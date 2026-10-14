@@ -33,7 +33,6 @@
     '<circle cx="11.2" cy="10.85" r="1.15" stroke="#7aa2d4" stroke-width="1.1"/>' +
     '<path d="M5.85 7.55 10 5.5M5.85 8.45 10 10.5" stroke="#b7cce6" stroke-width="1.05" stroke-linecap="round"/>' +
     '</svg></span>';
-
   function div(cls) { var n = document.createElement('div'); if (cls) n.className = cls; return n; }
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
@@ -660,7 +659,6 @@
         build: function () { return window.FastFlowBoard.mount(f.board); } });
     });
   }
-
   /* ───────── scenario proposals (checkbox card) ───────── */
   var SCENES = [
     { id: 'a1', title: 'A1 Supplier intelligent sourcing & admission', why: '数据最完整（ERP 报价、准入标准），使用者明确，最容易先跑通', rec: true },
@@ -765,6 +763,7 @@
             if (i) await api.sleep(380);
             if (window.FastFiles) window.FastFiles.addDeliverable(FOLDER + '/' + DOCS[i].name);
           }
+          if (window.FastFiles) window.FastFiles.showSyncTip('企业档案已同步到工作台资产');
           await api.sleep(200);
           await api.V({ id: 'co5', icon: 'context', label: '已生成企业档案', details: DOCS.map(function (d) { return d.name; }) });
           await api.sleep(280);
@@ -793,6 +792,7 @@
             if (j) await api.sleep(420);
             if (window.FastFiles) window.FastFiles.addDeliverable(BIZ + '/' + FLOWS[j].name);
           }
+          if (window.FastFiles) window.FastFiles.showSyncTip('企业档案与业务全景已同步到工作台资产');
           await api.sleep(200);
           await api.V({ id: 'co5b', icon: 'context', label: '已生成业务全景', details: FLOWS.map(function (d) { return d.name; }) });
           await api.sleep(280);

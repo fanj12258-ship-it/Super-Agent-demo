@@ -153,16 +153,54 @@ function graphAva(theme) {
 }
 
 function renderOntology(list) {
-  return '<div class="grid-agent">' + list.map(function (it) {
+  var cards = list.map(function (it) {
     var statusCls = it.statusKey === 'published' ? ' published' : '';
     return '<button type="button" class="card on-card">' +
       '<div class="on-head"><span class="on-ava">' + graphAva(it.theme) + '</span>' +
       '<div class="on-name">' + escapeHtmlModal(it.name) + '</div></div>' +
       '<div class="on-desc">' + escapeHtmlModal(it.desc) + '</div>' +
+      '<div class="on-scenario"><span>Scenario</span><strong>' + escapeHtmlModal(it.scenario) + '</strong></div>' +
       '<div class="on-meta">Updated by ' + escapeHtmlModal(it.author) + ' · ' + escapeHtmlModal(it.updated) + '</div>' +
       '<div class="on-tags"><span class="on-tag status' + statusCls + '">' + escapeHtmlModal(it.status) + '</span>' +
       '<span class="on-tag">' + it.versions + ' versions</span></div></button>';
-  }).join('') + '</div>';
+  }).join('');
+  return '<div class="on-workspace">' +
+    '<div class="on-panel" aria-label="Ontology catalog">' +
+      '<section class="on-panel-section on-graphs">' +
+        '<h2 class="on-section-title">Ontology Graph</h2>' +
+        '<div class="on-graph-space">' +
+          '<article class="on-graph-card">' +
+            '<div class="on-graph-preview" aria-hidden="true">' +
+              '<svg viewBox="0 0 620 210" fill="none">' +
+                '<path d="M124 70 238 105M124 140l114-35M382 105l114-35M382 105l114 35M310 55v28M310 127v28" class="on-graph-link"/>' +
+                '<circle cx="108" cy="66" r="24" class="on-graph-node on-graph-node-soft"/>' +
+                '<circle cx="108" cy="144" r="24" class="on-graph-node"/>' +
+                '<circle cx="512" cy="66" r="24" class="on-graph-node"/>' +
+                '<circle cx="512" cy="144" r="24" class="on-graph-node on-graph-node-soft"/>' +
+                '<circle cx="310" cy="38" r="18" class="on-graph-node"/>' +
+                '<circle cx="310" cy="172" r="18" class="on-graph-node"/>' +
+                '<rect x="238" y="78" width="144" height="54" rx="14" class="on-graph-core"/>' +
+                '<rect x="274" y="101" width="72" height="7" rx="3.5" class="on-graph-core-mark"/>' +
+                '<circle cx="108" cy="66" r="6" class="on-graph-dot"/><circle cx="108" cy="144" r="6" class="on-graph-dot"/>' +
+                '<circle cx="512" cy="66" r="6" class="on-graph-dot"/><circle cx="512" cy="144" r="6" class="on-graph-dot"/>' +
+              '</svg>' +
+            '</div>' +
+            '<div class="on-graph-body">' +
+              '<div class="on-graph-kicker">ENTERPRISE ONTOLOGY</div>' +
+              '<div class="on-graph-title-row"><h3>Enterprise ontology graph</h3></div>' +
+              '<p>Explore object types, relationships, rules, and actions across every object set.</p>' +
+              '<div class="on-graph-meta"><span>' + list.length + ' object sets</span><span>Cross-scenario</span></div>' +
+            '</div>' +
+          '</article>' +
+        '</div>' +
+      '</section>' +
+      '<div class="on-divider"></div>' +
+      '<section class="on-panel-section on-object-sets">' +
+        '<div class="on-section-head"><h2 class="on-section-title">Object Sets</h2><span>' + list.length + '</span></div>' +
+        '<div class="on-list">' + cards + '</div>' +
+      '</section>' +
+    '</div>' +
+  '</div>';
 }
 
 function renderMcp(list) {
@@ -172,6 +210,43 @@ function renderMcp(list) {
       '<div class="mcp-desc">' + escapeHtmlModal(it.desc) + '</div>' +
       '<div class="mcp-updated">Updated: ' + escapeHtmlModal(it.updated) + '</div>' +
       '<div class="mcp-row"><span class="mcp-pill">' + escapeHtmlModal(it.tag) + '</span></div></span></button>';
+  }).join('') + '</div>';
+}
+
+function enterpriseAssetPreview(kind) {
+  if (kind === 'landscape') {
+    return '<svg class="ea-preview-svg" viewBox="0 0 300 152" fill="none" aria-hidden="true">' +
+      '<path d="M70 76h48M182 76h48M150 46v20M150 86v20" class="ea-link"/>' +
+      '<path d="M92 43l26 15v36l-26 15-26-15V58l26-15ZM208 43l26 15v36l-26 15-26-15V58l26-15Z" class="ea-node ea-node-soft"/>' +
+      '<rect x="118" y="56" width="64" height="40" rx="10" class="ea-node ea-node-main"/>' +
+      '<circle cx="92" cy="76" r="7" class="ea-dot"/><circle cx="208" cy="76" r="7" class="ea-dot"/>' +
+      '<rect x="141" y="70" width="18" height="4" rx="2" class="ea-mark"/>' +
+      '<circle cx="150" cy="30" r="9" class="ea-node"/><circle cx="150" cy="122" r="9" class="ea-node"/>' +
+      '</svg>';
+  }
+  return '<svg class="ea-preview-svg" viewBox="0 0 300 152" fill="none" aria-hidden="true">' +
+    '<rect x="68" y="30" width="108" height="92" rx="10" class="ea-page ea-page-back"/>' +
+    '<rect x="92" y="22" width="140" height="108" rx="10" class="ea-page ea-page-main"/>' +
+    '<rect x="112" y="44" width="52" height="7" rx="3.5" class="ea-heading"/>' +
+    '<rect x="112" y="65" width="96" height="5" rx="2.5" class="ea-line"/>' +
+    '<rect x="112" y="78" width="82" height="5" rx="2.5" class="ea-line"/>' +
+    '<rect x="112" y="91" width="91" height="5" rx="2.5" class="ea-line"/>' +
+    '<rect x="112" y="108" width="44" height="8" rx="4" class="ea-chip"/>' +
+    '</svg>';
+}
+
+function renderEnterpriseAssets(list) {
+  return '<div class="ea-grid">' + list.map(function (it) {
+    return '<button type="button" class="card ea-card ea-' + it.kind + '">' +
+      '<div class="ea-preview">' + enterpriseAssetPreview(it.kind) + '</div>' +
+      '<div class="ea-body"><div class="ea-title-row"><span class="ea-icon">' +
+      (it.kind === 'landscape'
+        ? '<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="4" r="2"/><circle cx="4" cy="15" r="2"/><circle cx="16" cy="15" r="2"/><path d="m9 5.7-4 7.5m6-7.5 4 7.5M6 15h8"/></svg>'
+        : '<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 2.5h7l3 3V17.5H5z"/><path d="M12 2.5v3h3M8 9h4M8 12h4"/></svg>') +
+      '</span><span class="ea-name">' + escapeHtmlModal(it.name) + '</span><span class="ea-arrow" aria-hidden="true">→</span></div>' +
+      '<p class="ea-desc">' + escapeHtmlModal(it.desc) + '</p>' +
+      '<div class="ea-foot"><span>' + escapeHtmlModal(it.count) + '</span><span>' + escapeHtmlModal(it.meta) + '</span></div>' +
+      '</div></button>';
   }).join('') + '</div>';
 }
 

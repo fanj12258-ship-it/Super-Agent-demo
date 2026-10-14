@@ -7,6 +7,7 @@ var RENDERERS = {
   skill: renderSkill,
   ontology: renderOntology,
   mcp: renderMcp,
+  'enterprise-assets': renderEnterpriseAssets,
   files: renderFiles
 };
 
@@ -17,6 +18,7 @@ function renderList(key) {
     return '<div class="empty"><strong>Nothing here yet</strong>Create your first item for this project.</div>';
   }
   var fn = RENDERERS[key];
+  if (key === 'ontology') return fn ? fn(list) : '';
   return toolbar(list.length) + (fn ? fn(list) : '');
 }
 
@@ -36,7 +38,7 @@ function activateView(key) {
   render(key);
 }
 
-var TAB_CYCLE = ['scenario', 'agent', 'skill', 'ontology', 'mcp', 'files'];
+var TAB_CYCLE = ['scenario', 'agent', 'skill', 'ontology', 'mcp', 'files', 'enterprise-assets'];
 
 function shiftView(delta) {
   var active = document.querySelector('.nav-item.is-active');

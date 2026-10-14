@@ -43,7 +43,8 @@
           var key = (indented ? folder : '') + '/' + name;
           if (seen[key]) return;
           seen[key] = 1;
-          out.push({ name: name, folder: indented ? folder : '', group: tree.id === 'fast-materials' ? 'Materials' : 'Deliverables' });
+          var group = tree.id === 'fast-materials' ? 'Materials' : 'Deliverables';
+          out.push({ name: name, folder: indented ? folder : '', group: group });
         }
       });
     });

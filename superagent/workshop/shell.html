@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="css/agent-turn.css" />
   <link rel="stylesheet" href="css/agent-body.css" />
   <link rel="stylesheet" href="css/modal-create-scene.css" />
-  <link rel="stylesheet" href="css/fast-overrides.css?v=20261014e" />
+  <link rel="stylesheet" href="css/fast-overrides.css?v=20261014h" />
   <link rel="stylesheet" href="css/fast-blueprint.css" />
   <link rel="stylesheet" href="css/fast-blueprint-iso.css" />
   <link rel="stylesheet" href="css/fast-scene-card.css" />
@@ -83,7 +83,6 @@
           <div class="sidebar-tabs" role="tablist" aria-label="Left sidebar">
             <button type="button" class="sidebar-tab is-active" role="tab" aria-selected="true" data-tab="scene">Scenarios</button>
             <button type="button" class="sidebar-tab" role="tab" aria-selected="false" data-tab="files">Files</button>
-            <button type="button" class="sidebar-tab" role="tab" aria-selected="false" data-tab="assets">Assets</button>
           </div>
           <div class="sidebar-panel" data-panel="scene">
             <div class="sidebar-panel-scroll scene-panel-scroll">
@@ -274,6 +273,14 @@
           </div>
           <div class="sidebar-panel" data-panel="files" hidden>
             <div class="files-scroll" id="fast-files-scroll">
+              <div class="fast-sync-tip" id="fast-sync-tip" hidden>
+                <span class="fast-sync-tip-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.2 6.2 11 13 4.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <span class="fast-sync-tip-text">已同步到工作台资产</span>
+                <span class="fast-sync-tip-actions">
+                  <button type="button" data-sync-open>前往</button>
+                  <button type="button" data-sync-dismiss>忽略</button>
+                </span>
+              </div>
               <div class="fast-files-empty" id="fast-files-empty">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>
                 <p class="fast-files-empty-t">暂无文档</p>
@@ -297,23 +304,16 @@
                 <div class="tree" id="files-tree" role="tree" aria-label="Materials"></div>
                 <div class="tree" id="fast-materials" role="tree" aria-label="Materials"></div>
               </div>
-              <div class="files-group" data-section="context">
-                <div class="group-header files-group-header" data-section-header="context">
+              <div class="files-group" data-section="deliverable">
+                <div class="group-header files-group-header" data-section-header="deliverable">
                   <span class="group-header__title">
                     <span class="gh-text">Deliverables</span>
-                    <span class="gh-count" id="context-count">39</span>
+                    <span class="gh-count" id="deliverables-count">0</span>
                   </span>
                 </div>
                 <div class="tree" id="context-tree" role="tree" aria-label="Deliverables"></div>
                 <div class="tree" id="fast-deliverables" role="tree" aria-label="Deliverables"></div>
               </div>
-            </div>
-          </div>
-          <div class="sidebar-panel" data-panel="assets" hidden>
-            <div class="fast-assets-empty">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>
-              <p class="fast-files-empty-t">暂无资产</p>
-              <p class="fast-files-empty-d">做出的 Skill、MCP 和本体图谱会出现在这里</p>
             </div>
           </div>
         </div>
@@ -689,25 +689,24 @@
   <script src="js/chrome-popovers.js"></script>
   <script src="js/file-type-icons.js"></script>
   <script src="js/files-panel.js"></script>
-  <script src="js/fast-assets-tab.js"></script>
   <script src="js/fast-docs-data.js"></script>
   <script src="js/fast-plan-docs-data.js"></script>
-  <script src="js/fast-files.js?v=20261014e"></script>
+  <script src="js/fast-files.js?v=20261014l"></script>
   <script src="js/fast-scenes.js"></script>
   <script src="js/fast-mode.js"></script>
   <script src="js/fast-scene-card.js"></script>
-  <script src="js/fast-scene-create.js"></script>
+  <script src="js/fast-scene-create.js?v=20261014g"></script>
   <script src="js/fast-blueprint.js"></script>
   <script src="js/fast-blueprint-iso.js"></script>
   <script src="js/fast-flowmap.js"></script>
   <script src="js/fast-journey.js"></script>
   <script src="js/fast-intake.js"></script>
 {{SCRIPT_ROUTE}}  <script src="js/fast-flow-board.js?v=20261014e"></script>
-  <script src="js/fast-company.js?v=20261014e"></script>
+  <script src="js/fast-company.js?v=20261014n"></script>
   <script src="js/scene-card-menu.js"></script>
   <script src="js/cui-icons.js"></script>
   <script src="js/agent-body.js?v=20261014e"></script>
-  <script src="js/fast-docs.js?v=20261014e"></script>
+  <script src="js/fast-docs.js?v=20261014i"></script>
   <script src="js/fast-agent-panel.js"></script>
   <script src="js/fast-diagnosis.js"></script>
   <script src="js/fast-onto-graph.js"></script>
@@ -717,7 +716,7 @@
   <script src="js/fast-handoff.js"></script>
   <script src="js/fast-flow.js"></script>
   <script src="js/fast-upload.js"></script>
-  <script src="js/fast-mention.js"></script>
+  <script src="js/fast-mention.js?v=20261014g"></script>
   <script src="js/fast-conversations.js"></script>
   <script src="js/fast-summary.js"></script>
   <script src="js/workbench-home.js"></script>

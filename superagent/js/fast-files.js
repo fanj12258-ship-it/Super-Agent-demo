@@ -17,6 +17,8 @@
   var FTI = window.FileTypeIcons;
   var filesTab = document.querySelector('.sidebar-tab[data-tab="files"]');
   var sceneTab = document.querySelector('.sidebar-tab[data-tab="scene"]');
+  var syncTip = document.getElementById('fast-sync-tip');
+  var syncTipText = syncTip && syncTip.querySelector('.fast-sync-tip-text');
   var MORE =
     '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>';
   var CHEV =
@@ -34,8 +36,8 @@
     },
     deliverable: {
       tree: document.getElementById('fast-deliverables'),
-      group: scroll.querySelector('[data-section="context"]'),
-      count: document.getElementById('context-count'),
+      group: scroll.querySelector('[data-section="deliverable"]'),
+      count: document.getElementById('deliverables-count'),
       n: 0,
       folders: {},
     },
@@ -46,14 +48,14 @@
   }
 
   function sync() {
-    var any = false;
+    var filesAny = false;
     Object.keys(groups).forEach(function (k) {
       var g = groups[k];
       g.group.classList.toggle('has-items', g.n > 0);
-      g.count.textContent = g.n;
-      if (g.n > 0) any = true;
+      if (g.count) g.count.textContent = g.n;
+      if (g.n > 0) filesAny = true;
     });
-    scroll.classList.toggle('has-any', any);
+    scroll.classList.toggle('has-any', filesAny);
   }
 
   /* optional leading mark for one folder — the enterprise dossier uses its own, not the outline folder */
@@ -118,7 +120,7 @@
     return row;
   }
 
-  scroll.addEventListener('click', function (e) {
+  function onTreeClick(e) {
     if (e.target.closest('.more')) return;
     var folderRow = e.target.closest('#fast-materials .node, #fast-deliverables .node');
     if (folderRow) {
@@ -135,19 +137,36 @@
     if (!row) return;
     scroll.querySelectorAll('.file.is-active').forEach(function (r) { r.classList.remove('is-active'); });
     row.classList.add('is-active');
-  });
+  }
+  scroll.addEventListener('click', onTreeClick);
 
   function showTab(files) {
     var t = files ? filesTab : sceneTab;
     if (t && !t.classList.contains('is-active')) t.click();
   }
   if (filesTab) filesTab.addEventListener('click', function () { filesTab.classList.remove('has-dot'); });
+  if (syncTip) {
+    syncTip.addEventListener('click', function (e) {
+      if (e.target.closest('[data-sync-dismiss]')) {
+        syncTip.hidden = true;
+        return;
+      }
+      if (e.target.closest('[data-sync-open]')) {
+        window.location.href = '../workbench/agentos-workbench.html';
+      }
+    });
+  }
 
   window.FastFiles = {
     addDeliverable: function (name) { return add('deliverable', name); },
     markFolder: function (name, html) { marks[name] = html; },
     addMaterial: function (name) { return add('material', name); },
     showTab: showTab,
+    showSyncTip: function (message) {
+      if (!syncTip) return;
+      if (syncTipText && message) syncTipText.textContent = message;
+      syncTip.hidden = false;
+    },
     hideFolders: function (names, on) { hideSet = {}; (names || []).forEach(function (n) { hideSet[n] = 1; }); hideOn = !!on; applyHide(groups.deliverable); },
     collapseFolders: function (kind) {
       var g = groups[kind]; if (!g) return;
@@ -160,6 +179,7 @@
     markNew: function () { if (filesTab && !filesTab.classList.contains('is-active')) filesTab.classList.add('has-dot'); },
     reset: function () {
       Object.keys(groups).forEach(function (k) { groups[k].tree.innerHTML = ''; groups[k].n = 0; groups[k].folders = {}; });
+      if (syncTip) syncTip.hidden = true;
       sync();
     },
   };

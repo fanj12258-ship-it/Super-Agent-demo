@@ -96,16 +96,22 @@
     }
   }
 
+  function selectSceneChrome(t1) {
+    var item = document.querySelector('.ov-menu-item[data-scene="biz-t1"]');
+    if (item) item.click(); // shared menu handler updates label + checkmark + closes
+    var h = document.getElementById('center-head-title');
+    if (h) h.textContent = t1;
+  }
+
   /* Enter the T1 room: dropdown label + page title switch, fresh chat, welcome turn */
   function enterRoom(biz, title) {
     entered = true;
     setLinkCue(false);
     pendingCard = null;
     var t1 = biz[0] ? biz[0].name : 'T1 Sourcing strategy (v2.1 new step)';
-    var item = document.querySelector('.ov-menu-item[data-scene="biz-t1"]');
-    if (item) item.click(); // shared menu handler updates label + checkmark + closes
-    var h = document.getElementById('center-head-title');
-    if (h) h.textContent = t1;
+    selectSceneChrome(t1);
+    if (window.FastFiles) window.FastFiles.reset();
+    if (window.FastDocs && window.FastDocs.resetView) window.FastDocs.resetView();
     if (window.WorkshopPanels) window.WorkshopPanels.setRightOpen(true);
     window.FastChat.clearThread();
     if (window.FastJourney) window.FastJourney.begin();

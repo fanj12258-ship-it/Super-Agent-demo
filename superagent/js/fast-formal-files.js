@@ -8,7 +8,7 @@
  */
 (function () {
   'use strict';
-  var group = document.querySelector('#fast-files-scroll [data-section="context"]');
+  var group = document.querySelector('#fast-files-scroll [data-section="deliverable"]');
   var draft = document.getElementById('fast-deliverables');
   if (!group || !draft || !window.FastSwitchDialog) return;
   var FTI = window.FileTypeIcons;

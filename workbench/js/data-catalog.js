@@ -10,6 +10,7 @@ var VIEWS = {
   ontology:  { title: 'Ontology',  desc: 'Shared entities, relations, and domain vocabulary.' },
   mcp:       { title: 'MCP',       desc: 'Model Context Protocol servers that extend tool access.' },
   files:     { title: 'Files',     desc: 'Materials and deliverables — browse with a dense drill-down list.' },
+  'enterprise-assets': { title: 'Enterprise Assets', desc: 'Shared enterprise context for documents and the business landscape.' },
   aiops:     { title: 'AI Ops',    desc: 'Runtime health, traces, and agent operations.' }
 };
 var EMPTY_HERO = {
@@ -32,7 +33,7 @@ var EMPTY_HERO = {
 var items = document.querySelectorAll('.nav-item');
 var content = document.getElementById('mainContent');
 
-var SCOPED = { agent: 1, scenario: 1, knowledge: 1, skill: 1, ontology: 1, mcp: 1, files: 1 };
+var SCOPED = { agent: 1, scenario: 1, knowledge: 1, skill: 1, ontology: 1, mcp: 1, files: 1, 'enterprise-assets': 1 };
 
 // Production-shaped seed data + type-specific card renderers
 var CATALOG = {
@@ -243,20 +244,37 @@ var CATALOG = {
     {
       name: 'Supplier discovery object set',
       desc: 'T2 supplier discovery — search strategy and CS confirmation chain for supplier candidates.',
+      scenario: 'T2 Supplier discovery',
       author: 'ke wang', updated: '2026-07-30 13:40',
       status: 'Draft', statusKey: 'draft', versions: 2, theme: 'violet'
     },
     {
       name: 'Supplier deep-research object set',
       desc: 'T3 deep research on T2 candidates — multi-source collection, cross-check, and fusion into 6-dimension profiles with 4 risk labels.',
+      scenario: 'T3 Supplier deep research',
       author: 'Feng Zhu', updated: '2026-06-21 19:06',
       status: 'Draft', statusKey: 'draft', versions: 2, theme: 'blue'
     },
     {
       name: 'Support ticket object set',
       desc: 'Shared support ontology — tickets, channels, intents, escalation paths, and knowledge links for triage and resolution.',
+      scenario: 'Customer support operations',
       author: 'ke wang', updated: '2026-08-12 10:22',
       status: 'Published', statusKey: 'published', versions: 4, theme: 'slate'
+    },
+    {
+      name: 'Retail allocation object set',
+      desc: 'Store allocation ontology — demand signals, inventory snapshots, allocation rules, and override decisions.',
+      scenario: 'Rule-based allocation',
+      author: 'Lin Chen', updated: '2026-09-18 16:45',
+      status: 'Draft', statusKey: 'draft', versions: 3, theme: 'blue'
+    },
+    {
+      name: 'Incident response object set',
+      desc: 'Operational incident ontology — alerts, services, impact levels, responders, and remediation actions.',
+      scenario: 'Alert intake',
+      author: 'Alex Wu', updated: '2026-10-06 09:30',
+      status: 'Published', statusKey: 'published', versions: 5, theme: 'violet'
     }
   ],
   mcp: [
@@ -291,5 +309,21 @@ var CATALOG = {
       desc: 'Object set retrieval, object instance retrieval, object relationship graph query, L3 debug simulate-event and sandbox cleanup'
     }
   ],
-  files: [{ placeholder: true }]
+  files: [{ placeholder: true }],
+  'enterprise-assets': [
+    {
+      kind: 'documents',
+      name: 'Enterprise Documents',
+      desc: 'Policies, operating standards, process guides, and institutional knowledge shared across the enterprise.',
+      count: '128 documents',
+      meta: '12 collections · Updated today'
+    },
+    {
+      kind: 'landscape',
+      name: 'Business Landscape',
+      desc: 'A connected view of business domains, capabilities, processes, and the scenarios they support.',
+      count: '6 business domains',
+      meta: '42 processes · Updated 2h ago'
+    }
+  ]
 };

@@ -13,7 +13,7 @@
   var DOCS = window.FastDocsData || [];
   var FTI = window.FileTypeIcons;
   var byName = {};
-  // uploaded materials only — Agent-written deliverables ({deliverable:true}) and the Agent pane are opened by name
+  // uploaded materials only — generated deliverables and the Agent pane are opened by name
   function mats() { return DOCS.filter(function (d) { return !d.deliverable && d.kind !== 'agent'; }); }
   DOCS.forEach(function (d) { byName[d.name.toLowerCase()] = d; });
 
@@ -148,6 +148,9 @@
     } else if (d.kind === 'flow') {
       pane.classList.add('is-flow');
       pane.appendChild(d.build());
+    } else if (d.build) {
+      pane.classList.add('is-custom');
+      pane.appendChild(d.build());
     } else {
       var host = el('div', 'fd-doc');
       pane.appendChild(host);
@@ -167,6 +170,16 @@
     current = null;
     view.hidden = true;
     launch.hidden = false;
+    renderTabs();
+    syncRows();
+  }
+  function resetView() {
+    Object.keys(panes).forEach(function (name) { panes[name].remove(); });
+    panes = {};
+    openList = [];
+    current = null;
+    if (view) view.hidden = true;
+    if (launch) launch.hidden = false;
     renderTabs();
     syncRows();
   }
@@ -295,6 +308,7 @@
     find: find,
     groups: groups,
     open: open,
+    resetView: resetView,
     readCard: readCard,
     icon: icon,
   };
