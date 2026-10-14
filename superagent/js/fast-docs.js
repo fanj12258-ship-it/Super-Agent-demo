@@ -145,6 +145,9 @@
     } else if (d.kind === 'sheet') {
       pane.classList.add('is-sheet');
       pane.appendChild(buildSheet(d));
+    } else if (d.kind === 'flow') {
+      pane.classList.add('is-flow');
+      pane.appendChild(d.build());
     } else {
       var host = el('div', 'fd-doc');
       pane.appendChild(host);
@@ -202,6 +205,7 @@
     scroll.scrollTop = 0;
     meta.hidden = d.kind === 'agent';
     view.classList.toggle('is-agent', d.kind === 'agent');
+    view.classList.toggle('is-flow', d.kind === 'flow');
     meta.innerHTML = d.kind === 'agent' ? '' :
       '<span class="fd-crumb">' + (d.deliverable ? 'Deliverables' : 'Materials') + '<i>/</i>' + esc(d.folder) + '<i>/</i><b>' + esc(d.name) + '</b></span>' +
       '<span class="fd-meta-r">' + [d.pages, d.size, '更新于 ' + d.updated, d.author].filter(Boolean).map(esc).join(' · ') + '</span>';

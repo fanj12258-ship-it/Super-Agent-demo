@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{TITLE}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <!-- Styles split under css/ — see css/README.txt -->
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/layout-sidebar.css" />
+  <link rel="stylesheet" href="css/panels-modals.css" />
+  <link rel="stylesheet" href="css/scene-cards.css" />
+  <link rel="stylesheet" href="css/file-tree.css" />
+  <link rel="stylesheet" href="css/overview-menu.css" />
+  <link rel="stylesheet" href="css/chrome-popovers.css" />
+  <link rel="stylesheet" href="css/chat-composer.css" />
+  <link rel="stylesheet" href="css/agent-turn.css" />
+  <link rel="stylesheet" href="css/agent-body.css" />
+  <link rel="stylesheet" href="css/modal-create-scene.css" />
+  <link rel="stylesheet" href="css/fast-overrides.css?v=20261014e" />
+  <link rel="stylesheet" href="css/fast-blueprint.css" />
+  <link rel="stylesheet" href="css/fast-blueprint-iso.css" />
+  <link rel="stylesheet" href="css/fast-scene-card.css" />
+  <link rel="stylesheet" href="css/fast-docs.css?v=20261014e" />
+  <link rel="stylesheet" href="css/fast-flow.css" />
+  <link rel="stylesheet" href="css/fast-modules.css" />
+  <link rel="stylesheet" href="css/fast-onto-graph.css" />
+  <link rel="stylesheet" href="css/fast-conversations.css" />
+  <link rel="stylesheet" href="css/fast-switch-dialog.css" />
+  <link rel="stylesheet" href="css/fast-formal-files.css" />
+{{EXTRA_HEAD}}</head>
+<body>
+  <svg class="ws-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <defs>
+      <!-- Nav/launcher icons LOCKED — source: assets/agentos-nav-icons.locked.svg (same as Workbench) -->
+      <!-- One icon family: 24 grid · 18px · stroke 1.5 · round caps/joins · currentColor -->
+      <symbol id="ws-sidebar-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M9 4.5v15"/></symbol>
+      <symbol id="ws-sidebar-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M15 4.5v15"/></symbol>
+      <symbol id="ws-fullscreen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V6a2 2 0 0 1 2-2h3"/><path d="M15 4h3a2 2 0 0 1 2 2v3"/><path d="M20 15v3a2 2 0 0 1-2 2h-3"/><path d="M9 20H6a2 2 0 0 1-2-2v-3"/></symbol>
+      <symbol id="ws-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.9 10.2a1.8 1.8 0 0 1 .638-1.375l6.3-5.399a1.8 1.8 0 0 1 2.324 0l6.3 5.399a1.8 1.8 0 0 1 .638 1.375v8.1a1.8 1.8 0 0 1-1.8 1.8H5.7a1.8 1.8 0 0 1-1.8-1.8Z"/><path d="M14.7 20.1v-7.2a.9.9 0 0 0-.9-.9h-3.6a.9.9 0 0 0-.9.9v7.2"/></symbol>
+      <symbol id="ws-tasks" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m4 8 2 2 4-4"/><path d="m4 18 2 2 4-4"/><path d="M14 7h6"/><path d="M14 13h6"/><path d="M14 19h6"/></symbol>
+      <symbol id="ws-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5a5 5 0 0 1 5 5c0 3.6-5 8-5 8s-5-4.4-5-8a5 5 0 0 1 5-5Z"/><circle cx="12" cy="8.5" r="1.6"/><path d="M8 15.5 4.5 19l3.5 1.5 4-2 4 2 3.5-1.5L16 15.5"/></symbol>
+      <symbol id="ws-ontology" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5.5" r="2.2"/><circle cx="5.5" cy="18" r="2.2"/><circle cx="18.5" cy="18" r="2.2"/><path d="m11 7.5-4.5 8.5"/><path d="m13 7.5 4.5 8.5"/><path d="M7.7 18h8.6"/></symbol>
+      <symbol id="ws-agent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11.5" rx="3"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><path d="M9 13v1.5"/><path d="M15 13v1.5"/></symbol>
+      <symbol id="ws-skill" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3 5.5 13.5H12L11 21l7.5-10.5H12Z"/></symbol>
+      <symbol id="ws-mcp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v4"/><path d="M15 3v4"/><path d="M6 7h12v4a6 6 0 0 1-12 0Z"/><path d="M12 17v4"/></symbol>
+      <symbol id="ws-data" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.66 3.13 3 7 3s7-1.34 7-3V6"/><path d="M5 12c0 1.66 3.13 3 7 3s7-1.34 7-3"/></symbol>
+      <symbol id="ws-knowledge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18.5V5.5A1.5 1.5 0 0 1 6.5 4H19v13H6.5A1.5 1.5 0 0 0 5 18.5Z"/><path d="M5 18.5A1.5 1.5 0 0 0 6.5 20H19v-3"/><path d="M9 8h6"/></symbol>
+      <symbol id="ws-files" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.2A1.7 1.7 0 0 1 5.2 5.5h3.2l1.7 1.9H18.5A1.7 1.7 0 0 1 20.2 9.1v8.2a1.7 1.7 0 0 1-1.7 1.7H5.2a1.7 1.7 0 0 1-1.7-1.7Z"/></symbol>
+      <symbol id="ws-scenario" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3.5 8.5 4.5-8.5 4.5L3.5 8Z"/><path d="m3.5 12 8.5 4.5 8.5-4.5"/><path d="m3.5 16 8.5 4.5 8.5-4.5"/></symbol>
+      <symbol id="ws-test" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3.5h5"/><path d="M10.5 3.5v5.2L5 18a1.8 1.8 0 0 0 1.6 2.5h10.8A1.8 1.8 0 0 0 19 18l-5.5-9.3V3.5"/><path d="M7.8 14.5h8.4"/></symbol>
+      <symbol id="ws-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></symbol>
+    </defs>
+  </svg>
+  <div class="app-shell" id="app-shell">
+    <aside class="sidebar sidebar-left is-open" id="sidebar-left">
+      <div class="sidebar-head">
+        <div class="sidebar-head-lead">
+          <button type="button" class="ws-btn ws-btn--home" id="home-workbench" aria-label="Workbench" title="Workbench">
+            <svg class="ws-ico" width="18" height="18" aria-hidden="true"><use href="#ws-home"/></svg>
+          </button>
+          <button type="button" class="brand-picker" id="brandPicker" aria-label="Overview menu" aria-haspopup="menu" aria-expanded="false" aria-controls="overviewMenu">
+          <span class="brand-picker-label">Overview</span>
+          <svg class="chev" width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true"><path d="M1.5 3L4 5.5L6.5 3" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        </div>
+        <div class="sidebar-tools" id="sidebar-tools">
+          <button type="button" class="ws-btn" id="toggle-left-sidebar" aria-label="Collapse sidebar" aria-pressed="true">
+            <svg class="ws-ico" width="18" height="18" aria-hidden="true"><use href="#ws-sidebar-left"/></svg>
+          </button>
+          <button type="button" class="sidebar-tool" aria-label="Search">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="5.5"/><path d="m16 16 4 4"/></svg>
+          </button>
+          <button type="button" class="sidebar-tool" aria-label="Filter">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5h14l-5.2 6.4V17l-3.6 2v-7.6L5 5z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="sidebar-inner">
+        <div class="doc-explorer" id="doc-explorer">
+          <div class="sidebar-tabs" role="tablist" aria-label="Left sidebar">
+            <button type="button" class="sidebar-tab is-active" role="tab" aria-selected="true" data-tab="scene">Scenarios</button>
+            <button type="button" class="sidebar-tab" role="tab" aria-selected="false" data-tab="files">Files</button>
+            <button type="button" class="sidebar-tab" role="tab" aria-selected="false" data-tab="assets">Assets</button>
+          </div>
+          <div class="sidebar-panel" data-panel="scene">
+            <div class="sidebar-panel-scroll scene-panel-scroll">
+              <div class="scene-cards" id="scene-cards" role="list">
+                <div class="scene-empty-card">
+                  <h3 class="scene-empty-title"><span class="se-t-tall">No scenarios yet</span><span class="se-t-compact">New scenario</span></h3>
+                  <p class="scene-empty-desc se-d-tall">No scenario in mind yet? Start from chat and AgentOS will help work out the requirements. Already have a clear one? Create it directly and start crafting right away.</p>
+                  <p class="scene-empty-desc se-d-compact">Start from chat, or create one to begin.</p>
+                  <div class="scene-empty-actions">
+                    <button type="button" class="scene-empty-btn scene-empty-btn-ghost" id="scene-new-btn">New scenario+</button>
+                  </div>
+                </div>
+
+                <article class="scene-pack" data-fast-scene="a1" role="listitem">
+                  <div class="scene-unit scene-unit-app">
+                    <div class="scene-unit-head">
+                      <h4 class="scene-unit-title">A1 Supplier intelligent sourcing &amp; admission</h4>
+                      <button type="button" class="scene-unit-more" aria-label="More actions" aria-haspopup="menu" aria-expanded="false"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="4" cy="8" r="1.15" fill="currentColor"/><circle cx="8" cy="8" r="1.15" fill="currentColor"/><circle cx="12" cy="8" r="1.15" fill="currentColor"/></svg></button>
+                    <div class="scene-menu" hidden role="menu">
+                      <button type="button" role="menuitem">Edit</button>
+                      <button type="button" class="scene-menu-danger" role="menuitem">Delete</button>
+                    </div>
+                    </div>
+                    <div class="scene-unit-tags">
+                      <span class="scene-kicker">Application</span>
+                      <span class="scene-stage is-crafting"><span class="dot" aria-hidden="true"></span>Crafting</span>
+                    </div>
+                    <p class="scene-unit-desc">Application scenario for supplier sourcing strategy, discovery, and admission.</p>
+                    <div class="scene-unit-actions">
+                      <button type="button" class="scene-build">Continue crafting</button>
+                    </div>
+                  </div>
+                  <div class="scene-children">
+                    <div class="scene-biz-list">
+                      <div class="scene-biz" data-fast-hide>
+                        <div class="scene-unit-head">
+                          <h4 class="scene-unit-title">T2 Supplier discovery</h4>
+                          <button type="button" class="scene-unit-more" aria-label="More actions" aria-haspopup="menu" aria-expanded="false"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="4" cy="8" r="1.15" fill="currentColor"/><circle cx="8" cy="8" r="1.15" fill="currentColor"/><circle cx="12" cy="8" r="1.15" fill="currentColor"/></svg></button>
+                    <div class="scene-menu" hidden role="menu">
+                      <button type="button" role="menuitem">Edit</button>
+                      <button type="button" class="scene-menu-danger" role="menuitem">Delete</button>
+                    </div>
+                        </div>
+                        <div class="scene-unit-tags">
+                          <span class="scene-kicker scene-kicker-biz">Business</span>
+                          <span class="scene-stage is-crafting"><span class="dot" aria-hidden="true"></span>Crafting</span>
+                        </div>
+                        <p class="scene-unit-desc">Business scenario for discovering and shortlisting supplier candidates.</p>
+                        <div class="scene-unit-actions">
+                          <button type="button" class="scene-biz-build">Continue crafting</button>
+                        </div>
+                      </div>
+                      <div class="scene-biz">
+                        <div class="scene-unit-head">
+                          <h4 class="scene-unit-title">T1 Sourcing strategy (v2.1 new step)</h4>
+                          <button type="button" class="scene-unit-more" aria-label="More actions" aria-haspopup="menu" aria-expanded="false"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="4" cy="8" r="1.15" fill="currentColor"/><circle cx="8" cy="8" r="1.15" fill="currentColor"/><circle cx="12" cy="8" r="1.15" fill="currentColor"/></svg></button>
+                    <div class="scene-menu" hidden role="menu">
+                      <button type="button" role="menuitem">Edit</button>
+                      <button type="button" class="scene-menu-danger" role="menuitem">Delete</button>
+                    </div>
+                        </div>
+                        <div class="scene-unit-tags">
+                          <span class="scene-kicker scene-kicker-biz">Business</span>
+                          <span class="scene-stage is-ready"><span class="dot" aria-hidden="true"></span>Ready</span>
+                        </div>
+                        <p class="scene-unit-desc">Business scenario for drafting and confirming the sourcing strategy.</p>
+                        <div class="scene-unit-actions">
+                          <button type="button" class="scene-biz-build">Finalize</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="scene-pack" data-fast-scene="store" role="listitem">
+                  <div class="scene-unit scene-unit-app">
+                    <div class="scene-unit-head">
+                      <h4 class="scene-unit-title">Store allocation MVP</h4>
+                      <button type="button" class="scene-unit-more" aria-label="More actions" aria-haspopup="menu" aria-expanded="false"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="4" cy="8" r="1.15" fill="currentColor"/><circle cx="8" cy="8" r="1.15" fill="currentColor"/><circle cx="12" cy="8" r="1.15" fill="currentColor"/></svg></button>
+                    <div class="scene-menu" hidden role="menu">
+                      <button type="button" role="menuitem">Edit</button>
+                      <button type="button" class="scene-menu-danger" role="menuitem">Delete</button>
+                    </div>
+                    </div>
+                    <div class="scene-unit-tags">
+                      <span class="scene-kicker">Application</span>
+                      <span class="scene-stage is-live"><span class="dot" aria-hidden="true"></span>Live</span>
+                    </div>
+                    <p class="scene-unit-desc">HQ-to-store allocation with explainable rules and override paths.</p>
+                    <div class="scene-unit-actions">
+                      <button type="button" class="scene-build is-soft">Iterate</button>
+                    </div>
+                  </div>
+                  <div class="scene-children">
+                    <div class="scene-biz-list">
+                      <div class="scene-biz">
+                        <div class="scene-unit-head">
+                          <h4 class="scene-unit-title">Demand forecast intake</h4>
+                          <button type="button" class="scene-unit-more" aria-label="More actions" aria-haspopup="menu" aria-expanded="false"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="4" cy="8" r="1.15" fill="currentColor"/><circle cx="8" cy="8" r="1.15" fill="currentColor"/><circle cx="12" cy="8" r="1.15" fill="currentColor"/></svg></button>
+                    <div class="scene-menu" hidden role="menu">
+                      <button type="button" role="menuitem">Edit</button>
+                      <button type="button" class="scene-menu-danger" role="menuitem">Delete</button>
+                    </div>
+                        </div>
+                        <div class="scene-unit-tags">
+                          <span class="scene-kicker scene-kicker-biz">Business</span>
+                          <span class="scene-stage is-live"><span class="dot" aria-hidden="true"></span>Live</span>
+                        </div>
+                        <p class="scene-unit-desc">Ingest store demand signals before allocation.</p>
+                        <div class="scene-unit-actions">
+                          <button type="button" class="scene-biz-build">Iterate</button>
+                        </div>
+                      </div>
+                      <div class="scene-biz">
+                        <div class="scene-unit-head">
+                          <h4 class="scene-unit-title">Rule-based allocate</h4>
+                          <button type="button" class="scene-unit-more" aria-label="More actions" aria-haspopup="menu" aria-expanded="false"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="4" cy="8" r="1.15" fill="currentColor"/><circle cx="8" cy="8" r="1.15" fill="currentColor"/><circle cx="12" cy="8" r="1.15" fill="currentColor"/></svg></button>
+                    <div class="scene-menu" hidden role="menu">
+                      <button type="button" role="menuitem">Edit</button>
+                      <button type="button" class="scene-menu-danger" role="menuitem">Delete</button>
+                    </div>
+                        </div>
+                        <div class="scene-unit-tags">
+                          <span class="scene-kicker scene-kicker-biz">Business</span>
+                          <span class="scene-stage is-live"><span class="dot" aria-hidden="true"></span>Live</span>
+                        </div>
+                        <p class="scene-unit-desc">Generate and explain SKU allocation suggestions.</p>
+                        <div class="scene-unit-actions">
+                          <button type="button" class="scene-biz-build">Iterate</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+            <div class="fast-bp" id="fast-bp" hidden>
+              <div class="bp-head">
+                <div class="bp-title" id="bp-title">T1 Sourcing strategy (v2.1 new step)</div>
+                <div class="bp-meta">
+                  <span class="bp-chip">Business</span>
+                  <span class="bp-chip bp-chip-stage"><i class="dot"></i>Crafting</span>
+                  <span class="bp-chip bp-chip-mode" id="bp-mode">Fast</span>
+                </div>
+              </div>
+              <div class="bpi-card">
+                <div class="bpi-top"><span>Blueprint</span><button type="button" class="bpi-btn" id="bp-expand" title="Expand in main area" aria-label="Expand blueprint">⤢</button></div>
+                <div id="bp-iso" aria-hidden="true"></div>
+                <div class="bp-foot" id="bp-foot"></div>
+              </div>
+              <div class="bp-diagram" role="list" aria-label="Agent blueprint state" hidden>
+                <div class="bp-node" role="listitem" data-node="agent" data-state="todo">
+                  <span class="bp-ico" data-ico="agent"></span>
+                  <span class="bp-body"><span class="bp-name">Agent</span><span class="bp-sub">Sourcing agent</span></span>
+                  <span class="bp-st">Not built</span>
+                </div>
+                <div class="bp-link"></div>
+                <div class="bp-row">
+                  <div class="bp-node bp-node--sm" role="listitem" data-node="onto" data-state="optional">
+                    <span class="bp-ico" data-ico="onto"></span>
+                    <span class="bp-body"><span class="bp-name">Ontology</span><span class="bp-st">Optional</span></span>
+                  </div>
+                  <div class="bp-node bp-node--sm" role="listitem" data-node="skill" data-state="optional">
+                    <span class="bp-ico" data-ico="skill"></span>
+                    <span class="bp-body"><span class="bp-name">Skill</span><span class="bp-st">Optional</span></span>
+                  </div>
+                </div>
+                <div class="bp-link"></div>
+                <div class="bp-node" role="listitem" data-node="doc" data-state="todo">
+                  <span class="bp-ico" data-ico="doc"></span>
+                  <span class="bp-body"><span class="bp-name">Design doc</span><span class="bp-sub">Strategy · Agent design</span></span>
+                  <span class="bp-st">Not built</span>
+                </div>
+                <div class="bp-link"></div>
+                <div class="bp-node" role="listitem" data-node="know" data-state="todo">
+                  <span class="bp-ico" data-ico="know"></span>
+                  <span class="bp-body"><span class="bp-name">Knowledge</span><span class="bp-sub">Criteria · Past contracts</span></span>
+                  <span class="bp-st">Not built</span>
+                </div>
+                <div class="bp-link"></div>
+                <div class="bp-node" role="listitem" data-node="req" data-state="todo">
+                  <span class="bp-ico" data-ico="req"></span>
+                  <span class="bp-body"><span class="bp-name">Requirements</span><span class="bp-sub">Category · Trigger · Ranking</span></span>
+                  <span class="bp-st">Undefined</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="sidebar-panel" data-panel="files" hidden>
+            <div class="files-scroll" id="fast-files-scroll">
+              <div class="fast-files-empty" id="fast-files-empty">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>
+                <p class="fast-files-empty-t">暂无文档</p>
+                <p class="fast-files-empty-d">对话中产出的交付物和上传的素材会出现在这里</p>
+              </div>
+              <div class="files-group" data-section="material">
+                <div class="group-header files-group-header" data-section-header="material">
+                  <span class="group-header__title">
+                    <span class="gh-text">Materials</span>
+                    <span class="gh-count" id="files-count">23</span>
+                  </span>
+                  <div class="actions">
+                    <button type="button" class="gh-icon-btn" aria-label="Upload" title="Upload">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v12M6 10l6-6 6 6M5 20h14"/></svg>
+                    </button>
+                    <button type="button" class="gh-icon-btn" aria-label="New" title="New">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="tree" id="files-tree" role="tree" aria-label="Materials"></div>
+                <div class="tree" id="fast-materials" role="tree" aria-label="Materials"></div>
+              </div>
+              <div class="files-group" data-section="context">
+                <div class="group-header files-group-header" data-section-header="context">
+                  <span class="group-header__title">
+                    <span class="gh-text">Deliverables</span>
+                    <span class="gh-count" id="context-count">39</span>
+                  </span>
+                </div>
+                <div class="tree" id="context-tree" role="tree" aria-label="Deliverables"></div>
+                <div class="tree" id="fast-deliverables" role="tree" aria-label="Deliverables"></div>
+              </div>
+            </div>
+          </div>
+          <div class="sidebar-panel" data-panel="assets" hidden>
+            <div class="fast-assets-empty">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>
+              <p class="fast-files-empty-t">暂无资产</p>
+              <p class="fast-files-empty-d">做出的 Skill、MCP 和本体图谱会出现在这里</p>
+            </div>
+          </div>
+        </div>
+        <div class="sb-head">
+          <button class="sb-user" id="userBtn" type="button" aria-label="Account menu" aria-haspopup="menu" aria-expanded="false" aria-controls="acctMenu">
+            <span class="avatar">K</span>
+            <span class="sb-user-name">ke.wang</span>
+            <svg class="chev" width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true"><path d="M1.5 3L4 5.5L6.5 3" stroke="#333" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="icon-btn" id="notifyBtn" type="button" aria-label="Notifications" aria-haspopup="dialog" aria-expanded="false" aria-controls="notifyPanel">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2.2a3.8 3.8 0 0 0-3.8 3.8v2.2c0 .5-.2 1-.5 1.4l-.9 1.1c-.3.4 0 .9.5.9h9.4c.5 0 .8-.5.5-.9l-.9-1.1c-.3-.4-.5-.9-.5-1.4V6A3.8 3.8 0 0 0 8 2.2Z" stroke="#333" stroke-width="1" stroke-linejoin="round"/><path d="M6.6 12.6a1.5 1.5 0 0 0 2.8 0" stroke="#333" stroke-width="1" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+    <div class="sidebar-resize" id="resize-left" role="separator" aria-orientation="vertical" aria-label="Resize left sidebar"></div>
+    <div class="main-column">
+      <div class="main-column-head">
+        <div class="center-head-rail center-head-rail--left" id="center-rail-left" hidden>
+          <button type="button" class="ws-btn ws-btn--home" id="home-workbench-rail" aria-label="Workbench" title="Workbench">
+            <svg class="ws-ico" width="18" height="18" aria-hidden="true"><use href="#ws-home"/></svg>
+          </button>
+          <button type="button" class="ws-btn" id="toggle-left-rail" aria-label="Open sidebar" aria-pressed="false">
+            <svg class="ws-ico" width="18" height="18" aria-hidden="true"><use href="#ws-sidebar-left"/></svg>
+          </button>
+        </div>
+        <div class="center-head-main">
+          <div class="center-head-space">
+            <h1 class="center-head-title" id="center-head-title">DJI Innovations</h1>
+          </div>
+          <div class="center-head-actions">
+            <button type="button" class="ws-btn" id="center-bg-tasks-btn" aria-label="Background tasks">
+              <svg class="ws-ico" width="18" height="18" aria-hidden="true"><use href="#ws-tasks"/></svg>
+            </button>
+            <button type="button" class="ws-btn" id="center-map-btn" aria-label="Map" hidden>
+              <svg class="ws-ico" width="18" height="18" aria-hidden="true"><use href="#ws-map"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="center-head-rail center-head-rail--right" id="center-rail-right">
+          <button type="button" class="ws-btn" id="toggle-right-rail" aria-label="Open agent panel" aria-pressed="false">
+            <svg class="ws-ico" width="18" height="18" aria-hidden="true"><use href="#ws-sidebar-right"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="page">
+        <div class="wrap">
+          <div class="hero-stack">
+            <h1 class="title">AgentOS Chat, here to help</h1>
+          </div>
+
+          <div class="chat-main" id="chat-main">
+            <div class="chat-main-scroll" id="chat-main-scroll">
+              <div class="chat-thread" id="chat-thread" aria-live="polite"></div>
+            </div>
+          </div>
+
+          <div class="composer-block" id="composer-block">
+            <div class="composer-dock">
+              <div class="composer-card" id="composer-card">
+                <div class="fd-att" id="fd-att" hidden aria-label="Attached documents"></div>
+                <div class="composer-field">
+                  <textarea class="composer-input" id="composer-input" rows="1" placeholder="Ask anything, or hand a task to the Agent…" aria-label="Message input"  autocomplete="off" spellcheck="false"></textarea>
+                </div>
+                <div class="composer-toolbar">
+                  <div class="composer-toolbar-left">
+                  <button type="button" class="composer-plus" aria-label="Add">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                  </button>
+                  <button type="button" class="composer-plus fd-upload" id="fd-upload" aria-label="Upload documents" title="Upload documents">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m21 11.5-8.6 8.6a5.2 5.2 0 0 1-7.4-7.4l8.8-8.8a3.5 3.5 0 0 1 4.9 4.9l-8.8 8.8a1.8 1.8 0 0 1-2.5-2.5l8.1-8.1"/></svg>
+                  </button>
+{{COMPOSER_ROUTE}}                  <div class="fast-mode" id="fast-mode" data-mode="fast" hidden>
+                    <button type="button" class="fast-mode-chip" id="fast-mode-chip" aria-haspopup="menu" aria-expanded="false" title="Build mode">
+                      <span class="fm-ico" aria-hidden="true"></span>
+                      <span class="fm-label">轻量模式</span>
+                      <svg class="fm-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                    <div class="fast-mode-menu" id="fast-mode-menu" role="menu" hidden>
+                      <button type="button" class="fm-item" role="menuitemradio" data-mode="fast">
+                        <span class="fm-item-ico" data-ico="fast"></span>
+                        <span class="fm-item-main"><span class="fm-item-t">轻量模式</span><span class="fm-item-d">先快速得到一个 Agent，边试边改</span></span>
+                        <svg class="fm-check" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.3L5 8.8l4.5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </button>
+                      <button type="button" class="fm-item" role="menuitemradio" data-mode="steps">
+                        <span class="fm-item-ico" data-ico="steps"></span>
+                        <span class="fm-item-main"><span class="fm-item-t">按流程打造</span><span class="fm-item-d">按流程一步步来：需求 → 知识 → 设计 → 本体 → Agent</span></span>
+                        <svg class="fm-check" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.3L5 8.8l4.5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                  </div>
+                  <div class="composer-toolbar-right">
+                    <div class="composer-model" id="composer-model">
+                      <button type="button" class="composer-model-trigger" id="composer-model-trigger" aria-haspopup="dialog" aria-expanded="false">
+                        <span class="composer-model-summary" id="composer-model-summary">Auto</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                      </button>
+                      <div class="composer-model-panel" id="composer-model-panel" hidden>
+                        <button type="button" class="composer-model-row" data-open="model">
+                          <span class="composer-model-row-label">Model</span>
+                          <span class="composer-model-row-value">
+                            <span id="composer-model-value">Auto</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                          </span>
+                        </button>
+                        <button type="button" class="composer-model-row" id="composer-intensity-row" data-open="intensity">
+                          <span class="composer-model-row-label">Reasoning</span>
+                          <span class="composer-model-row-value">
+                            <span id="composer-intensity-value">Default</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                          </span>
+                        </button>
+                        <div class="composer-model-menu" id="composer-model-menu" hidden></div>
+                      </div>
+                    </div>
+                    <div class="composer-token" id="composer-token">
+                      <button type="button" class="composer-token-btn" id="composer-token-btn" aria-label="Context usage" aria-haspopup="dialog" aria-expanded="false">
+                        <svg class="composer-token-ring" width="18" height="18" viewBox="0 0 20 20" aria-hidden="true">
+                          <circle cx="10" cy="10" r="7.2" fill="none" stroke="var(--divider)" stroke-width="2.2"/>
+                          <circle id="composer-token-arc" cx="10" cy="10" r="7.2" fill="none" stroke="var(--text-secondary)" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="6.8 38.4"/>
+                        </svg>
+                      </button>
+                      <div class="composer-token-panel" id="composer-token-panel" hidden>
+                        <div class="composer-token-head">
+                          <h3 class="composer-token-title">Context usage</h3>
+                          <button type="button" class="composer-token-close" id="composer-token-close" aria-label="Close">
+                            <svg width="14" height="14" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 3L9 9M9 3L3 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                          </button>
+                        </div>
+                        <div class="composer-token-metric">
+                          <span class="composer-token-percent">15.0%</span>
+                          <span class="composer-token-used">Used 45.1K / 300.0K</span>
+                        </div>
+                        <div class="composer-token-bar" aria-hidden="true">
+                          <span style="width:0.6%;background:#5b8def"></span>
+                          <span style="width:3.9%;background:#3ecf8e"></span>
+                          <span style="width:10.5%;background:#f5a623"></span>
+                          <span style="width:0%;background:#7b61ff"></span>
+                          <span style="width:0%;background:#f06785"></span>
+                        </div>
+                        <div class="composer-token-list">
+                          <div class="composer-token-item">
+                            <span class="composer-token-item-left"><span class="composer-token-dot" style="background:#5b8def"></span>System prompt</span>
+                            <span class="composer-token-item-right">0.6%</span>
+                          </div>
+                          <div class="composer-token-item">
+                            <span class="composer-token-item-left"><span class="composer-token-dot" style="background:#3ecf8e"></span>Tools &amp; sub-agents</span>
+                            <span class="composer-token-item-right">3.9%</span>
+                          </div>
+                          <div class="composer-token-item">
+                            <span class="composer-token-item-left"><span class="composer-token-dot" style="background:#f5a623"></span>Conversation</span>
+                            <span class="composer-token-item-right">10.5%</span>
+                          </div>
+                          <div class="composer-token-item">
+                            <span class="composer-token-item-left"><span class="composer-token-dot" style="background:#7b61ff"></span>Connectors &amp; MCP</span>
+                            <span class="composer-token-item-right">0%</span>
+                          </div>
+                          <div class="composer-token-item">
+                            <span class="composer-token-item-left"><span class="composer-token-dot" style="background:#f06785"></span>Skills</span>
+                            <span class="composer-token-item-right">0%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <button type="button" class="composer-send" id="composer-send" aria-label="Send">
+                      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M9 13.5V4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M5.25 8.25 9 4.5 12.75 8.25" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero-spacer" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-resize" id="resize-right" hidden role="separator" aria-orientation="vertical" aria-label="Resize right panel"></div>
+    <aside class="sidebar sidebar-right" id="sidebar-right" aria-label="Agent panel">
+      <div class="right-panel-inner">
+        <div class="right-panel-head">
+          <div class="right-panel-actions" id="right-panel-actions">
+            <button type="button" class="ws-btn" id="right-fullscreen" aria-label="Expand agent panel" aria-pressed="false">
+            <svg class="ws-ico" width="18" height="18" aria-hidden="true"><use href="#ws-fullscreen"/></svg>
+          </button>
+            <button type="button" class="ws-btn" id="toggle-right-sidebar" aria-label="Close agent panel" aria-pressed="false">
+            <svg class="ws-ico" width="18" height="18" aria-hidden="true"><use href="#ws-sidebar-right"/></svg>
+          </button>
+          </div>
+        </div>
+        <div class="right-panel-body">
+          <ul class="rp-launch" aria-label="Open in panel">
+            <li><button type="button" class="rp-launch-item" data-launch="ontology">
+              <svg class="ws-ico" width="18" height="18" aria-hidden="true"><use href="#ws-ontology"/></svg>
+              <span>Ontology</span>
+            </button></li>
+            <li><button type="button" class="rp-launch-item" data-launch="agent">
+              <svg class="ws-ico" width="18" height="18" aria-hidden="true"><use href="#ws-agent"/></svg>
+              <span>Agent</span>
+            </button></li>
+            <li><button type="button" class="rp-launch-item" data-launch="skill">
+              <svg class="ws-ico" width="18" height="18" aria-hidden="true"><use href="#ws-skill"/></svg>
+              <span>Skill</span>
+            </button></li>
+            <li><button type="button" class="rp-launch-item" data-launch="mcp">
+              <svg class="ws-ico" width="18" height="18" aria-hidden="true"><use href="#ws-mcp"/></svg>
+              <span>MCP</span>
+            </button></li>
+            <li><button type="button" class="rp-launch-item" data-launch="data">
+              <svg class="ws-ico" width="18" height="18" aria-hidden="true"><use href="#ws-data"/></svg>
+              <span>Data source</span>
+            </button></li>
+            <li><button type="button" class="rp-launch-item" data-launch="knowledge">
+              <svg class="ws-ico" width="18" height="18" aria-hidden="true"><use href="#ws-knowledge"/></svg>
+              <span>Knowledge base</span>
+            </button></li>
+            <li><button type="button" class="rp-launch-item" data-launch="scenario">
+              <svg class="ws-ico" width="18" height="18" aria-hidden="true"><use href="#ws-scenario"/></svg>
+              <span>Scenario</span>
+            </button></li>
+            <li><button type="button" class="rp-launch-item" data-launch="test">
+              <svg class="ws-ico" width="18" height="18" aria-hidden="true"><use href="#ws-test"/></svg>
+              <span>Test</span>
+            </button></li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+  </div>
+    <div class="acct-menu" id="acctMenu" role="menu" hidden>
+    <div class="acct-top">
+      <div class="acct-avatar">K</div>
+      <div class="acct-name">ke.wang</div>
+      <div class="acct-email">ke.wang@inspiregroup.com</div>
+    </div>
+    <div class="acct-sep"></div>
+    <div class="acct-sec">
+      <div class="acct-row">
+        <span class="acct-ico"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1.8 12.2L4.6 4l2.8 8.2M2.9 9.6h3.4" stroke="#666" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 5h5.2M9 8h5.2M9 11h5.2" stroke="#666" stroke-width="1.1" stroke-linecap="round"/></svg></span>
+        <span class="acct-grow" data-zh="选择语言" data-en="Language">Language</span>
+        <div class="lang-seg" role="group" aria-label="Language">
+          <button type="button" data-lang="zh">中</button>
+          <button type="button" data-lang="en" class="is-on">EN</button>
+        </div>
+      </div>
+    </div>
+    <div class="acct-sep"></div>
+    <div class="acct-sec">
+      <button class="acct-item" type="button" role="menuitem">
+        <span class="acct-ico"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.2" r="2.6" stroke="#666" stroke-width="1.1"/><path d="M2.8 13.6c0-2.6 2.3-4.4 5.2-4.4s5.2 1.8 5.2 4.4" stroke="#666" stroke-width="1.1" stroke-linecap="round"/></svg></span>
+        <span data-zh="个人资料" data-en="Profile">Profile</span>
+      </button>
+      <button class="acct-item" type="button" role="menuitem">
+        <span class="acct-ico"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2.2v7.4M5.4 7.2 8 9.8l2.6-2.6" stroke="#666" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.2 11.8h9.6" stroke="#666" stroke-width="1.1" stroke-linecap="round"/></svg></span>
+        <span class="acct-grow" data-zh="版本更新" data-en="Version update">Version update</span>
+        <span class="acct-dot" aria-label="New"></span>
+      </button>
+      <div class="acct-sep acct-sep-in"></div>
+      <button class="acct-item" type="button" role="menuitem">
+        <span class="acct-ico"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M9 2.5h3.5a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9M2.5 8h7M7 5.3L9.7 8 7 10.7" stroke="#333" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span data-zh="退出登录" data-en="Log out">Log out</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="notify-panel" id="notifyPanel" role="dialog" aria-label="Notifications" hidden>
+    <div class="nt-head">
+      <div class="nt-title">Notifications</div>
+    </div>
+    <div class="nt-list" id="ntList"></div>
+  </div>
+
+  <div class="ov-menu" id="overviewMenu" role="menu" aria-label="Overview and scenarios" hidden>
+    <div class="ov-menu-sec">
+          <button type="button" class="ov-menu-item is-current" role="menuitemradio" aria-checked="true" data-label="Overview" data-mode="overview">
+            <span class="ov-menu-name">Overview</span>
+            <span class="ov-menu-trail"><svg class="ov-menu-check" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.3L5 8.8l4.5-5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span></button>
+    </div>
+    <div class="ov-menu-sep" role="separator"></div>
+    <div class="ov-menu-sec ov-menu-sec--scenes" id="fast-ov-scenes">
+      <p class="fast-ov-empty">暂无场景</p>
+      <div class="ov-menu-pack" data-fast-scene="a1">
+          <button type="button" data-fast-hide class="ov-menu-item" role="menuitemradio" aria-checked="false" data-label="A1 Supplier intelligent sourcing &amp; admission" data-kind="app" data-scene="app-a1">
+            <span class="ov-menu-kind">Application</span>
+            <span class="ov-menu-name">A1 Supplier intelligent sourcing &amp; admission</span>
+            <span class="ov-menu-trail"><span class="ov-menu-enter" aria-hidden="true">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6h5.2M5.5 3.5 8.2 6 5.5 8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <svg class="ov-menu-check" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.3L5 8.8l4.5-5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span></button>
+        <div class="ov-menu-children">
+          <button type="button" data-fast-hide class="ov-menu-item ov-menu-item--biz" role="menuitemradio" aria-checked="false" data-label="T2 Supplier discovery" data-kind="biz" data-scene="biz-t2">
+            <span class="ov-menu-kind">Business</span>
+            <span class="ov-menu-name">T2 Supplier discovery</span>
+            <span class="ov-menu-trail"><span class="ov-menu-enter" aria-hidden="true">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6h5.2M5.5 3.5 8.2 6 5.5 8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <svg class="ov-menu-check" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.3L5 8.8l4.5-5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span></button>
+          <button type="button" class="ov-menu-item ov-menu-item--biz" role="menuitemradio" aria-checked="false" data-label="T1 Sourcing strategy (v2.1 new step)" data-kind="biz" data-scene="biz-t1">
+            <span class="ov-menu-kind">Business</span>
+            <span class="ov-menu-name">T1 Sourcing strategy (v2.1 new step)</span>
+            <span class="ov-menu-trail"><span class="ov-menu-enter" aria-hidden="true">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6h5.2M5.5 3.5 8.2 6 5.5 8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <svg class="ov-menu-check" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.3L5 8.8l4.5-5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span></button>
+        </div>
+      </div>
+
+      <div class="ov-menu-pack" data-fast-scene="store">
+          <button type="button" class="ov-menu-item" role="menuitemradio" aria-checked="false" data-label="Store allocation MVP" data-kind="app" data-scene="app-store">
+            <span class="ov-menu-kind">Application</span>
+            <span class="ov-menu-name">Store allocation MVP</span>
+            <span class="ov-menu-trail"><span class="ov-menu-enter" aria-hidden="true">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6h5.2M5.5 3.5 8.2 6 5.5 8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <svg class="ov-menu-check" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.3L5 8.8l4.5-5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span></button>
+        <div class="ov-menu-children">
+          <button type="button" class="ov-menu-item ov-menu-item--biz" role="menuitemradio" aria-checked="false" data-label="Demand forecast intake" data-kind="biz" data-scene="biz-demand">
+            <span class="ov-menu-kind">Business</span>
+            <span class="ov-menu-name">Demand forecast intake</span>
+            <span class="ov-menu-trail"><span class="ov-menu-enter" aria-hidden="true">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6h5.2M5.5 3.5 8.2 6 5.5 8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <svg class="ov-menu-check" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.3L5 8.8l4.5-5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span></button>
+          <button type="button" class="ov-menu-item ov-menu-item--biz" role="menuitemradio" aria-checked="false" data-label="Rule-based allocate" data-kind="biz" data-scene="biz-allocate">
+            <span class="ov-menu-kind">Business</span>
+            <span class="ov-menu-name">Rule-based allocate</span>
+            <span class="ov-menu-trail"><span class="ov-menu-enter" aria-hidden="true">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6h5.2M5.5 3.5 8.2 6 5.5 8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <svg class="ov-menu-check" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.3L5 8.8l4.5-5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- New scenario modal -->
+  <div class="sm" id="create-scene-modal" hidden aria-hidden="true">
+    <div class="sm-backdrop" data-create-close></div>
+    <div class="sm-dialog" role="dialog" aria-modal="true" aria-labelledby="create-scene-title">
+      <div class="sm-head">
+        <div>
+          <h2 class="sm-title" id="create-scene-title">New scenario</h2>
+          <p class="sm-intro">Application scenarios become AgentTeams with cross-agent and role collaboration. Business scenarios become single agents for deeper, domain-specific intelligence.</p>
+        </div>
+        <button type="button" class="sm-close" data-create-close aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <form class="sm-body" id="create-scene-form" novalidate></form>
+      <div class="sm-foot">
+        <span class="sm-hint"><span class="sm-req">*</span> Required</span>
+        <div class="sm-actions">
+          <button type="button" class="sm-btn sm-btn-ghost" data-create-close>Cancel</button>
+          <button type="submit" form="create-scene-form" class="sm-btn sm-btn-primary" id="create-scene-confirm" disabled>Create</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Scripts split under js/ — load order matters -->
+  <script src="js/workshop-columns.js"></script>
+  <script src="js/workshop-panels.js"></script>
+  <script src="js/composer-model-picker.js"></script>
+  <script src="js/composer-token-usage.js"></script>
+  <script src="js/create-scene-modal.js"></script>
+  <script src="js/overview-menu.js"></script>
+  <script src="js/chrome-popovers.js"></script>
+  <script src="js/file-type-icons.js"></script>
+  <script src="js/files-panel.js"></script>
+  <script src="js/fast-assets-tab.js"></script>
+  <script src="js/fast-docs-data.js"></script>
+  <script src="js/fast-plan-docs-data.js"></script>
+  <script src="js/fast-files.js?v=20261014e"></script>
+  <script src="js/fast-scenes.js"></script>
+  <script src="js/fast-mode.js"></script>
+  <script src="js/fast-scene-card.js"></script>
+  <script src="js/fast-scene-create.js"></script>
+  <script src="js/fast-blueprint.js"></script>
+  <script src="js/fast-blueprint-iso.js"></script>
+  <script src="js/fast-flowmap.js"></script>
+  <script src="js/fast-journey.js"></script>
+  <script src="js/fast-intake.js"></script>
+{{SCRIPT_ROUTE}}  <script src="js/fast-flow-board.js?v=20261014e"></script>
+  <script src="js/fast-company.js?v=20261014e"></script>
+  <script src="js/scene-card-menu.js"></script>
+  <script src="js/cui-icons.js"></script>
+  <script src="js/agent-body.js?v=20261014e"></script>
+  <script src="js/fast-docs.js?v=20261014e"></script>
+  <script src="js/fast-agent-panel.js"></script>
+  <script src="js/fast-onto-graph.js"></script>
+  <script src="js/fast-modules.js"></script>
+  <script src="js/fast-switch-dialog.js"></script>
+  <script src="js/fast-formal-files.js"></script>
+  <script src="js/fast-handoff.js"></script>
+  <script src="js/fast-flow.js"></script>
+  <script src="js/fast-upload.js"></script>
+  <script src="js/fast-mention.js"></script>
+  <script src="js/fast-conversations.js"></script>
+  <script src="js/fast-summary.js"></script>
+  <script src="js/workbench-home.js"></script>
+  <script src="js/fast-change.js"></script>
+  <script src="js/agent-chat-mock-fast.js"></script>
+{{SCRIPT_END}}</body>
+</html>

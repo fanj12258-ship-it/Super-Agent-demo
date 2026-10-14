@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "node scripts/build-static.mjs"
+    "build": "node scripts/build-static.mjs",
+    "build:workshop": "node scripts/build-workshop-pages.mjs",
+    "build:workshop:check": "node scripts/build-workshop-pages.mjs --check"
   }
 }

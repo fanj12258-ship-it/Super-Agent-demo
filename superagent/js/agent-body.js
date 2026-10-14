@@ -283,7 +283,8 @@
     var segs = ctx.segments || DEFAULT_SEGMENTS;
     for (var k = 0; k < segs.length; k++) {
       var s = segs[k];
-      if (s.md) await add(mdNode(s.md), s.gap || 360);
+      if (s.node) await add(s.node, s.gap || 280);
+      else if (s.md) await add(mdNode(s.md), s.gap || 360);
       else if (s.files) await add(fileChanges(s.files), s.gap || 300);
       else if (s.steps) await add(fourSteps(s.steps), s.gap || 280);
     }

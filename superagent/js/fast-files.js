@@ -56,14 +56,20 @@
     scroll.classList.toggle('has-any', any);
   }
 
+  /* optional leading mark for one folder — the enterprise dossier uses its own, not the outline folder */
+  var marks = {};
   function ensureFolder(g, name) {
     if (g.folders[name]) return g.folders[name];
+    var mark = marks[name];
+    var icon = !mark ? '' : (typeof mark === 'string' ? mark : (mark.icon || ''));
+    var tag = mark && typeof mark === 'object' ? mark.tag : '';
     var node = document.createElement('div');
-    node.className = 'node is-open is-new';
+    node.className = 'node is-open is-new' + (icon ? ' is-dossier' : '');
     node.setAttribute('data-kind', 'folder');
     node.setAttribute('role', 'treeitem');
     node.setAttribute('aria-expanded', 'true');
-    node.innerHTML = CHEV + FOLDER + '<span class="label">' + esc(name) + '</span>' +
+    node.innerHTML = CHEV + (icon || FOLDER) + '<span class="label">' + esc(name) + '</span>' +
+      (tag ? '<span class="folder-tag">' + esc(tag) + '</span>' : '') +
       '<div class="row-actions"><button type="button" class="more" aria-label="More">' + MORE + '</button></div>';
     node.addEventListener('animationend', function () { node.classList.remove('is-new'); });
     g.tree.appendChild(node);
@@ -86,13 +92,14 @@
     var folder = parts.length ? ensureFolder(g, parts.join('/')) : null;
     var type = FTI ? FTI.typeOf(name) : 'file';
     var doc = window.FastDocs && window.FastDocs.find(name);
+    var glyph = (doc && doc.kind === 'flow' && window.FastFlowBoard) ? window.FastFlowBoard.fileIcon() : (FTI ? FTI.svg(type) : '');
     var row = document.createElement('div');
     row.className = 'file is-new' + (folder ? ' indent-1' : '');
     row.setAttribute('data-kind', 'file');
     row.setAttribute('role', 'treeitem');
     if (doc) row.setAttribute('data-doc', doc.name);
     row.innerHTML =
-      '<span class="file-icon file-icon--' + type + '" aria-hidden="true">' + (FTI ? FTI.svg(type) : '') + '</span>' +
+      '<span class="file-icon file-icon--' + type + '" aria-hidden="true">' + glyph + '</span>' +
       '<div class="info"><div class="name">' + esc(name) + '</div></div>' +
       '<div class="row-actions"><button type="button" class="more" aria-label="More">' + MORE + '</button></div>';
     row.addEventListener('animationend', function () { row.classList.remove('is-new'); });
@@ -138,6 +145,7 @@
 
   window.FastFiles = {
     addDeliverable: function (name) { return add('deliverable', name); },
+    markFolder: function (name, html) { marks[name] = html; },
     addMaterial: function (name) { return add('material', name); },
     showTab: showTab,
     hideFolders: function (names, on) { hideSet = {}; (names || []).forEach(function (n) { hideSet[n] = 1; }); hideOn = !!on; applyHide(groups.deliverable); },
