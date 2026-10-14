@@ -34,6 +34,7 @@ cui-icons.js              — CUI 图标
 agent-body.js             — Agent 正文渲染
 fast-docs.js              — 文档面板
 fast-agent-panel.js       — 右栏 Agent
+fast-diagnosis.js         — 诊断 / 修复钩子
 fast-onto-graph.js        — 本体图
 fast-modules.js           — 模块层
 fast-switch-dialog.js     — 转入按流程打造
