@@ -1,0 +1,29 @@
+/* Fast POC page ONLY — Files · Deliverables two small tabs + 正式目录 (see js/fast-formal-files.js) */
+.ffm-gone { display: none !important; }
+.ffm-seg { display: inline-flex; gap: 2px; margin: 2px 14px 6px; padding: 2px; border-radius: 8px; background: #f3f3f5; }
+.ffm-seg[hidden] { display: none; }
+.ffm-seg-b { height: 22px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; font: inherit; font-size: 11.5px; font-weight: 500; color: #8a8a8f; cursor: pointer; }
+.ffm-seg-b:hover { color: #171717; }
+.ffm-seg-b.is-on { background: #fff; color: #171717; box-shadow: 0 1px 2px rgba(0, 0, 0, .08); }
+.ffm-tree[hidden], #fast-deliverables[hidden] { display: none; }
+
+/* status dots — same language as the sidebar blueprint */
+.ffm-dot { flex: none; width: 7px; height: 7px; margin-left: 6px; border-radius: 50%; border: 1.25px solid #a3a3a8; background: #fff; }
+.ffm-dot.ffm-keep { background: #1f82eb; border-color: #1f82eb; }
+.ffm-dot.ffm-chk { background: #e8a317; border-color: #e8a317; }
+.ffm-dot.ffm-mock { border: 1.25px dashed #2d6a4f; }
+.files-scroll .tree .file .ffm-from, .files-scroll .tree .file .ffm-note { flex: none; font-size: 10.5px; color: #a3a3a8; white-space: nowrap; }
+.files-scroll .tree .file.ffm-ph .name { color: #a3a3a8; }
+.files-scroll .tree .file.ffm-ph .file-icon { opacity: .45; }
+.files-scroll .tree .file.ffm-ph .ffm-note { padding: 0 6px; border: 1px dashed #cfcfd4; border-radius: 5px; line-height: 16px; }
+
+/* arriving: rows slide in once */
+.ffm-flash .file, .ffm-flash .node { animation: fast-file-in .6s ease-out backwards; }
+
+/* the (hidden until hover) ⋯ button gives rows their 24px height — formal rows carry it too so spacing matches the draft list */
+.ffm-tree .ffm-from ~ .row-actions, .ffm-tree .ffm-note ~ .row-actions, .ffm-tree .ffm-dot ~ .row-actions { margin-left: 0; }
+
+/* status legend under the tree */
+.ffm-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 10px 14px 4px; font-size: 10.5px; line-height: 14px; color: #a3a3a8; }
+.ffm-legend span { display: inline-flex; align-items: center; }
+.ffm-legend .ffm-dot { margin: 0 5px 0 0; }

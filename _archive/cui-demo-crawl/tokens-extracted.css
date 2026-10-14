@@ -1,0 +1,29 @@
+:root{
+--color-bg-base: #ffffff;
+--color-bg-container: #ffffff;
+--color-bg-elevated: #fafafa;
+--color-fill-tertiary: rgba(0, 0, 0, .03);
+--color-border: #d9d9d9;
+--color-border-secondary: #f0f0f0;
+--color-split: rgba(0, 0, 0, .12);
+--color-text: rgba(0, 0, 0, .88);
+--color-text-label: rgba(0, 0, 0, .65);
+--color-text-description: rgba(0, 0, 0, .45);
+--color-text-light: #ffffff;
+--color-primary: #1f82eb;
+--color-warning: #eba71f;
+--color-success: #5fcb3b;
+--color-notation: #ef4fa7;
+--color-send-disabled: #d7d8d7;
+--radius-lg: 8px;
+--radius-full: 999px;
+--font: "SF Pro Text", "SF Pro", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+--font-mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+--sidebar-min: 452px;
+color:var(--color-text);
+font-family:var(--font);
+font-size:13px;
+line-height:18px;
+font-synthesis:none;
+text-rendering:optimizeLegibility;
+-webkit-font-smoothing:antialiased}

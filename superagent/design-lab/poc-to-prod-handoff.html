@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>POC 之后：草稿文档怎么映射进真实环境</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #171717; --mute: #8a8a8f; --soft: #a3a3a8; --line: #ececec; --line-2: #f3f3f5;
+    --blue: #1f82eb; --blue-ink: #1f6fd1; --blue-bg: #f2f8ff; --blue-line: #d9e9fc;
+    --green: #2d6a4f; --green-bg: #f1f7f3; --green-line: #cfe3d7;
+    --grey-bg: #f7f7f9;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #fff; color: var(--ink); font: 13px/20px Inter, -apple-system, "PingFang SC", "Helvetica Neue", sans-serif; -webkit-font-smoothing: antialiased; }
+  .page { max-width: 1040px; margin: 0 auto; padding: 56px 40px 72px; }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--soft); }
+  h1 { margin: 8px 0 8px; font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -.015em; }
+  .lead { margin: 0; max-width: 680px; font-size: 14px; line-height: 22px; color: #55555b; }
+  .lead b { color: var(--ink); font-weight: 600; }
+  h2 { margin: 48px 0 6px; font-size: 15px; line-height: 22px; font-weight: 600; }
+  .sub { margin: 0 0 16px; font-size: 12px; color: var(--mute); }
+  .ar { display: flex; align-items: center; justify-content: center; width: 28px; flex: none; color: #c4c4ca; }
+
+  /* three principles */
+  .pr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 24px; }
+  .pc { padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; }
+  .pc i { display: inline-block; margin-bottom: 8px; font-style: normal; font-size: 11px; font-weight: 600; color: var(--soft); letter-spacing: .06em; }
+  .pc h5 { margin: 0 0 4px; font-size: 13px; line-height: 18px; font-weight: 600; }
+  .pc p { margin: 0; font-size: 12px; line-height: 18px; color: #6b6b70; }
+
+  /* flow */
+  .flow { display: flex; align-items: stretch; }
+  .st { flex: 1; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+  .st em { display: inline-block; margin-bottom: 4px; font-style: normal; font-size: 10.5px; font-weight: 600; letter-spacing: .04em; color: var(--soft); }
+  .st b { display: block; font-size: 13px; font-weight: 600; }
+  .st span { display: block; margin-top: 2px; font-size: 12px; line-height: 18px; color: #6b6b70; }
+  .st.draft { background: var(--grey-bg); border-style: dashed; border-color: #cfcfd4; }
+  .st.real { background: var(--blue-bg); border-color: var(--blue-line); }
+  .st.real em { color: var(--blue-ink); }
+  .paths { margin-top: 10px; display: flex; gap: 10px; align-items: center; font-size: 12px; color: var(--mute); }
+  .paths b { padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); font-weight: 500; color: #3a3a3e; background: #fff; }
+
+  /* mapping */
+  .sum { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px 0 8px; border-radius: 8px; font-size: 12px; font-weight: 500; }
+  .chip b { font-weight: 600; }
+  .s-keep { color: var(--blue-ink); background: #e8f1fd; }
+  .s-chk { color: #55555b; background: #ededf0; }
+  .s-mock { color: var(--green); background: #e3efe8; border: 1px dashed #9fc4ae; }
+  .s-new { color: var(--ink); background: #fff; border: 1px dashed #b4b4ba; }
+  table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); font-size: 12px; line-height: 18px; }
+  .wrap { border-radius: 12px; overflow: hidden; border: 1px solid var(--line); }
+  .wrap table { border: 0; }
+  th { text-align: left; padding: 8px 14px; font-weight: 500; color: var(--mute); background: var(--grey-bg); }
+  td { padding: 9px 14px; border-top: 1px solid var(--line-2); vertical-align: top; color: #3a3a3e; }
+  td.step { width: 150px; color: var(--ink); font-weight: 500; }
+  td.step small { display: block; font-weight: 400; font-size: 11px; color: var(--soft); }
+  td.doc { width: 170px; font-weight: 500; color: var(--ink); white-space: nowrap; }
+  td.how { color: #6b6b70; }
+  td.st-c { width: 168px; }
+  tr.grp td { border-top: 1px solid var(--line); }
+  tr.grp:first-child td { border-top: 0; }
+  tr.sub td { border-top: 1px solid var(--line-2); }
+  .note { margin: 12px 0 0; font-size: 12px; line-height: 18px; color: var(--mute); }
+  .note b { color: var(--ink); font-weight: 500; }
+
+  /* handoff */
+  .two { display: grid; grid-template-columns: 1.1fr 1fr; gap: 12px; }
+  .box { padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; }
+  .box h5 { margin: 0 0 6px; font-size: 13px; line-height: 18px; font-weight: 600; }
+  .box p, .box li { margin: 0; font-size: 12px; line-height: 19px; color: #6b6b70; }
+  .box ul { margin: 0; padding-left: 16px; }
+  .foot { margin-top: 48px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 11px; color: var(--soft); }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="eyebrow">AgentOS · Fast → Steps</div>
+  <h1>POC 做完之后，草稿文档怎么映射进真实环境</h1>
+  <p class="lead">POC 里产生的文档，是真实环境文档的<b>草稿（预文档）</b>。进入真实环境，就是按真实环境要求的文档结构，<b>一份一份对照</b>：哪些能沿用，哪些带着临时数据要校对，哪些是提前 Mock 的要改，哪些还要重新创作。</p>
+
+  <div class="pr">
+    <div class="pc"><i>01</i><h5>没有“重不重做”</h5><p>进入真实环境，等于一次更贴近真实需求的迭代。可以直接在 Steps 里做，也可以先 Fast 落地再反向改，由用户自己选。</p></div>
+    <div class="pc"><i>02</i><h5>之后的迭代都在真实环境</h5><p>POC 是起点，不是循环的一环。以后改东西，直接在真实环境里改，不再回头建沙盒。</p></div>
+    <div class="pc"><i>03</i><h5>试用好坏，都进 Steps</h5><p>用户试用觉得 OK 或不 OK，都马上进入 Steps 做详细打造。试用感受只是输入，不设“通过才能继续”的闸门。</p></div>
+  </div>
+
+  <h2>整体怎么走</h2>
+  <p class="sub">POC 草稿 → 一次迭代 → 真实环境里持续迭代。</p>
+  <div class="flow">
+    <div class="st draft"><em>POC · FAST</em><b>草稿文档</b><span>快速落地版里临时产生的文档、本体、Skill</span></div>
+    <div class="ar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></div>
+    <div class="st"><em>映射</em><b>对照真实环境的文档结构</b><span>逐份标状态：沿用 / 校对 / 改 Mock / 再创作</span></div>
+    <div class="ar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></div>
+    <div class="st real"><em>真实环境 · STEPS</em><b>详细打造</b><span>按映射结果补全、校对、替换，之后持续迭代</span></div>
+  </div>
+
+  <h2>映射清单：真实环境需要的文档 ← POC 里的草稿</h2>
+  <p class="sub">下面按蓝图里现有的 8 个步骤、14 份文档举例；最终以产品经理定的文档结构为准，结构一变，这张表跟着变。</p>
+
+  <div class="sum">
+    <span class="chip s-keep"><b>3</b> 沿用</span>
+    <span class="chip s-chk"><b>4</b> 含临时数据 · 需校对</span>
+    <span class="chip s-mock"><b>5</b> 提前 Mock · 需要改</span>
+    <span class="chip s-new"><b>2</b> 需再创作</span>
+  </div>
+
+  <div class="wrap">
+  <table>
+    <thead><tr><th>步骤</th><th>真实环境的文档</th><th>POC 里对应的草稿</th><th>状态</th></tr></thead>
+    <tbody>
+      <tr class="grp"><td class="step" rowspan="2">1 · Requirements</td><td class="doc">Requirements brief</td><td class="how">对话里整理出的需求和 5 个关键决策</td><td class="st-c"><span class="chip s-keep">沿用</span></td></tr>
+      <tr class="sub"><td class="doc">Success criteria</td><td class="how">POC 里只有试用时的口头判断，没成文</td><td class="st-c"><span class="chip s-new">需再创作</span></td></tr>
+
+      <tr class="grp"><td class="step" rowspan="3">2 · Business knowledge</td><td class="doc">Contracts · rules</td><td class="how">已上传的合同与准入标准，提炼的规则</td><td class="st-c"><span class="chip s-keep">沿用</span></td></tr>
+      <tr class="sub"><td class="doc">Process notes</td><td class="how">流程说明、访谈纪要、异常记录</td><td class="st-c"><span class="chip s-keep">沿用</span></td></tr>
+      <tr class="sub"><td class="doc">ERP export</td><td class="how">只有 14 条样例报价</td><td class="st-c"><span class="chip s-chk">含临时数据 · 需校对</span></td></tr>
+
+      <tr class="grp"><td class="step" rowspan="3">3–5 · Design plans</td><td class="doc">Product plan</td><td class="how">Fast 起草的方案，含 POC 阶段的临时假设</td><td class="st-c"><span class="chip s-chk">含临时数据 · 需校对</span></td></tr>
+      <tr class="sub"><td class="doc">Ontology plan</td><td class="how">同上，对象和关系按样例数据定</td><td class="st-c"><span class="chip s-chk">含临时数据 · 需校对</span></td></tr>
+      <tr class="sub"><td class="doc">Agent plan</td><td class="how">同上，权重与规则是 POC 默认值</td><td class="st-c"><span class="chip s-chk">含临时数据 · 需校对</span></td></tr>
+
+      <tr class="grp"><td class="step" rowspan="2">6 · Build ontology</td><td class="doc">Data source spec</td><td class="how">由 ERP 字段字典直接生成</td><td class="st-c"><span class="chip s-mock">提前 Mock · 需要改</span></td></tr>
+      <tr class="sub"><td class="doc">Semantic graph</td><td class="how">5 个对象，缺“例外”属性，合同条款未结构化</td><td class="st-c"><span class="chip s-mock">提前 Mock · 需要改</span></td></tr>
+
+      <tr class="grp"><td class="step" rowspan="3">7 · Skills · MCP · more</td><td class="doc">Skill specs</td><td class="how">阈值和权重写死，不可配置</td><td class="st-c"><span class="chip s-mock">提前 Mock · 需要改</span></td></tr>
+      <tr class="sub"><td class="doc">MCP specs</td><td class="how">ERP 连接是样例接口</td><td class="st-c"><span class="chip s-mock">提前 Mock · 需要改</span></td></tr>
+      <tr class="sub"><td class="doc">Resource list</td><td class="how">POC 没涉及</td><td class="st-c"><span class="chip s-new">需再创作</span></td></tr>
+
+      <tr class="grp"><td class="step">8 · Generate Agent</td><td class="doc">Agent spec</td><td class="how">基于 Mock 的本体和 Skill 生成</td><td class="st-c"><span class="chip s-mock">提前 Mock · 需要改</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="note">这张表同时就是 Fast 里的 <b>Mock register</b> 长大后的样子：Mock 不再单独记一份，而是作为映射清单里的一种状态。</p>
+
+  <h2>交接时要带什么</h2>
+  <p class="sub">比之前设想的更简单：不用四份文件，一份映射清单加上草稿本身就够。</p>
+  <div class="two">
+    <div class="box"><h5>带过去</h5><ul>
+      <li>全部草稿文档（原样，不删）</li>
+      <li>一份映射清单：每份文档的状态和备注</li>
+      <li>试用时的反馈，作为 Steps 打造的参考输入</li>
+    </ul></div>
+    <div class="box"><h5>不需要</h5><ul>
+      <li>“通过才能继续”的试用闸门</li>
+      <li>单独的“沙盒归档、复制新沙盒”流程</li>
+      <li>为迭代再开一轮 Fast</li>
+    </ul></div>
+  </div>
+
+  <div class="foot">AgentOS Workshop · Fast 演示配套说明 · 仅供讨论，尚未改动演示代码</div>
+</div>
+</body>
+</html>

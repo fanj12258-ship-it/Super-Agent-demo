@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>small-test-for-user — 方案示意 v4</title>
+  <style>
+    :root {
+      --ink: #111; --text: #333; --mute: #8c8c8c; --line: #ececec; --bg: #fafafa; --hover: #f5f5f5;
+      --live-bg: #e8f8ef; --live: #1f7a45; --live-dot: #22c55e;
+      --ready-bg: #eef4ff; --ready: #3b6fd8; --ready-dot: #3b82f6;
+      --craft-bg: #fff4e5; --craft: #b76a00; --craft-dot: #f59e0b;
+      --pop-shadow: 0 4px 12px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.03);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif;
+      font-size: 12px; line-height: 1.4; color: var(--text); background: #fff;
+      display: flex; flex-direction: column; height: 100%;
+    }
+    button { font: inherit; cursor: pointer; border: 0; background: none; color: inherit; text-align: left; }
+    [hidden] { display: none !important; }
+
+    .legend {
+      flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px;
+      padding: 8px 12px; border-bottom: 1px solid #e8d9a8; background: #fffbea; font-size: 11px; color: #666;
+    }
+    .legend strong { color: var(--ink); }
+    .tag {
+      height: 22px; padding: 0 8px; border-radius: 6px; border: 1px solid #e8d9a8;
+      background: #fff; font-weight: 600; color: #7a5b00; display: inline-flex; align-items: center;
+    }
+    .path-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+    .path-btns button {
+      height: 26px; padding: 0 9px; border-radius: 7px; border: 1px solid var(--line);
+      background: #fff; font-weight: 600; font-size: 11px;
+    }
+    .path-btns button.is-on { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+    /* left = everything (tree) · center = chat · right = expand/preview */
+    .app { flex: 1; display: flex; min-height: 0; }
+    .side { display: flex; flex-direction: column; min-height: 0; background: #fff; }
+    .left { width: 288px; flex-shrink: 0; border-right: 1px solid var(--line); }
+    .right { width: 420px; flex-shrink: 0; border-left: 1px solid var(--line); background: #fff; }
+    .side-h {
+      flex-shrink: 0; padding: 12px 12px 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--mute);
+    }
+    .side-h .hint { font-weight: 500; text-transform: none; letter-spacing: 0; font-size: 10px; }
+    .side-scroll { flex: 1; overflow: auto; padding: 0 10px 16px; }
+
+    .main { flex: 1; min-width: 0; display: flex; flex-direction: column; background: #fff; }
+    .main-top {
+      flex-shrink: 0; height: 46px; padding: 0 14px; display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .main-top .title { font-size: 13px; font-weight: 600; color: var(--ink); }
+    .main-top .sub { flex: 1; min-width: 0; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .thread { flex: 1; overflow: auto; padding: 18px 22px 8px; }
+    .thread-inner { max-width: 640px; margin: 0 auto; }
+    .hero { max-width: 520px; margin: 8vh auto 0; text-align: center; color: var(--mute); }
+    .hero h1 { margin: 0 0 8px; font-size: 22px; letter-spacing: -.02em; color: var(--ink); }
+    .hero p { margin: 0; font-size: 13px; line-height: 1.55; }
+    .composer-wrap { flex-shrink: 0; padding: 8px 22px 22px; }
+    .composer {
+      max-width: 640px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 14px; padding: 10px 12px;
+      background: #fff; box-shadow: 0 8px 28px rgba(0,0,0,.04);
+    }
+    .composer textarea {
+      width: 100%; border: 0; outline: none; resize: none; font: inherit; min-height: 44px; color: var(--text);
+    }
+    .composer .row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .composer .hint { flex: 1; font-size: 10px; color: #aaa; }
+
+    .btn { height: 30px; padding: 0 12px; border-radius: 8px; font-weight: 600; font-size: 12px; }
+    .btn-primary { background: var(--ink); color: #fff; }
+    .btn-primary:hover { background: #2a2a2a; }
+    .btn-soft { background: #fff; border: 1px solid #d8d8d8; color: #1a1a1a; }
+    .btn-soft:hover { background: #f7f7f7; }
+    .btn-xs { height: 24px; padding: 0 8px; font-size: 10px; border-radius: 6px; }
+
+    .msg { margin-bottom: 14px; max-width: 94%; }
+    .msg.user { margin-left: auto; }
+    .msg .who { font-size: 10px; font-weight: 600; color: var(--mute); margin-bottom: 3px; }
+    .msg .bubble {
+      padding: 10px 12px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); line-height: 1.5;
+    }
+    .msg.user .bubble { background: #111; color: #fff; border-color: #111; }
+    .msg .bubble b { color: var(--ink); }
+    .msg.user .bubble b { color: #fff; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .chip {
+      height: 26px; padding: 0 10px; border-radius: 999px; border: 1px solid #d8d8d8; background: #fff;
+      font-size: 11px; font-weight: 600;
+    }
+    .chip:hover { background: var(--hover); }
+    .chip.is-primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+    .stage {
+      display: inline-flex; align-items: center; gap: 5px; height: 20px; padding: 0 7px;
+      border-radius: 999px; font-size: 10px; font-weight: 600; background: #f4f4f5; color: #777;
+    }
+    .stage .dot { width: 5px; height: 5px; border-radius: 50%; background: #a3a3a3; }
+    .stage.is-crafting { background: var(--craft-bg); color: var(--craft); }
+    .stage.is-crafting .dot { background: var(--craft-dot); }
+    .stage.is-live { background: var(--live-bg); color: var(--live); }
+    .stage.is-live .dot { background: var(--live-dot); }
+
+    .mode { display: inline-flex; padding: 2px; border-radius: 8px; background: #f2f2f4; gap: 2px; }
+    .mode button { height: 26px; padding: 0 10px; border-radius: 6px; font-weight: 600; font-size: 11px; color: #666; }
+    .mode button.is-on { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+    .sync {
+      height: 28px; padding: 0 10px; border-radius: 7px; font-weight: 600; font-size: 11px;
+      border: 1px solid #d8d8d8; background: #fff;
+    }
+    .sync.is-dirty { border-color: #f59e0b; color: #b76a00; background: #fff4e5; }
+
+    /* LEFT: scenes + full asset tree */
+    .scene-item {
+      width: 100%; margin-bottom: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff;
+    }
+    .scene-item:hover { border-color: #ddd; background: #fafafa; }
+    .scene-item .n { font-weight: 600; color: var(--ink); }
+    .scene-item .m { margin-top: 4px; display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--mute); }
+    .badge-new {
+      height: 18px; padding: 0 6px; border-radius: 5px; background: #f24822; color: #fff; font-size: 9px; font-weight: 700;
+      display: inline-flex; align-items: center;
+    }
+    .note {
+      margin-bottom: 10px; padding: 8px 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line);
+      font-size: 11px; color: #666; line-height: 1.45;
+    }
+    .scene-head { margin-bottom: 10px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+    .scene-head .n { font-weight: 600; color: var(--ink); }
+    .scene-head .row { margin-top: 6px; display: flex; align-items: center; gap: 10px; }
+    .link { font-size: 11px; font-weight: 600; color: #555; }
+    .link:hover { color: var(--ink); text-decoration: underline; }
+    .meter { display: flex; gap: 4px; margin: 8px 0 4px; }
+    .meter i { flex: 1; height: 6px; border-radius: 99px; background: #eee; }
+    .meter i.on { background: var(--live-dot); }
+    .meter i.half { background: var(--craft-dot); }
+    .scene-head .cap { font-size: 10px; color: var(--mute); }
+    .chain { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin: 8px 0 12px; }
+    .chain .pill {
+      height: 22px; padding: 0 7px; border-radius: 999px; border: 1px solid var(--line); font-size: 10px; font-weight: 700;
+      display: inline-flex; align-items: center; gap: 5px; background: #fff;
+    }
+    .chain .pill .d { width: 6px; height: 6px; border-radius: 50%; background: #c4c4c4; }
+    .chain .pill.is-done { background: var(--live-bg); border-color: #b7ebc9; color: var(--live); }
+    .chain .pill.is-done .d { background: var(--live-dot); }
+    .chain .pill.is-partial { background: var(--craft-bg); border-color: #f0d4a0; color: var(--craft); }
+    .chain .pill.is-partial .d { background: var(--craft-dot); }
+    .chain .pill.is-empty { border-style: dashed; color: #999; }
+    .chain .arr { color: #bbb; font-size: 11px; }
+
+    .grp { margin-bottom: 10px; }
+    .grp-h {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 2px 5px;
+      font-size: 11px; font-weight: 700; color: var(--ink);
+    }
+    .grp-h .c { font-weight: 600; color: var(--mute); font-size: 10px; }
+    .grp-bar { height: 3px; background: #f0f0f0; border-radius: 99px; overflow: hidden; margin: 0 2px 6px; }
+    .grp-bar i { display: block; height: 100%; background: var(--ink); }
+    .asset {
+      width: 100%; display: flex; align-items: flex-start; gap: 8px; padding: 7px 9px; margin-bottom: 4px;
+      border: 1px solid transparent; border-radius: 8px; background: transparent;
+    }
+    .asset:hover { background: var(--hover); }
+    .asset.is-active { background: #e5f4ff; border-color: #cfe6f7; }
+    .asset .ic { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; background: #c4c4c4; }
+    .asset.is-done .ic { background: var(--live-dot); }
+    .asset.is-partial .ic { background: var(--craft-dot); }
+    .asset.is-empty .ic { background: transparent; border: 1.5px dashed #bbb; }
+    .asset .body { min-width: 0; flex: 1; }
+    .asset .l { font-weight: 600; color: var(--ink); display: block; }
+    .asset.is-empty .l { color: #888; font-weight: 500; }
+    .asset .sub { font-size: 10px; color: #9a9a9a; margin-top: 1px; display: block; }
+    .tag-req, .tag-opt {
+      height: 16px; padding: 0 5px; border-radius: 4px; font-size: 9px; font-weight: 700;
+      display: inline-flex; align-items: center; margin-left: 6px; vertical-align: middle;
+    }
+    .tag-req { background: #eef4ff; color: var(--ready); }
+    .tag-opt { background: #f4f4f5; color: #999; }
+
+    /* RIGHT: tabs + viewer */
+    .tabs {
+      flex-shrink: 0; display: flex; gap: 2px; padding: 8px 8px 0; border-bottom: 1px solid var(--line); overflow-x: auto;
+    }
+    .tab {
+      display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 8px 8px 0 0;
+      font-weight: 600; font-size: 11px; color: #777; white-space: nowrap; border: 1px solid transparent; border-bottom: 0;
+    }
+    .tab.is-on { color: var(--ink); background: #fff; border-color: var(--line); }
+    .tab .x { color: #bbb; font-size: 12px; padding: 0 2px; }
+    .tab .x:hover { color: #111; }
+    .viewer { flex: 1; overflow: auto; padding: 14px 16px 20px; }
+    .v-empty { color: var(--mute); padding: 40px 12px; text-align: center; line-height: 1.6; }
+    .v-title { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .v-title h2 { margin: 0; font-size: 16px; color: var(--ink); letter-spacing: -.01em; }
+    .v-bc { font-size: 10px; color: var(--mute); margin-bottom: 10px; }
+    .st-pill { height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; }
+    .st-pill.is-done { background: var(--live-bg); color: var(--live); }
+    .st-pill.is-partial { background: var(--craft-bg); color: var(--craft); }
+    .st-pill.is-empty { background: #f4f4f5; color: #888; }
+    .deps { margin-bottom: 12px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+    .deps .row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 3px 0; font-size: 11px; color: #666; }
+    .deps .row b { color: #999; font-weight: 700; font-size: 10px; letter-spacing: .04em; min-width: 54px; }
+    .dep-chip {
+      height: 22px; padding: 0 8px; border-radius: 999px; border: 1px solid #d8d8d8; background: #fff; font-size: 10px; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .dep-chip:hover { border-color: #111; }
+    .dep-chip i { width: 6px; height: 6px; border-radius: 50%; background: #c4c4c4; }
+    .dep-chip.is-done i { background: var(--live-dot); }
+    .dep-chip.is-partial i { background: var(--craft-dot); }
+    .v-actions { display: flex; gap: 8px; margin: 0 0 12px; }
+    .doc h4 { margin: 14px 0 4px; font-size: 12px; color: var(--ink); }
+    .doc p { margin: 0 0 8px; color: #555; line-height: 1.6; }
+    .doc .ghost {
+      padding: 10px; border: 1px dashed #d0d0d0; border-radius: 8px; color: #999; background: #fafafa; margin-bottom: 8px;
+    }
+    .graph-box { border: 1px solid var(--line); border-radius: 12px; background: #fcfcfc; padding: 6px; margin-bottom: 10px; }
+    .graph-box svg { display: block; width: 100%; height: auto; }
+    .card { border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 12px; margin-bottom: 10px; }
+    .card h3 { margin: 0 0 4px; font-size: 13px; color: var(--ink); }
+    .card p { margin: 0; color: var(--mute); line-height: 1.45; }
+    .lock-list { margin: 8px 0 0; padding: 0; list-style: none; }
+    .lock-list li { margin-bottom: 5px; }
+    .try-line { padding: 6px 0; border-bottom: 1px solid #f2f2f2; color: #555; }
+    .try-line:last-child { border-bottom: 0; }
+    .try-line em { font-style: normal; font-size: 10px; color: var(--mute); display: block; }
+    .kv { display: grid; grid-template-columns: 72px 1fr; gap: 6px 10px; font-size: 11px; }
+    .kv b { color: #999; font-weight: 700; }
+
+    .overlay {
+      position: fixed; inset: 0; z-index: 50; background: rgba(17,17,17,.28);
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .dialog {
+      width: 100%; max-width: 460px; background: #fff; border: 1px solid var(--line); border-radius: 14px;
+      box-shadow: var(--pop-shadow), 0 24px 64px rgba(0,0,0,.14); padding: 16px;
+    }
+    .dialog h2 { margin: 0 0 4px; font-size: 15px; color: var(--ink); }
+    .dialog .sub { margin: 0 0 14px; color: var(--mute); line-height: 1.5; }
+    .opt { width: 100%; padding: 12px; margin-bottom: 8px; border: 1px solid var(--line); border-radius: 10px; background: #fafafa; }
+    .opt:hover { border-color: #111; background: #fff; }
+    .opt .t { font-weight: 600; color: var(--ink); font-size: 13px; }
+    .opt .d { margin-top: 3px; color: var(--mute); line-height: 1.45; }
+    .opt.is-rec { border-color: #111; background: #fff; }
+    .dialog .foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+    .impact-list { margin: 0 0 10px; padding: 0; list-style: none; }
+    .impact-list li {
+      padding: 7px 9px; margin-bottom: 5px; border: 1px solid var(--line); border-radius: 8px; background: #fafafa;
+      display: flex; justify-content: space-between; gap: 8px;
+    }
+    .toast {
+      position: fixed; right: 18px; bottom: 18px; z-index: 60; padding: 10px 12px; border-radius: 10px;
+      background: #111; color: #fff; font-size: 12px; box-shadow: var(--pop-shadow); max-width: 320px;
+    }
+  </style>
+</head>
+<body>
+  <div class="legend">
+    <strong>small-test-for-user</strong>
+    <span class="tag">v4 · 左=全部资产 · 右=展开</span>
+    <span>像 Codex：左树、中对话、右预览。黄条仅评审用。</span>
+    <div class="path-btns" id="pathBtns">
+      <button type="button" data-path="home" class="is-on">① 刚进来</button>
+      <button type="button" data-path="chat">② 聊出场景</button>
+      <button type="button" data-path="modal">③ 弹窗选模式</button>
+      <button type="button" data-path="fast">④ Fast</button>
+      <button type="button" data-path="steps">⑤ Steps</button>
+      <button type="button" data-path="mid">⑥ 半路续作</button>
+      <button type="button" data-path="live">⑦ Live</button>
+    </div>
+  </div>
+
+  <div class="app">
+    <aside class="side left" id="left"></aside>
+    <section class="main">
+      <div class="main-top" id="mainTop"></div>
+      <div class="thread" id="thread"><div class="thread-inner" id="threadInner"></div></div>
+      <div class="composer-wrap">
+        <div class="composer">
+          <textarea id="composerInput" placeholder="随便问，或描述需求…（中间永远是对话）"></textarea>
+          <div class="row">
+            <span class="hint" id="composerHint">闲聊 / 做需求 / 改某份交付物，都在这里</span>
+            <button type="button" class="btn btn-primary" data-act="send">发送（示意）</button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <aside class="side right" id="right"></aside>
+  </div>
+
+  <div class="overlay" id="overlay" hidden></div>
+  <div class="toast" id="toast" hidden></div>
+
+  <script>
+(function () {
+  var STAGE_LAB = { crafting: 'Crafting', live: 'Live', not_started: 'Not started' };
+  var SCENES = {
+    a1: { id: 'a1', name: 'A1 Supplier sourcing', stage: 'crafting', hasProgress: true, live: false },
+    sales: { id: 'sales', name: 'Sales enablement', stage: 'live', hasProgress: true, live: true },
+    born: { id: 'born', name: 'Store allocation', stage: 'not_started', hasProgress: false, live: false, isNew: true }
+  };
+
+  var state = {
+    scene: null, mode: null, special: null, bornShown: false, thread: [],
+    tabs: [], active: null, sync: 'clean', leftView: 'scenes', modal: null
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  function A(id, type, label, st, o) {
+    o = o || {};
+    return { id: id, type: type, label: label, state: st, req: !!o.req, feeds: o.feeds || [] };
+  }
+  function getVariant() { return state.special || state.mode; }
+
+  function getData() {
+    var v = getVariant();
+    if (v === 'fast') {
+      return {
+        agentKind: 'run',
+        agentNote: '基于薄文档 + Vendor FAQ 试跑。红灯项是前置依赖，试完再回头改。',
+        assets: [
+          A('d1', 'Docs', '目标一页纸（薄）', 'done', { req: true, feeds: ['a1'] }),
+          A('d2', 'Docs', '业务知识笔记', 'empty', { feeds: ['d3'] }),
+          A('d3', 'Docs', '产品设计', 'empty', { req: true, feeds: ['d4', 'a1'] }),
+          A('d4', 'Docs', '本体设计', 'empty', { req: true, feeds: ['o1'] }),
+          A('o1', 'Ontology', '领域图谱', 'empty', { req: true, feeds: ['a1'] }),
+          A('s1', 'Skill', 'contract-risk-check', 'empty', { feeds: ['a1'] }),
+          A('k1', 'Knowledge', 'Vendor FAQ', 'done', { feeds: ['a1'] }),
+          A('a1', 'Agent', 'Discovery POC', 'done')
+        ],
+        defaultOpen: 'a1'
+      };
+    }
+    if (v === 'steps') {
+      return {
+        agentKind: 'lock',
+        agentNote: '文档前置齐了才会生成 Agent。',
+        assets: [
+          A('d1', 'Docs', '需求澄清', 'done', { req: true, feeds: ['d3'] }),
+          A('d2', 'Docs', '业务知识笔记', 'done', { req: true, feeds: ['d3'] }),
+          A('d3', 'Docs', '产品设计', 'partial', { req: true, feeds: ['d4', 'd5'] }),
+          A('d4', 'Docs', '本体设计', 'empty', { req: true, feeds: ['o1'] }),
+          A('d5', 'Docs', 'Agent 设计', 'empty', { req: true, feeds: ['a1'] }),
+          A('o1', 'Ontology', '领域图谱', 'empty', { req: true, feeds: ['a1'] }),
+          A('s1', 'Skill', 'contract-risk-check', 'empty', { feeds: ['a1'] }),
+          A('k1', 'Knowledge', 'Vendor FAQ', 'done', { feeds: ['d2'] }),
+          A('a1', 'Agent', '待解锁', 'empty')
+        ],
+        defaultOpen: 'd3'
+      };
+    }
+    if (v === 'mid') {
+      return {
+        agentKind: 'draft',
+        agentNote: '已有可试草稿；图谱未齐前答案偏浅。',
+        assets: [
+          A('d1', 'Docs', '需求澄清', 'done', { req: true, feeds: ['d3'] }),
+          A('d2', 'Docs', '业务知识笔记', 'done', { req: true, feeds: ['d3'] }),
+          A('d3', 'Docs', '产品设计', 'done', { req: true, feeds: ['d4', 'd5'] }),
+          A('d4', 'Docs', '本体设计', 'partial', { req: true, feeds: ['o1'] }),
+          A('d5', 'Docs', 'Agent 设计', 'empty', { req: true, feeds: ['a1'] }),
+          A('o1', 'Ontology', '领域图谱', 'partial', { req: true, feeds: ['a1'] }),
+          A('s1', 'Skill', 'contract-risk-check', 'partial', { feeds: ['a1'] }),
+          A('k1', 'Knowledge', 'Vendor FAQ', 'done', { feeds: ['d2'] }),
+          A('a1', 'Agent', 'Discovery assistant', 'partial')
+        ],
+        defaultOpen: 'o1'
+      };
+    }
+    return {
+      agentKind: 'live',
+      agentNote: '线上在跑。改动先试，再 Sync 回线上。',
+      assets: [
+        A('d1', 'Docs', 'Playbook v1.2', 'done', { req: true, feeds: ['a1'] }),
+        A('o1', 'Ontology', 'Account schema', 'done', { req: true, feeds: ['a1'] }),
+        A('s1', 'Skill', 'sales-follow-up', 'done', { req: true, feeds: ['a1'] }),
+        A('s2', 'Skill', 'weekly-brief', 'partial', { feeds: ['a1'] }),
+        A('k1', 'Knowledge', 'Battle cards', 'done', { feeds: ['a1'] }),
+        A('a1', 'Agent', 'Follow-up assistant · Live', 'done')
+      ],
+      defaultOpen: 's2'
+    };
+  }
+
+  function byId(data, id) { return data.assets.filter(function (a) { return a.id === id; })[0]; }
+  function upstream(data, id) { return data.assets.filter(function (a) { return a.feeds.indexOf(id) >= 0; }); }
+  function downstream(data, id) {
+    var seen = {}, out = [];
+    (function walk(x) {
+      (byId(data, x) ? byId(data, x).feeds : []).forEach(function (f) {
+        if (seen[f]) return; seen[f] = 1;
+        var a = byId(data, f); if (a) out.push(a);
+        walk(f);
+      });
+    })(id);
+    return out;
+  }
+  function typeStats(data, type) {
+    var list = data.assets.filter(function (a) { return a.type === type; });
+    return { list: list, done: list.filter(function (a) { return a.state === 'done'; }).length, total: list.length,
+      part: list.filter(function (a) { return a.state === 'partial'; }).length };
+  }
+  function chainState(data, type) {
+    var s = typeStats(data, type);
+    if (!s.total) return 'empty';
+    if (s.done === s.total) return 'done';
+    if (s.done || s.part) return 'partial';
+    return 'empty';
+  }
+  function reqProgress(data) {
+    var req = data.assets.filter(function (a) { return a.req; });
+    return { req: req, done: req.filter(function (a) { return a.state === 'done'; }).length };
+  }
+
+  function toast(msg) {
+    var t = $('toast'); t.textContent = msg; t.hidden = false;
+    clearTimeout(toast._t); toast._t = setTimeout(function () { t.hidden = true; }, 2200);
+  }
+  function pushMsg(role, html) { state.thread.push({ role: role, html: html }); }
+
+  function renderThread() {
+    var inner = $('threadInner');
+    if (!state.thread.length) {
+      inner.innerHTML = '<div class="hero"><h1>AgentOS Chat</h1><p>和 Codex 一样：今天想聊什么就聊什么。需求、闲聊、或顺手聊出一个新场景。左边是场景与资产，右边点开才展开。</p></div>';
+      return;
+    }
+    inner.innerHTML = state.thread.map(function (m) {
+      var who = m.role === 'user' ? '你' : 'AgentOS';
+      return '<div class="msg ' + (m.role === 'user' ? 'user' : '') + '"><div class="who">' + who + '</div><div class="bubble">' + m.html + '</div></div>';
+    }).join('');
+    $('thread').scrollTop = 1e6;
+  }
+
+  function renderMainTop() {
+    var el = $('mainTop');
+    if (!state.scene) {
+      el.innerHTML = '<span class="title">AgentOS Chat</span><span class="sub">自由对话 · 场景随时可选</span>';
+      return;
+    }
+    var sc = SCENES[state.scene];
+    var stage = sc.live ? 'live' : (sc.stage === 'not_started' ? 'not_started' : 'crafting');
+    el.innerHTML =
+      '<span class="title">' + esc(sc.name) + '</span>' +
+      '<span class="stage is-' + stage + '"><span class="dot"></span>' + (STAGE_LAB[sc.stage] || sc.stage) + '</span>' +
+      '<div class="mode"><button type="button" data-act="mode" data-mode="fast" class="' + (state.mode === 'fast' ? 'is-on' : '') + '">Fast</button>' +
+      '<button type="button" data-act="mode" data-mode="steps" class="' + (state.mode === 'steps' ? 'is-on' : '') + '">Steps</button></div>' +
+      '<span class="sub">左：全部资产与完成度 · 右：点开展开</span>' +
+      '<button type="button" class="sync ' + (state.sync === 'dirty' ? 'is-dirty' : '') + '" data-act="sync">Sync · ' + state.sync + '</button>';
+  }
+
+  function sceneListHtml() {
+    var ids = ['a1', 'sales'];
+    if (state.bornShown) ids.push('born');
+    return ids.map(function (id) {
+      var s = SCENES[id];
+      var st = s.live ? 'live' : (s.stage === 'not_started' ? 'not_started' : 'crafting');
+      return '<button type="button" class="scene-item" data-act="pick-scene" data-scene="' + id + '">' +
+        '<div class="n">' + esc(s.name) + (s.isNew ? ' <span class="badge-new">NEW</span>' : '') + '</div>' +
+        '<div class="m"><span class="stage is-' + st + '"><span class="dot"></span>' + (STAGE_LAB[s.stage] || '') + '</span>' +
+        (s.hasProgress ? '<span>有进度</span>' : '<span>从对话长出来</span>') + '</div></button>';
+    }).join('');
+  }
+
+  function renderLeft() {
+    var el = $('left');
+    if (!state.scene || state.leftView === 'scenes') {
+      el.innerHTML =
+        '<div class="side-h">Scenes<span class="hint">选一个去打造</span></div>' +
+        '<div class="side-scroll"><div class="note">场景承载在这里；不选也能一直聊。选了之后，这一列会变成<b>这个场景的全部资产树</b>（文档、图谱、Skill、Agent，含「还没建」的）。</div>' +
+        sceneListHtml() +
+        (state.scene ? '<button type="button" class="link" data-act="back-assets">← 回当前场景资产</button>' : '') + '</div>';
+      return;
+    }
+    var sc = SCENES[state.scene];
+    var data = getData();
+    var rp = reqProgress(data);
+    var segs = rp.req.map(function (a) {
+      return '<i class="' + (a.state === 'done' ? 'on' : a.state === 'partial' ? 'half' : '') + '"></i>';
+    }).join('');
+    var order = ['Docs', 'Ontology', 'Skill', 'Knowledge', 'Agent'];
+    var chain = '<div class="chain">' +
+      '<span class="pill is-' + chainState(data, 'Docs') + '"><span class="d"></span>Docs ' + typeStats(data, 'Docs').done + '/' + typeStats(data, 'Docs').total + '</span><span class="arr">→</span>' +
+      '<span class="pill is-' + chainState(data, 'Ontology') + '"><span class="d"></span>图谱 ' + typeStats(data, 'Ontology').done + '/' + typeStats(data, 'Ontology').total + '</span><span class="arr">→</span>' +
+      '<span class="pill is-' + chainState(data, 'Agent') + '"><span class="d"></span>Agent</span></div>';
+
+    var groups = order.map(function (type) {
+      var st = typeStats(data, type);
+      if (!st.total) return '';
+      var pct = Math.round(st.done / st.total * 100);
+      var items = st.list.map(function (a) {
+        var cls = 'asset is-' + (a.state === 'done' ? 'done' : a.state === 'partial' ? 'partial' : 'empty') + (state.active === a.id ? ' is-active' : '');
+        var sub = a.state === 'done' ? 'Ready' : a.state === 'partial' ? 'In progress' : '待建';
+        if (a.type === 'Agent' && a.state === 'empty') sub = '还差 ' + (rp.req.length - rp.done) + ' 项必需前置';
+        if (a.type === 'Agent' && a.state === 'partial') sub = '草稿 · 前置未齐';
+        if (a.type === 'Agent' && a.state === 'done' && getData().agentKind === 'run') sub = '已试跑 · 前置 ' + rp.done + '/' + rp.req.length;
+        var tag = a.type === 'Agent' ? '' : (a.req ? '<span class="tag-req">Agent 需要</span>' : '<span class="tag-opt">可选</span>');
+        return '<button type="button" class="' + cls + '" data-act="open" data-asset="' + a.id + '">' +
+          '<span class="ic"></span><span class="body"><span class="l">' + esc(a.label) + tag + '</span><span class="sub">' + sub + '</span></span></button>';
+      }).join('');
+      return '<div class="grp"><div class="grp-h"><span>' + type + '</span><span class="c">' + st.done + '/' + st.total + ' ready</span></div>' +
+        '<div class="grp-bar"><i style="width:' + pct + '%"></i></div>' + items + '</div>';
+    }).join('');
+
+    el.innerHTML =
+      '<div class="side-h">场景资产树<span class="hint">全部在这里</span></div>' +
+      '<div class="side-scroll">' +
+      '<div class="scene-head"><div class="n">' + esc(sc.name) + '</div>' +
+      '<div class="meter">' + segs + '</div>' +
+      '<div class="cap">Agent 必需前置 <b>' + rp.done + '/' + rp.req.length + '</b> 已满足</div>' +
+      '<div class="row"><button type="button" class="link" data-act="back-scenes">← 换场景</button>' +
+      '<button type="button" class="link" data-act="impact-demo">改一份看联动</button></div></div>' +
+      chain + groups + '</div>';
+  }
+
+  function depChip(a, prefix) {
+    var cls = a.state === 'done' ? 'is-done' : a.state === 'partial' ? 'is-partial' : '';
+    return '<button type="button" class="dep-chip ' + cls + '" data-act="open" data-asset="' + a.id + '"><i></i>' + prefix + esc(a.label) + '</button>';
+  }
+
+  function graphSvg(st) {
+    var nodes = [
+      { x: 20, y: 24, l: 'Supplier' }, { x: 130, y: 24, l: 'Bid' }, { x: 240, y: 24, l: 'Contract' },
+      { x: 20, y: 100, l: 'Region' }, { x: 130, y: 100, l: 'Risk' }
+    ];
+    var edges = [[0, 1], [1, 2], [0, 3], [0, 4], [2, 4]];
+    var solid = st === 'done' ? 5 : st === 'partial' ? 3 : 0;
+    var e = edges.map(function (p) {
+      var a = nodes[p[0]], b = nodes[p[1]];
+      var on = p[0] < solid && p[1] < solid;
+      return '<line x1="' + (a.x + 35) + '" y1="' + (a.y + 14) + '" x2="' + (b.x + 35) + '" y2="' + (b.y + 14) + '" stroke="' + (on ? '#555' : '#ccc') + '" stroke-width="1.2"' + (on ? '' : ' stroke-dasharray="4 3"') + '/>';
+    }).join('');
+    var n = nodes.map(function (nd, i) {
+      var on = i < solid;
+      return '<rect x="' + nd.x + '" y="' + nd.y + '" width="70" height="28" rx="8" fill="' + (on ? '#fff' : '#fafafa') + '" stroke="' + (on ? '#111' : '#bbb') + '" stroke-width="1.2"' + (on ? '' : ' stroke-dasharray="4 3"') + '/>' +
+        '<text x="' + (nd.x + 35) + '" y="' + (nd.y + 18) + '" text-anchor="middle" font-size="11" fill="' + (on ? '#111' : '#aaa') + '">' + nd.l + '</text>';
+    }).join('');
+    return '<div class="graph-box"><svg viewBox="0 0 330 150">' + e + n + '</svg></div>';
+  }
+
+  function docBody(a) {
+    if (a.state === 'empty') {
+      return '<div class="doc"><div class="ghost">这份文档还没有。Agent 可以在对话里起草，也可以你直接说要点。</div></div>';
+    }
+    var secs = ['背景', '目标与边界', '关键流程', '待确认'];
+    var html = '<div class="doc">';
+    secs.forEach(function (s, i) {
+      var full = a.state === 'done' || i < 2;
+      html += '<h4>' + s + '</h4>' + (full
+        ? '<p>' + esc(a.label) + '：围绕业务目标，说明范围、输入输出与验收口径。改动此处会联动下游文档与 Agent 依赖。</p>'
+        : '<div class="ghost">待补 · 在对话里说「补这一节」即可</div>');
+    });
+    return html + '</div>';
+  }
+
+  function renderRight() {
+    var el = $('right');
+    if (!state.scene) {
+      el.innerHTML =
+        '<div class="side-h">预览<span class="hint">像 Codex 右侧</span></div>' +
+        '<div class="viewer"><div class="v-empty">选了场景之后，在<b>左边点任意资产</b>，会在这里展开：<br>文档全文、图谱、Skill、Agent 与试用。</div></div>';
+      return;
+    }
+    var data = getData();
+    var tabsHtml = state.tabs.map(function (id) {
+      var a = byId(data, id); if (!a) return '';
+      return '<button type="button" class="tab ' + (state.active === id ? 'is-on' : '') + '" data-act="open" data-asset="' + id + '">' + esc(a.label) +
+        '<span class="x" data-act="close-tab" data-asset="' + id + '">×</span></button>';
+    }).join('');
+    var body = '';
+    if (!state.active || !byId(data, state.active)) {
+      body = '<div class="v-empty">左边点任意资产，在这里展开。<br>Fast 常从 Agent 试用看起；Steps 常从文档看起。</div>';
+    } else {
+      var a = byId(data, state.active);
+      var ups = upstream(data, a.id), downs = a.feeds.map(function (f) { return byId(data, f); }).filter(Boolean);
+      var stLab = a.state === 'done' ? 'Ready' : a.state === 'partial' ? 'In progress' : '待建';
+      var deps = '<div class="deps">' +
+        '<div class="row"><b>依赖 ←</b>' + (ups.length ? ups.map(function (u) { return depChip(u, ''); }).join('') : '<span>无（源头）</span>') + '</div>' +
+        '<div class="row"><b>喂给 →</b>' + (downs.length ? downs.map(function (u) { return depChip(u, ''); }).join('') : '<span>无</span>') + '</div></div>';
+      var actions = '<div class="v-actions"><button type="button" class="btn btn-soft btn-xs" data-act="impact-open" data-asset="' + a.id + '">改这份 → 看联动</button>' +
+        '<button type="button" class="btn btn-soft btn-xs" data-act="ask" data-asset="' + a.id + '">让 Agent 改这份</button></div>';
+      var inner = '';
+      if (a.type === 'Docs') inner = docBody(a);
+      else if (a.type === 'Ontology') inner = graphSvg(a.state) + '<div class="card"><h3>图谱</h3><p>' + (a.state === 'done' ? '完整' : a.state === 'partial' ? '已建 3/5 个实体，其余虚线待建' : '尚未建；先有本体设计文档更稳') + '</p></div>';
+      else if (a.type === 'Skill') inner = '<div class="card"><h3>Skill 卡</h3><div class="kv"><b>输入</b><span>合同 PDF / 条款文本</span><b>输出</b><span>风险标签 + 理由</span><b>状态</b><span>' + stLab + '</span></div></div>';
+      else if (a.type === 'Knowledge') inner = '<div class="card"><h3>知识库</h3><div class="kv"><b>来源</b><span>Confluence</span><b>规模</b><span>42 chunks</span><b>同步</b><span>昨天</span></div></div>';
+      else {
+        var rp = reqProgress(data);
+        var miss = rp.req.filter(function (x) { return x.state !== 'done'; });
+        if (data.agentKind === 'lock') {
+          inner = '<div class="card"><h3>Agent 尚未解锁</h3><p>' + esc(data.agentNote) + '</p><ul class="lock-list">' +
+            miss.map(function (m) { return '<li>' + depChip(m, '缺 · ') + '</li>'; }).join('') + '</ul></div>';
+        } else {
+          inner = '<div class="card"><h3>' + esc(a.label) + '</h3><p>' + esc(data.agentNote) + '</p>' +
+            '<div class="deps" style="margin-top:10px"><div class="row"><b>前置</b>' +
+            rp.req.map(function (m) { return depChip(m, ''); }).join('') + '</div></div></div>' +
+            '<div class="card"><h3>试用</h3>' +
+            '<div class="try-line"><em>你</em>' + (data.agentKind === 'live' ? '把这通通话收成 5 行 follow-up' : '华东包装供应商短名单') + '</div>' +
+            '<div class="try-line"><em>Agent</em>' + (data.agentKind === 'live' ? '草稿已出（Live 试跑）' : '8 家 + 风险提示（依赖浅）') + '</div>' +
+            '<button type="button" class="btn btn-primary" style="margin-top:8px" data-act="try">再试一次</button></div>';
+        }
+      }
+      body =
+        '<div class="v-title"><h2>' + esc(a.label) + '</h2><span class="st-pill is-' + (a.state === 'done' ? 'done' : a.state === 'partial' ? 'partial' : 'empty') + '">' + stLab + '</span></div>' +
+        '<div class="v-bc">' + esc(SCENES[state.scene].name) + ' › ' + a.type + '</div>' + deps + actions + inner;
+    }
+    el.innerHTML =
+      '<div class="side-h">展开区<span class="hint">文档 · 图谱 · Agent</span></div>' +
+      '<div class="tabs">' + tabsHtml + '</div><div class="viewer">' + body + '</div>';
+  }
+
+  function renderOverlay() {
+    var ov = $('overlay');
+    if (!state.modal) { ov.hidden = true; ov.innerHTML = ''; return; }
+    ov.hidden = false;
+    if (state.modal.type === 'mode') {
+      var sc = SCENES[state.modal.scene];
+      ov.innerHTML =
+        '<div class="dialog"><h2>' + (sc.live ? '继续 · ' : '开始打造 · ') + esc(sc.name) + '</h2>' +
+        '<p class="sub">对话还在后面。选完后，左边变成资产树，右边点开才展开。</p>' +
+        (sc.hasProgress ? '<button type="button" class="opt is-rec" data-act="choose" data-choose="resume"><div class="t">' + (sc.live ? '继续迭代（Live）' : '继续上次进度 · Steps') + '</div><div class="d">带着已有资产与对话痕迹进来。</div></button>' : '') +
+        '<button type="button" class="opt" data-act="choose" data-choose="fast"><div class="t">快速 Fast</div><div class="d">先给薄文档与完整度框架，尽快试跑 Agent，再回头改前置依赖。</div></button>' +
+        '<button type="button" class="opt" data-act="choose" data-choose="steps"><div class="t">逐步 Steps</div><div class="d">资产树一点点长出来；文档前置 → 图谱 → Agent。</div></button>' +
+        '<div class="foot"><button type="button" class="btn btn-soft" data-act="close-modal">先不选，继续聊</button></div></div>';
+    } else if (state.modal.type === 'impact') {
+      var data = getData();
+      var a = byId(data, state.modal.asset);
+      var ds = a ? downstream(data, a.id) : [];
+      ov.innerHTML =
+        '<div class="dialog"><h2>改「' + esc(a ? a.label : '') + '」会联动</h2><p class="sub">下游交付物会标记待更新。</p>' +
+        '<ul class="impact-list">' + (ds.length ? ds.map(function (d) {
+          return '<li><span>' + esc(d.label) + '</span><span style="color:#b76a00;font-weight:600">待更新</span></li>';
+        }).join('') : '<li><span>无下游</span></li>') + '</ul>' +
+        '<div class="foot"><button type="button" class="btn btn-soft" data-act="close-modal">取消</button>' +
+        '<button type="button" class="btn btn-primary" data-act="impact-ok">改并联动</button></div></div>';
+    } else if (state.modal.type === 'sync') {
+      ov.innerHTML =
+        '<div class="dialog"><h2>一键同步</h2><p class="sub">试验改动同步回正式资产（示意）。</p>' +
+        '<ul class="impact-list"><li><span>产品设计</span><span>将写入</span></li><li><span>领域图谱</span><span>将写入</span></li><li><span>Agent 依赖</span><span>将刷新</span></li></ul>' +
+        '<div class="foot"><button type="button" class="btn btn-soft" data-act="close-modal">取消</button>' +
+        '<button type="button" class="btn btn-primary" data-act="sync-ok">确认同步</button></div></div>';
+    }
+  }
+
+  function renderAll() {
+    renderMainTop(); renderThread(); renderLeft(); renderRight(); renderOverlay();
+    $('composerHint').textContent = state.scene
+      ? (state.mode === 'fast' ? 'Fast：先跑，再改前置 · 改一点全局会跟' : 'Steps：照资产树完整度走 · 改一点全局会跟')
+      : '闲聊 / 做需求 / 聊出新场景';
+  }
+
+  function setPath(p) {
+    document.querySelectorAll('#pathBtns [data-path]').forEach(function (b) {
+      b.classList.toggle('is-on', b.getAttribute('data-path') === p);
+    });
+  }
+  function resetHome() {
+    state.scene = null; state.mode = null; state.special = null; state.thread = [];
+    state.bornShown = false; state.tabs = []; state.active = null; state.sync = 'clean'; state.leftView = 'scenes'; state.modal = null;
+  }
+  function seedChat() {
+    state.thread = [];
+    pushMsg('user', '我们要不要做个门店调拨的助手？先随便聊聊范围。');
+    pushMsg('ai', '可以先闲聊范围，也可以直接把它<b>收成一个场景</b>。' +
+      '<div class="chip-row"><button type="button" class="chip is-primary" data-act="born">收成新场景 · Store allocation</button>' +
+      '<button type="button" class="chip">继续闲聊</button></div>');
+  }
+
+  function openAsset(id) {
+    if (state.tabs.indexOf(id) < 0) state.tabs.push(id);
+    state.active = id;
+    var a = byId(getData(), id);
+    if (a) $('composerInput').value = '改这一份：' + a.label;
+  }
+
+  function enterScene(sceneId, choice) {
+    var sc = SCENES[sceneId];
+    state.modal = null; state.scene = sceneId; state.leftView = 'assets'; state.tabs = []; state.active = null;
+    if (choice === 'resume') {
+      state.special = sc.live ? 'live' : 'mid';
+      state.mode = sc.live ? 'fast' : 'steps';
+      state.sync = 'dirty';
+      if (state.thread.length < 2) {
+        if (sc.live) {
+          pushMsg('user', 'Monday 站会 brief 太长，压到 8 条以内。');
+          pushMsg('ai', '已标 <b>weekly-brief</b> 为迭代点。右侧已展开；改完再 Sync。');
+        } else {
+          pushMsg('user', '先按 CS 确认点，做一版供应商短名单 Agent。');
+          pushMsg('ai', '已有需求/知识/产品设计；<b>Next：补完图谱</b>。左边资产树看全貌，右边已展开图谱。');
+        }
+      } else pushMsg('ai', '已带着当前对话进入「' + esc(sc.name) + '」。');
+    } else {
+      state.special = null; state.mode = choice; state.sync = 'clean';
+      pushMsg('ai', choice === 'fast'
+        ? '已选 <b>Fast</b>：左边是完整资产树（含还没建的）；右边先展开 Agent 试跑结果。红灯是前置依赖，试完再回头改。'
+        : '已选 <b>Steps</b>：左边是完整资产树，按完整度往下补；右边先展开当前该做的文档。');
+    }
+    var d = getData();
+    state.tabs = [d.defaultOpen];
+    state.active = d.defaultOpen;
+    renderAll();
+  }
+
+  document.body.addEventListener('click', function (e) {
+    var x = e.target.closest('[data-act="close-tab"]');
+    if (x) {
+      e.stopPropagation();
+      var id = x.getAttribute('data-asset');
+      state.tabs = state.tabs.filter(function (t) { return t !== id; });
+      if (state.active === id) state.active = state.tabs[state.tabs.length - 1] || null;
+      renderRight(); renderLeft();
+      return;
+    }
+    var t = e.target.closest('[data-act]');
+    if (!t) return;
+    var act = t.getAttribute('data-act');
+
+    if (act === 'pick-scene') { state.modal = { type: 'mode', scene: t.getAttribute('data-scene') }; setPath('modal'); renderOverlay(); return; }
+    if (act === 'born') { state.bornShown = true; state.modal = { type: 'mode', scene: 'born' }; setPath('modal'); renderAll(); return; }
+    if (act === 'close-modal') { state.modal = null; renderOverlay(); return; }
+    if (act === 'choose') {
+      var sid = state.modal.scene, ch = t.getAttribute('data-choose');
+      setPath(ch === 'resume' ? (SCENES[sid].live ? 'live' : 'mid') : ch);
+      enterScene(sid, ch); return;
+    }
+    if (act === 'mode') {
+      state.mode = t.getAttribute('data-mode');
+      pushMsg('ai', '已切到 <b>' + (state.mode === 'fast' ? 'Fast' : 'Steps') + '</b>（同一对话；资产树随模式更新）。');
+      if (!state.special) {
+        var d = getData(); state.tabs = [d.defaultOpen]; state.active = d.defaultOpen;
+      }
+      setPath(state.mode); renderAll(); return;
+    }
+    if (act === 'back-scenes') { state.leftView = 'scenes'; renderLeft(); return; }
+    if (act === 'back-assets') { state.leftView = 'assets'; renderLeft(); return; }
+    if (act === 'open') { openAsset(t.getAttribute('data-asset')); renderLeft(); renderRight(); return; }
+    if (act === 'ask') {
+      var a = byId(getData(), t.getAttribute('data-asset'));
+      $('composerInput').value = '请改「' + a.label + '」：';
+      $('composerInput').focus();
+      return;
+    }
+    if (act === 'impact-demo') {
+      var dd = getData();
+      var target = state.active || (dd.assets.filter(function (z) { return z.state !== 'done'; })[0] || dd.assets[0]).id;
+      state.modal = { type: 'impact', asset: target }; renderOverlay(); return;
+    }
+    if (act === 'impact-open') { state.modal = { type: 'impact', asset: t.getAttribute('data-asset') }; renderOverlay(); return; }
+    if (act === 'impact-ok') {
+      state.modal = null; state.sync = 'dirty';
+      pushMsg('ai', '已改并联动：下游交付物已标记待更新。可 Sync。');
+      renderAll(); toast('全局联动已标记'); return;
+    }
+    if (act === 'sync') { state.modal = { type: 'sync' }; renderOverlay(); return; }
+    if (act === 'sync-ok') { state.modal = null; state.sync = 'clean'; renderAll(); toast('已同步回正式资产'); return; }
+    if (act === 'try') { toast('试用结果会回到中栏对话'); return; }
+    if (act === 'send') {
+      var v = $('composerInput').value.trim() || '（示意）继续';
+      $('composerInput').value = '';
+      pushMsg('user', esc(v));
+      if (!state.scene) {
+        pushMsg('ai', '可以继续聊，或把它<b>收成场景</b>。<div class="chip-row"><button type="button" class="chip is-primary" data-act="born">收成新场景</button></div>');
+      } else {
+        pushMsg('ai', '已按这条更新（示意）；右侧展开区与左侧状态会跟。');
+        state.sync = 'dirty';
+      }
+      renderAll();
+    }
+  });
+
+  $('overlay').addEventListener('click', function (e) {
+    if (e.target === $('overlay')) { state.modal = null; renderOverlay(); }
+  });
+
+  $('pathBtns').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-path]');
+    if (!b) return;
+    var p = b.getAttribute('data-path');
+    setPath(p);
+    if (p === 'home') { resetHome(); renderAll(); }
+    else if (p === 'chat') { resetHome(); seedChat(); renderAll(); }
+    else if (p === 'modal') { resetHome(); seedChat(); state.bornShown = true; state.modal = { type: 'mode', scene: 'born' }; renderAll(); }
+    else if (p === 'fast') { resetHome(); seedChat(); state.bornShown = true; enterScene('born', 'fast'); }
+    else if (p === 'steps') { resetHome(); seedChat(); state.bornShown = true; enterScene('born', 'steps'); }
+    else if (p === 'mid') { resetHome(); enterScene('a1', 'resume'); }
+    else if (p === 'live') { resetHome(); enterScene('sales', 'resume'); }
+  });
+
+  renderAll();
+})();
+  </script>
+</body>
+</html>

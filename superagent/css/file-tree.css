@@ -1,0 +1,316 @@
+/* Files / 素材 — ported from 个人空间设计稿+场景tab新增再次识别.html */
+
+/* 分区头 · 轻量 kicker：品牌色标题 + · N + hover 展开操作 */
+.files-group-header.group-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 8px 10px 4px 14px;
+  margin: 0;
+  background: transparent;
+  color: var(--text-tertiary, #8e8e96);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.files-group-header .group-header__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.files-group-header .gh-text {
+  color: #1f82eb;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.files-group-header .gh-count {
+  font-size: 12px;
+  font-weight: 500;
+  color: #b4b4b8;
+  margin-left: 2px;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+.files-group-header .gh-count::before {
+  content: "·";
+  margin-right: 4px;
+  opacity: 0.6;
+}
+.files-group-header .actions {
+  display: inline-flex;
+  gap: 2px;
+  align-items: center;
+  flex-shrink: 0;
+  width: 0;
+  min-width: 0;
+  opacity: 0;
+  visibility: hidden;
+  overflow: hidden;
+  pointer-events: none;
+  transition: width 0.18s ease, opacity 0.15s ease;
+}
+.files-group-header:hover .actions,
+.files-group-header:focus-within .actions {
+  width: 52px;
+  opacity: 1;
+  visibility: visible;
+  overflow: visible;
+  pointer-events: auto;
+}
+.files-group-header .gh-icon-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #8e8e96;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.files-group-header .gh-icon-btn:hover {
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--text-primary, #18181b);
+}
+.files-group-header .gh-icon-btn svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+.files-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.files-group {
+  flex-shrink: 0;
+}
+.files-group + .files-group .files-group-header {
+  padding-top: 14px;
+}
+
+.files-scroll .tree {
+  --tree-row-bleed-x: 0px;
+  --tree-guide: rgba(15, 23, 42, 0.088);
+  /* design default 10px; nudge toward chevron to cut the offset a bit */
+  --tree-guide-x: 12px;
+  --tree-guide-step: 12px;
+  --brand-hover-fill: rgba(31, 130, 235, 0.08);
+  --brand-active-fill: rgba(31, 130, 235, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 2px 0 6px;
+}
+
+.files-scroll .tree .is-hidden { display: none !important; }
+
+.files-scroll .tree .node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1.75px 8px;
+  border-radius: 0;
+  color: var(--text-primary, #18181b);
+  cursor: pointer;
+  user-select: none;
+  font-size: 12px;
+}
+.files-scroll .tree .file {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1.75px 8px;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.files-scroll .tree .node::after,
+.files-scroll .tree .file::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * var(--tree-row-bleed-x, 0px));
+  right: calc(-1 * var(--tree-row-bleed-x, 0px));
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 0;
+}
+.files-scroll .tree .node:hover::after,
+.files-scroll .tree .file:hover::after {
+  background: var(--brand-hover-fill);
+}
+.files-scroll .tree .node.active::after,
+.files-scroll .tree .file.is-active::after,
+.files-scroll .tree .node.active:hover::after,
+.files-scroll .tree .file.is-active:hover::after {
+  background: var(--brand-active-fill);
+}
+
+.files-scroll .tree .node > *,
+.files-scroll .tree .file > * {
+  position: relative;
+  z-index: 1;
+}
+
+.files-scroll .tree .chev {
+  width: 14px;
+  height: 14px;
+  color: #c2c6cf;
+  flex-shrink: 0;
+  transition: transform 0.18s ease, color 0.15s ease;
+}
+.files-scroll .tree .node:hover > .chev { color: #9aa0ac; }
+.files-scroll .tree .node.is-open > .chev { transform: rotate(90deg); }
+
+.files-scroll .tree .icon {
+  width: 16px;
+  height: 16px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+/* 一级文件夹：描边 + 软底 */
+.files-scroll .tree .node:not([class*="indent-"]) > svg.icon {
+  color: #5b8def;
+}
+.files-scroll .tree .node:not([class*="indent-"]) > svg.icon path {
+  fill: rgba(31, 130, 235, 0.09);
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+.files-scroll .tree .node[class*="indent-"] > svg.icon {
+  color: #9ca3af;
+}
+.files-scroll .tree .node[class*="indent-"] > svg.icon path {
+  fill: none;
+  stroke: currentColor;
+}
+
+.files-scroll .tree .label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  line-height: 16px;
+}
+.files-scroll .tree .node[class*="indent-"] .label {
+  font-weight: 400;
+}
+
+/* Seti-style file icons (self-colored · js/file-type-icons.js) */
+.files-scroll .tree .file .file-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: visible;
+  background: transparent;
+}
+.files-scroll .tree .file .file-icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+.files-scroll .tree .file .info {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 5px;
+}
+.files-scroll .tree .file .name {
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  color: var(--text-primary, #18181b);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.files-scroll .tree .indent-1 { padding-left: 18px; }
+.files-scroll .tree .indent-2 { padding-left: 30px; }
+.files-scroll .tree .indent-3 { padding-left: 42px; }
+.files-scroll .tree .indent-4 { padding-left: 54px; }
+
+/* 层级竖线：与 padding 18/30/42/54（步长 12）对齐 */
+.files-scroll .tree .node[class*="indent-"]::before,
+.files-scroll .tree .file[class*="indent-"]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--tree-guide-x);
+  width: 1px;
+  background: var(--tree-guide);
+  pointer-events: none;
+  z-index: 0;
+}
+.files-scroll .tree .node.indent-2::before,
+.files-scroll .tree .file.indent-2::before,
+.files-scroll .tree .node.indent-3::before,
+.files-scroll .tree .file.indent-3::before,
+.files-scroll .tree .node.indent-4::before,
+.files-scroll .tree .file.indent-4::before {
+  box-shadow: var(--tree-guide-step) 0 0 0 var(--tree-guide);
+}
+
+.files-scroll .tree .row-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transform: translateX(2px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.files-scroll .tree .node:hover .row-actions,
+.files-scroll .tree .file:hover .row-actions,
+.files-scroll .tree .node:focus-within .row-actions,
+.files-scroll .tree .file:focus-within .row-actions {
+  opacity: 1;
+  transform: none;
+}
+.files-scroll .tree .row-actions button {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #8e8e96;
+  cursor: pointer;
+  padding: 0;
+}
+.files-scroll .tree .row-actions button:hover {
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--text-primary, #18181b);
+}
+.files-scroll .tree .row-actions svg {
+  width: 17px;
+  height: 17px;
+}

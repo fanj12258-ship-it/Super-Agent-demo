@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>转入按流程打造 · 对号入座总览（设计稿）</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #171717; --mute: #8a8a8f; --soft: #a3a3a8; --line: #ececec; --line-2: #f3f3f5; --grey-bg: #f7f7f9;
+    --blue: #1f82eb; --blue-ink: #1f6fd1; --blue-bg: #f2f8ff; --blue-line: #d9e9fc;
+    --green: #2d6a4f; --amber: #b7791f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f3f3f5; color: var(--ink); font: 13px/20px Inter, -apple-system, "PingFang SC", "Helvetica Neue", sans-serif; -webkit-font-smoothing: antialiased; }
+  .note-top { max-width: 920px; margin: 0 auto; padding: 28px 24px 0; font-size: 12px; line-height: 18px; color: var(--mute); }
+  .note-top b { color: var(--ink); font-weight: 500; }
+
+  /* the panel itself — what the user would see after clicking 「转入按流程打造」 */
+  .panel { max-width: 920px; margin: 16px auto 48px; background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 12px 40px rgba(0,0,0,.06); overflow: hidden; }
+  .ph { padding: 18px 22px 14px; }
+  .ph h1 { margin: 0; font-size: 15px; line-height: 22px; font-weight: 600; }
+  .ph p { margin: 4px 0 0; font-size: 12px; line-height: 18px; color: #6b6b70; max-width: 640px; }
+
+  /* status filter chips */
+  .sum { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 22px 14px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: #fff; font: inherit; font-size: 12px; color: #3a3a3e; cursor: pointer; transition: background .15s, border-color .15s; }
+  .chip:hover { background: var(--grey-bg); }
+  .chip.on { border-color: #cfcfd4; background: var(--grey-bg); }
+  .chip b { font-weight: 600; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid #a3a3a8; background: #fff; flex: none; }
+  .d-keep { background: var(--blue); border-color: var(--blue); }
+  .d-chk { background: #e8a317; border-color: #e8a317; }
+  .d-mock { border: 1.5px dashed var(--green); }
+  .d-new { border-color: #a3a3a8; }
+
+  /* two columns */
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) 128px minmax(0, 1fr); padding: 0 22px; }
+  .colh { padding: 8px 0 8px; font-size: 11px; font-weight: 600; letter-spacing: .04em; color: var(--soft); display: flex; align-items: center; gap: 6px; }
+  .colh.mid { justify-content: center; }
+  .colh.right { color: var(--blue-ink); }
+  .grp { grid-column: 1 / -1; margin: 10px 0 4px; font-size: 11px; font-weight: 600; color: var(--mute); display: flex; align-items: center; gap: 8px; }
+  .grp i { font-style: normal; padding: 1px 6px; border-radius: 4px; background: var(--grey-bg); color: var(--soft); font-size: 10.5px; }
+  .grp::after { content: ""; flex: 1; height: 1px; background: var(--line-2); }
+
+  .row { display: contents; }
+  .cell { padding: 0; margin: 3px 0; }
+  .item { display: flex; align-items: flex-start; gap: 8px; min-height: 42px; padding: 8px 10px; border-radius: 10px; transition: opacity .18s; }
+  .item .ico { margin-top: 2px; flex: none; color: var(--soft); }
+  .item b { display: block; font-size: 12.5px; line-height: 18px; font-weight: 500; }
+  .item span { display: block; font-size: 11px; line-height: 16px; color: var(--mute); }
+  .item.quick { border: 1px dashed #cfcfd4; background: var(--grey-bg); }
+  .item.quick.empty { background: #fff; border-color: var(--line); }
+  .item.quick.empty b { color: var(--soft); font-weight: 400; }
+  .item.real { border: 1px solid var(--blue-line); background: var(--blue-bg); }
+  .item.real .ico { color: var(--blue); }
+
+  /* the connector between the two sides: status label sitting on a line */
+  .link { position: relative; display: flex; align-items: center; justify-content: center; margin: 3px 0; }
+  .link::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 0; border-top: 1px solid var(--line); }
+  .tag { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 7px; font-size: 11px; font-weight: 500; background: #fff; border: 1px solid var(--line); white-space: nowrap; }
+  .t-keep { color: var(--blue-ink); border-color: var(--blue-line); background: #fff; }
+  .t-chk { color: var(--amber); border-color: #f2e0b8; }
+  .t-mock { color: var(--green); border: 1px dashed #9fc4ae; }
+  .t-new { color: #55555b; border: 1px dashed #b4b4ba; }
+
+  .dim .row.off .cell, .dim .row.off .link { opacity: .28; }
+
+  .legend { padding: 12px 22px 0; font-size: 11px; line-height: 16px; color: var(--mute); }
+  .foot { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding: 14px 22px; border-top: 1px solid var(--line); background: #fff; }
+  .foot p { flex: 1; margin: 0; font-size: 12px; line-height: 18px; color: var(--mute); }
+  .btn { height: 30px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--line); background: #fff; font: inherit; font-size: 12.5px; font-weight: 500; color: #3a3a3e; cursor: pointer; }
+  .btn:hover { background: var(--grey-bg); }
+  .btn.primary { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .btn.primary:hover { background: #2a2a2a; }
+
+  .spec { max-width: 920px; margin: 0 auto 56px; padding: 0 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .spec div { padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; font-size: 12px; line-height: 18px; color: #6b6b70; }
+  .spec b { display: block; margin-bottom: 2px; color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="note-top">
+  <b>这是什么：</b>用户在「轻量模式」里点 <b>转入按流程打造</b> 之后，先出现的一页总览。它只回答一件事：<b>我已经做出来的东西，会放到流程里的哪个位置，还差什么。</b>
+  点上面的状态，可以只看那一类。这一页不是门槛，也不要求用户处理，直接点「开始按流程打造」就能进去。
+</div>
+
+<div class="panel" id="panel">
+  <div class="ph">
+    <h1>转入按流程打造</h1>
+    <p>轻量模式里做出来的内容，会放进流程的 8 个步骤里。有的直接沿用，有的需要校对，有的要换成真实实现，有的还要重新写。进去之后再一项项确认就行。</p>
+  </div>
+
+  <div class="sum" id="sum"></div>
+
+  <div class="cols" id="cols"></div>
+
+  <div class="legend">文档清单以产品经理定的真实环境结构为准，这里只是示意。</div>
+
+  <div class="foot">
+    <p>随时可以回到这里查看。已有内容不会丢，轻量模式里的版本会一直保留作对照。</p>
+    <button type="button" class="btn">先不转，继续试用</button>
+    <button type="button" class="btn primary">开始按流程打造</button>
+  </div>
+</div>
+
+<div class="spec">
+  <div><b>放在哪</b>聊天区里的卡片 + 右侧面板的完整页，二选一；卡片只显示数量和「查看对号入座」。</div>
+  <div><b>进去之后</b>左侧蓝图每份文档右边出现同样颜色的小圆点，点开某一步，看到的是草稿内容和正式要求并排。</div>
+  <div><b>处理完的</b>圆点会变成实心蓝色（已确认），不再提示。</div>
+</div>
+
+<script>
+(function () {
+  var ST = {
+    keep:  { t: '沿用',        dot: 'd-keep', cls: 't-keep' },
+    chk:   { t: '需校对',      dot: 'd-chk',  cls: 't-chk' },
+    mock:  { t: 'Mock 需改',   dot: 'd-mock', cls: 't-mock' },
+    'new': { t: '需再创作',    dot: 'd-new',  cls: 't-new' }
+  };
+  var DATA = [
+    ['1', 'Requirements', [
+      ['Requirements brief', '对话整理的需求与 5 个决策', '直接作为基线', 'keep'],
+      ['Success criteria', '', '补写可以验收的标准', 'new']
+    ]],
+    ['2', 'Business knowledge', [
+      ['Contracts · rules', '已上传的合同与准入标准', '内容是真实的', 'keep'],
+      ['Process notes', '流程说明、访谈纪要、异常记录', '内容是真实的', 'keep'],
+      ['ERP export', '14 条样例报价', '换成完整导出再确认', 'chk']
+    ]],
+    ['3–5', 'Design plans', [
+      ['Product plan', '轻量模式起草的方案', '含临时假设，逐条校对', 'chk'],
+      ['Ontology plan', '轻量模式起草的方案', '含临时假设，逐条校对', 'chk'],
+      ['Agent plan', '轻量模式起草的方案', '含临时假设，逐条校对', 'chk']
+    ]],
+    ['6', 'Build ontology', [
+      ['Data source spec', '由字段字典生成的数据源说明', '接入真实 ERP 后重写', 'mock'],
+      ['Semantic graph', '5 个对象 · 5 条关系（AI 模拟）', '按真实数据校对后重建', 'mock']
+    ]],
+    ['7', 'Skills · MCP · more', [
+      ['Skill specs', '固定阈值与权重', '规则可配置、带版本', 'mock'],
+      ['MCP specs', '样例 ERP 接口', '换成真实接口', 'mock'],
+      ['Resource list', '', '补充需要的外部资源', 'new']
+    ]],
+    ['8', 'Generate Agent', [
+      ['Agent spec', '基于 Mock 的本体和 Skill 生成', '上游替换后重新生成', 'mock']
+    ]]
+  ];
+  var DOC = '<svg class="ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>';
+  var count = { keep: 0, chk: 0, mock: 0, 'new': 0 };
+  var cols = document.getElementById('cols');
+  var html = '<div class="colh">轻量模式 · 已有</div><div class="colh mid">状态</div><div class="colh right">按流程打造 · 需要</div>';
+  DATA.forEach(function (g) {
+    html += '<div class="grp"><i>STEP ' + g[0] + '</i>' + g[1] + '</div>';
+    g[2].forEach(function (r) {
+      var s = ST[r[3]]; count[r[3]]++;
+      var empty = !r[1];
+      html += '<div class="row" data-s="' + r[3] + '">' +
+        '<div class="cell"><div class="item quick' + (empty ? ' empty' : '') + '">' + (empty ? '' : DOC) + '<div><b>' + (empty ? '还没有' : r[1]) + '</b></div></div></div>' +
+        '<div class="link"><span class="tag ' + s.cls + '">' + s.t + '</span></div>' +
+        '<div class="cell"><div class="item real">' + DOC + '<div><b>' + r[0] + '</b><span>' + r[2] + '</span></div></div></div>' +
+        '</div>';
+    });
+  });
+  cols.innerHTML = html;
+
+  var sum = document.getElementById('sum'), cur = null;
+  Object.keys(ST).forEach(function (k) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.setAttribute('data-k', k);
+    b.innerHTML = '<i class="dot ' + ST[k].dot + '"></i>' + ST[k].t + ' <b>' + count[k] + '</b>';
+    sum.appendChild(b);
+  });
+  sum.addEventListener('click', function (e) {
+    var b = e.target.closest('.chip'); if (!b) return;
+    var k = b.getAttribute('data-k'); cur = cur === k ? null : k;
+    sum.querySelectorAll('.chip').forEach(function (c) { c.classList.toggle('on', c.getAttribute('data-k') === cur); });
+    cols.classList.toggle('dim', !!cur);
+    cols.querySelectorAll('.row').forEach(function (r) { r.classList.toggle('off', !!cur && r.getAttribute('data-s') !== cur); });
+  });
+})();
+</script>
+</body>
+</html>

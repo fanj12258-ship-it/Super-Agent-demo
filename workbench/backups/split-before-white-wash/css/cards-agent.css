@@ -1,0 +1,103 @@
+/* cards-agent.css — Agent persona cards */
+
+/* Agent — persona profile */
+.ag-card {
+  position: relative;
+  height: 100%;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ag-card.is-new {
+  border-color: #b7ddf7;
+  box-shadow: 0 0 0 1px rgba(13, 153, 255, 0.12), 0 8px 20px rgba(13, 153, 255, 0.08);
+}
+.ag-new {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: inline-flex; align-items: center;
+  height: 22px; padding: 0 9px; border-radius: 6px;
+  background: var(--brand-red, #f24822); color: #fff;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.03em;
+  box-shadow: 0 1px 3px rgba(242, 72, 34, 0.35);
+}
+.ag-card.is-new .ag-main { padding-right: 56px; }
+.ag-main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 16px 12px;
+  min-height: 0;
+}
+.ag-top { display: flex; gap: 12px; align-items: flex-start; }
+.ag-ava {
+  width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 17px; font-weight: 700; letter-spacing: -0.02em;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
+}
+.ag-copy { min-width: 0; flex: 1; }
+.ag-name {
+  font-size: 14px; font-weight: 600; letter-spacing: -0.015em; color: #111;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ag-role {
+  margin-top: 3px; font-size: 12px; line-height: 16px; color: #8c8c8c;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; min-height: 32px;
+}
+.ag-meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  min-height: 22px;
+}
+.ag-model {
+  display: inline-flex; align-items: center; height: 22px; padding: 0 8px;
+  border-radius: 6px; background: #f0f0f2; color: #666;
+  font-size: 11px; font-weight: 500; line-height: 22px; flex: 0 1 auto;
+  max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ag-tag {
+  height: 22px; padding: 0 8px; border-radius: 6px;
+  background: #f4f4f5; color: #555; font-size: 11px; font-weight: 500; line-height: 22px;
+  white-space: nowrap;
+}
+.ag-foot {
+  margin-top: auto;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: 48px; padding: 10px 16px;
+  border-top: 1px solid #f2f2f2; background: #fafafa;
+  font-size: 11px; color: #a0a0a0; box-sizing: border-box;
+}
+.ag-status { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; color: #555; flex-shrink: 0; }
+.ag-dot { width: 7px; height: 7px; border-radius: 50%; background: #c0c0c0; flex: 0 0 auto; }
+.ag-dot.live { background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.16); }
+.ag-dot.ready { background: #3b82f6; }
+.ag-dot.draft { background: #a3a3a3; }
+.ag-cta {
+  height: 28px;
+  min-width: 0;
+  padding: 0 10px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-align: center;
+  flex-shrink: 0;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.ag-cta.publish { background: #111; color: #fff; }
+.ag-cta.publish:hover { background: #2a2a2a; }
+.ag-cta.build {
+  background: #fff; color: #1a1a1a; border: 1px solid #d8d8d8;
+}
+.ag-cta.build:hover { background: #f7f7f7; border-color: #c0c0c0; }
+.ag-cta.try {
+  background: #e8f8ef; color: #1f7a45; border: 1px solid #b7ebc9;
+}
+.ag-cta.try:hover { background: #d8f3e4; }
+.ag-runs { margin-left: auto; }

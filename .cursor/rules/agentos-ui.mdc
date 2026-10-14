@@ -1,0 +1,106 @@
+---
+description: AgentOS Workbench design tokens, display patterns, and interaction rules. Use when editing workbench or superagent UI so both layers stay visually and behaviorally consistent.
+globs: "{workbench/**,superagent/**}"
+alwaysApply: false
+---
+
+# AgentOS UI — Workbench source of truth
+
+> **🔒 `workbench/agentos-workbench.html` is LOCKED (2026-10-10).** Do not edit it unless the user explicitly says to change it. When asked: back up to `workbench/backups/` first, then change only what was named. Locked snapshot (single-file, pre-split): `workbench/backups/agentos-workbench.LOCKED-2026-10-10.html`. The page is now split: markup in the HTML, styles in `workbench/css/`, behavior in `workbench/js/` (classic scripts, shared global scope, load order matters) — edit the matching file, never inline CSS/JS back into the HTML.
+
+**Full token tables & audit:** `workbench/tokens/agentos-ui.md` (keep in sync).  
+Reference implementation: `workbench/agentos-workbench.html`.  
+Workshop: `superagent/superagent.html` `:root` aligned to the same cool-neutral contract (2026-10-10).
+
+## Product layers
+
+| Layer | Path | Role |
+|---|---|---|
+| **Workbench (outer)** | `workbench/agentos-workbench.html` | Spaces, asset catalogs, account & notifications. Entry shell. |
+| **Workshop (inner)** | `superagent/superagent.html` (+ JS / `superagent-ui/`) | Craft / chat / build after entering from workbench. |
+
+Match Workbench tokens first. Prefer `var(--token)` over new hex. If a value appears ≥2 times, tokenize it. Never restore heavy menu shadow `0 5px 17px rgba(0,0,0,0.2)…` on account/notify/team.
+
+## Live `:root` (HTML today)
+
+```css
+:root {
+  --text: #333333;
+  --text-secondary: #8c8c8c;
+  --placeholder: #b3b3b3;
+  --divider: #e6e6e6;
+  --hover: #f5f5f5;
+  --selected: #e5f4ff;
+  --search-bg: #f5f5f5;
+  --brand-red: #f24822;
+  --file-blue: #0d99ff;
+  --popover-bg: #ffffff;
+  --popover-border: #ececec;
+  --popover-radius: 14px;
+  --popover-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --popover-sep: #f0f0f0;
+  --popover-font: 13px;
+  --popover-pad: 6px;
+  --popover-item-h: 34px;
+  --popover-item-radius: 8px;
+  --popover-item-pad-x: 10px;
+  --popover-gap: 8px;
+}
+```
+
+Canonical extras (promote when touching CSS): `--text-primary #111`, `--bg-subtle #fafafa`, `--border #ececec`, `--ink #171717` / `--ink-hover #2a2a2a` / `--ink-active #0f0f0f`, `--border-strong #d8d8d8`, full `--status-*` set, `--radius-card 12` / `--radius-card-lg 14`, `--shadow-card-hover`, `--shadow-modal`.
+
+## Status colors
+
+| Stage | Dot | Chip bg / text |
+|---|---|---|
+| Live | `#22c55e` + ring `rgba(34,197,94,0.14)` | `#e8f8ef` / `#1f7a45` |
+| Ready | `#3b82f6` | `#eef4ff` / `#3b6fd8` |
+| Crafting | `#f59e0b` | `#fff4e5` / `#b76a00` |
+| Idle / Draft / Not started | `#a3a3a3` | `#f4f4f5` / `#666–#777` |
+
+Qualitative stages only — never fake precise % progress.
+
+## CTA stage matrix
+
+**Live = shipped.** Re-entry is iteration, not craft.
+
+| Surface | Live | Ready | Crafting | Idle/Draft |
+|---|---|---|---|---|
+| Scenario app | **Iterate** (soft) | Go to launch | Continue crafting | Start crafting |
+| Scenario biz | **Iterate** (border) | Finalize (primary) | Continue crafting | Start crafting |
+| Agent | **Try** (green soft) | Go to publish | — | Continue building |
+
+Do not swap Agent Try ↔ Scenario Iterate.
+
+## Chrome recipes (must match)
+
+- **Popovers:** white, border `#ececec`, r14, `--popover-shadow`, item h34/r8, `--hover`
+- **Cards:** border `#ececec`, r12 (dense) / r14 (scenario), footer `#fafafa` + `#f2f2f2`
+- **Primary CTA:** near-black (`#171717` / `#111`), not purple / not brand-red fill
+- **Selection:** `#e5f4ff`
+- **Type:** Inter stack; base 12/16 · **list/card primary 12/500** · nested **12/400** · desc **11/400** · featured agent/mcp name may stay 14/600 · page title 22
+- **Sidebar:** 256px; brand bar 54px; nav h34
+- **Motion:** 0.12–0.14s only; optional card `translateY(-1px)`
+- **Notify:** no unread dots / bell badge
+- **Empty Market/Ops:** full-bleed soft `.empty-hero`, not hard gray tray
+
+## Known drift (OK unless asked to unify)
+
+Ink triad `#171717`/`#111`/`#1a1a1a`; CTA size 10/11/12; card r12 vs r14; scenario no hover; notify hover `#fafafa` vs `--hover`; biz modal chip vs ready-blue. Details in tokens md audit section.
+
+## Locked 2026-10-11 — Sidebar list type + Files tree + Agent turn
+
+- **Sidebar list type (unified):** primary **12/500/16** · nested **12/400/16** · desc **11/400/15** · section kicker **12.5/600** brand `#1F82EB`. Workshop scenario cards + Files tree + Workbench kb/sk/on + scenario titles.
+- **Files / materials tree:** outline folders · **14px** type chips (doc blue / md yellow / html orange / …) · indent guide · hover + **selected-only** wash (no default select). Impl: `superagent/css/file-tree.css`, `js/files-panel.js`.
+- **Agent turn chrome:** `--ao-*` · mock avatar + name **AgentOS** · prose / code pill / footer. Impl: `AssistantTurn.tsx`.
+- **Deep thinking (CUI Demo lock):** `--ao-dt-*` from https://agentos-cui-demo.vercel.app/ — status shimmer carousel → `用时 Ns` · process viewport 480 · activity-row `深度思考` + edge-masked details 120 · hover chevron. Refs: `workbench/tokens/refs/cui-demo.*`. Do not reinvent.
+- Full tables in `workbench/tokens/agentos-ui.md`. Do not recalibrate these when adding content.
+
+## Anti-patterns
+
+Purple page themes · cream `#F4F1EA` editorial · heavy menu shadows · fake % craft bars · giant file tiles · restyle card chrome for data-only updates · Live labeled as Go to craft.
+
+## Superagent gate
+
+Tokens map to Workbench · density 12–13px chrome · near-black primary · cool selection · same status language · light popovers · EN demo copy · Workbench ≠ Workshop IA without explicit entry.

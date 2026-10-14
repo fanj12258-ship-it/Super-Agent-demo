@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blueprint · 等轴分层图 · 设计讨论稿</title>
+<!-- 设计讨论稿:零依赖单文件,不被 superagent.html / superagent-fast.html 引用 -->
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #f6f6f7; color: #333;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .lab { max-width: 1240px; margin: 0 auto; padding: 36px 32px 72px; }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 6px; color: #111; letter-spacing: -.01em; }
+  .lead { margin: 0 0 22px; font-size: 13px; line-height: 20px; color: #6b6b70; max-width: 720px; }
+
+  /* controls */
+  .ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 22px; }
+  .ctl .lbl { font-size: 12px; color: #8a8a8f; margin-right: 2px; }
+  .btn {
+    height: 28px; padding: 0 10px; border: 1px solid #e4e4e7; background: #fff; border-radius: 7px;
+    font: inherit; font-size: 12px; color: #333; cursor: pointer;
+  }
+  .btn:hover { border-color: #cfcfd4; }
+  .btn.on { background: #171717; border-color: #171717; color: #fff; }
+  .sep { width: 1px; height: 18px; background: #e4e4e7; margin: 0 6px; }
+
+  /* sidebars */
+  .cols { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+  .col h2 { margin: 0 0 3px; font-size: 13px; font-weight: 600; color: #111; }
+  .col .cap { margin: 0 0 10px; font-size: 12px; line-height: 17px; color: #8a8a8f; max-width: var(--w, 320px); }
+  .frame {
+    width: var(--w, 320px); background: #fff; border: 1px solid #ececec; border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03); overflow: hidden;
+  }
+  .f-head { padding: 12px 14px 4px; }
+  .f-back { font-size: 11.5px; color: #8a8a8f; }
+  .f-title { margin-top: 6px; font-size: 13px; font-weight: 600; color: #111; line-height: 18px; }
+  .f-chips { display: flex; gap: 4px; margin-top: 7px; }
+  .f-chip { height: 18px; padding: 0 6px; display: inline-flex; align-items: center; gap: 4px; border-radius: 5px; background: #f5f5f6; font-size: 11px; font-weight: 500; color: #6b6b70; }
+  .f-chip.mode { background: rgba(31,130,235,.09); color: #1f6fd1; }
+  .f-chip i { width: 5px; height: 5px; border-radius: 50%; background: #f59e0b; }
+  .f-body { padding: 0 4px 14px; }
+  .f-body svg { display: block; width: 100%; overflow: visible; }
+
+  /* baseline (current) */
+  .base { padding: 8px 10px 4px; display: flex; flex-direction: column; }
+  .base .bp-link { align-self: center; }
+
+  /* baseline node cards (inlined from fast-blueprint.css — no external dep) */
+  .bp-link { align-self: center; position: relative; width: 1px; height: 14px; background: #dcdce0; }
+  .bp-link::after {
+    content: ""; position: absolute; left: -2px; top: 0; width: 5px; height: 5px;
+    border-radius: 50%; background: #dcdce0;
+  }
+  .bp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .bp-node {
+    display: flex; align-items: center; gap: 8px;
+    min-width: 0; padding: 8px 9px;
+    border: 1px solid #ececec; border-radius: 8px; background: #fff;
+    transition: border-color .25s ease, background .25s ease, box-shadow .4s ease;
+  }
+  .bp-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .bp-name { font-size: 12px; font-weight: 500; line-height: 16px; color: #111; white-space: nowrap; }
+  .bp-sub { font-size: 11px; line-height: 15px; color: #a3a3a8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bp-st { flex-shrink: 0; font-size: 11px; line-height: 16px; color: #a3a3a8; white-space: nowrap; }
+  .bp-node--sm { padding: 7px 8px; gap: 6px; }
+  .bp-node--sm .bp-body { flex-direction: row; align-items: center; justify-content: space-between; gap: 4px; }
+  .bp-node[data-state="optional"] { border-style: dashed; border-color: #dcdce0; background: transparent; }
+  .bp-node[data-state="optional"] .bp-name { color: #8a8a8f; }
+  .bp-node[data-state="doing"] { border-color: rgba(31,130,235,.38); background: rgba(31,130,235,.045); }
+  .bp-node[data-state="doing"] .bp-st { color: #1f6fd1; font-weight: 500; }
+  .bp-node[data-state="doing"] .bp-st::before {
+    content: ""; display: inline-block; width: 5px; height: 5px; margin-right: 4px;
+    border-radius: 50%; background: #1f82eb; vertical-align: 1px; animation: bp-pulse 1.4s ease-in-out infinite;
+  }
+  .bp-node[data-state="done"] .bp-st { color: #1f9d55; font-weight: 500; }
+  .bp-node[data-state="done"] .bp-st::before { content: "✓ "; }
+  @keyframes bp-pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+
+  /* ---------- svg styling ---------- */
+  .plate { --pf: transparent; --ps: #cfcfd4; --pl: transparent; --pr: transparent; --pg: #d6d6da; cursor: pointer; }
+  .plate .top { fill: var(--pf); stroke: var(--ps); stroke-width: 1; stroke-linejoin: round; transition: fill .4s, stroke .4s; }
+  .plate .sl { fill: var(--pl); stroke: var(--ps); stroke-width: 1; stroke-linejoin: round; transition: fill .4s, opacity .4s; }
+  .plate .sr { fill: var(--pr); stroke: var(--ps); stroke-width: 1; stroke-linejoin: round; transition: fill .4s, opacity .4s; }
+  .plate .pat * { vector-effect: non-scaling-stroke; }
+  .plate .pat .s { fill: none; stroke: var(--pg); stroke-width: 1; stroke-linecap: round; }
+  .plate .pat .f { fill: var(--pg); fill-opacity: .0; stroke: var(--pg); stroke-width: 1; transition: fill-opacity .5s; }
+  .plate .pat .d { fill: var(--pg); stroke: none; }
+  .plate .lift { transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+  .plate .ground { fill: rgba(0,0,0,.05); opacity: 0; transition: opacity .4s; }
+
+  .plate.st-todo     { --pf: rgba(255,255,255,0); --ps: #d2d2d7; --pg: #dcdce0; }
+  .plate.st-todo .top, .plate.st-optional .top { stroke-dasharray: 3 3; }
+  .plate.st-optional { --ps: #e3e3e7; --pg: #e6e6ea; opacity: .85; }
+  .plate.st-doing { --pf: rgba(31,130,235,.075); --ps: #1f82eb; --pl: rgba(31,130,235,.16); --pr: rgba(31,130,235,.26); --pg: #1f6fd1; }
+  .plate.st-doing .lift { transform: translateY(-6px); }
+  .plate.st-doing .ground { opacity: 1; }
+  .plate.st-doing .top { stroke-dasharray: 5 3; animation: march 1.1s linear infinite; }
+  .plate.st-doing .pat .f { fill-opacity: .14; }
+  .plate.st-done { --pf: #fafafb; --ps: #c9c9ce; --pl: #ececef; --pr: #dedee2; --pg: #8f8f97; }
+  .plate.st-done .pat .f { fill-opacity: .16; }
+  .plate.st-done .pat .acc { fill: #22a05a; stroke: none; }
+  .plate:hover .top { stroke: #111; }
+  .plate.sel .top, .plate.pin .top { stroke: #111; stroke-width: 1.4; }
+  .plate.sel .sl, .plate.sel .sr, .plate.pin .sl, .plate.pin .sr { stroke: #111; }
+  .plate.sel:not(.st-doing) .lift, .plate.pin:not(.st-doing) .lift { transform: translateY(-3px); }
+
+  .half.optional { opacity: .45; }
+  .half.doing { color: #1f6fd1; }
+  .half.done .f { fill-opacity: .2; }
+
+  @keyframes march { to { stroke-dashoffset: -16; } }
+
+  .leader { stroke: #dcdce0; stroke-width: 1; fill: none; }
+  .leader.hot { stroke: #1f82eb; }
+  .leaderDot { fill: #c9c9ce; }
+  .leaderDot.hot { fill: #1f82eb; }
+  .fiber { stroke: #dcdce0; stroke-width: .8; }
+  .fiber.on { stroke: #a9a9b1; }
+  .fiber.hot { stroke: #7db6f3; }
+  .lname { font-size: 12px; font-weight: 500; fill: #111; }
+  .lname.todo, .lname.optional { fill: #8a8a8f; }
+  .lst { font-size: 11px; fill: #a3a3a8; }
+  .lst.doing { fill: #1f6fd1; font-weight: 500; }
+  .lst.done { fill: #1f9d55; font-weight: 500; }
+  .tag rect { fill: #fff; stroke: #ececef; }
+  .tag text { font-size: 11.5px; font-weight: 500; fill: #111; }
+  .tag text.sub { font-weight: 400; fill: #a3a3a8; }
+  .tag text.sub.doing { fill: #1f6fd1; }
+  .tag text.sub.done { fill: #1f9d55; }
+
+  .sec { font-size: 14px; font-weight: 600; color: #111; margin: 4px 0 8px; display: flex; align-items: center; gap: 8px; }
+  .pill { height: 20px; padding: 0 8px; border-radius: 999px; background: #171717; color: #fff; font-size: 11px; font-weight: 500; display: inline-flex; align-items: center; }
+
+  /* ---- recommended: sidebar mini + rows + center expand ---- */
+  .stage { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+  .mini-card { margin: 8px 10px 10px; border: 1px solid #f0f0f0; border-radius: 12px; background: #fafafb; position: relative; padding: 6px 4px 4px; }
+  .mini-top { display: flex; align-items: center; justify-content: space-between; padding: 0 6px 0 8px; font-size: 11px; font-weight: 500; color: #a3a3a8; height: 22px; }
+  .ico-btn { width: 22px; height: 22px; border: 0; background: transparent; border-radius: 6px; color: #8a8a8f; font-size: 13px; line-height: 1; cursor: pointer; }
+  .ico-btn:hover { background: #ececef; color: #111; }
+  .ico-btn:focus-visible, .row:focus-visible { outline: 2px solid rgba(31,130,235,.5); outline-offset: 1px; }
+  #isoMini svg { display: block; width: 100%; overflow: visible; }
+  .mlab { font-size: 11px; fill: #8a8a8f; cursor: pointer; }
+  .mlab.doing { fill: #1f6fd1; font-weight: 500; }
+  .mlab.done { fill: #333; }
+  .mlab.hl { fill: #111; font-weight: 500; }
+
+  .rows { padding: 0 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+  .row {
+    display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 10px;
+    border: 1px solid #ececec; border-radius: 8px; background: #fff; cursor: pointer; user-select: none;
+    transition: background .15s, border-color .25s;
+  }
+  .row:hover, .row.hl { background: #f5f5f5; }
+  .row.pin { border-color: #171717; background: #fafafa; }
+  .row .rname { flex: 1; min-width: 0; font-size: 12px; font-weight: 500; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .rname small { margin-left: 6px; font-size: 11px; font-weight: 400; color: #a3a3a8; }
+  .row .rst { font-size: 11px; color: #a3a3a8; white-space: nowrap; }
+  .row .rdot { width: 6px; height: 6px; border-radius: 50%; background: #d4d4d8; flex-shrink: 0; }
+  .row.st-optional { border-style: dashed; border-color: #dcdce0; background: transparent; }
+  .row.st-optional .rname, .row.st-todo .rname { color: #8a8a8f; }
+  .row.st-doing { border-color: rgba(31,130,235,.38); background: rgba(31,130,235,.045); }
+  .row.st-doing.pin { border-color: #1f6fd1; }
+  .row.st-doing .rdot { background: #1f82eb; animation: pulse 1.4s ease-in-out infinite; }
+  .row.st-doing .rst { color: #1f6fd1; font-weight: 500; }
+  .row.st-done .rdot { background: #22a05a; }
+  .row.st-done .rst { color: #1f9d55; font-weight: 500; }
+  .row.st-done .rst::before { content: "✓ "; }
+  .row.flash { animation: rflash .9s ease-out; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+  @keyframes rflash { 0% { box-shadow: 0 0 0 0 rgba(31,130,235,.4); } 100% { box-shadow: 0 0 0 7px rgba(31,130,235,0); } }
+
+  .center { position: relative; width: 760px; max-width: 100%; height: 660px; background: #fff; border: 1px solid #ececec; border-radius: 12px; overflow: hidden; }
+  .c-bar { height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 16px; border-bottom: 1px solid #f0f0f0; font-size: 13px; font-weight: 500; color: #111; }
+  .c-dot { width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; }
+  .c-skel { padding: 22px 28px; display: flex; flex-direction: column; gap: 12px; }
+  .sk { height: 10px; border-radius: 5px; background: #f2f2f4; }
+  .sk.w1 { width: 72%; } .sk.w2 { width: 54%; } .sk.w3 { width: 84%; }
+  .sk.tbl { height: 96px; border-radius: 8px; border: 1px solid #f0f0f0; background: #fafafb; }
+  .c-t { font-size: 13px; font-weight: 500; }
+  .c-sp { flex: 1; }
+  .c-open { height: 26px; padding: 0 10px; border: 1px solid #e4e4e7; background: #fff; border-radius: 7px; font: inherit; font-size: 12px; color: #333; cursor: pointer; }
+  .c-open:hover { border-color: #cfcfd4; }
+  .chat { position: absolute; top: 44px; bottom: 80px; left: 0; right: 0; overflow-y: auto; padding: 18px 28px 8px; display: flex; flex-direction: column; gap: 16px; }
+  .msg { font-size: 13px; line-height: 21px; color: #333; }
+  .msg.in { animation: msgin .45s ease-out; }
+  @keyframes msgin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .msg.user { align-self: flex-end; max-width: 78%; background: #f4f4f5; border-radius: 12px; padding: 8px 12px; }
+  .msg.agent .who { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #111; margin-bottom: 6px; }
+  .msg.agent .av { width: 20px; height: 20px; border-radius: 50%; background: #171717; }
+  .msg.agent p { margin: 0 0 6px; }
+  .msg.agent ol { margin: 0 0 6px; padding-left: 18px; }
+  .msg table { border-collapse: collapse; font-size: 12px; margin: 4px 0 8px; width: 100%; max-width: 420px; }
+  .msg th, .msg td { border: 1px solid #ececec; padding: 5px 9px; text-align: left; }
+  .msg th { background: #fafafa; font-weight: 500; color: #8a8a8f; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .chip2 { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border: 1px solid #ececec; border-radius: 7px; background: #fff; font-size: 11.5px; color: #555; cursor: pointer; }
+  .chip2:hover, .chip2.hl { background: #f5f5f5; }
+  .chip2 i { width: 6px; height: 6px; border-radius: 50%; background: #d4d4d8; }
+  .chip2.doing { border-color: rgba(31,130,235,.38); background: rgba(31,130,235,.045); color: #1f6fd1; }
+  .chip2.doing i { background: #1f82eb; animation: pulse 1.4s ease-in-out infinite; }
+  .chip2.done i { background: #22a05a; }
+  .chip2 b { font-weight: 500; color: #111; }
+  .fakebtns { display: flex; gap: 8px; margin: 6px 0 2px; }
+  .fakebtn { height: 28px; padding: 0 12px; border: 1px solid #e4e4e7; border-radius: 8px; font-size: 12px; display: inline-flex; align-items: center; background: #fff; }
+  .fakebtn.p { background: #171717; border-color: #171717; color: #fff; }
+  .c-comp { position: absolute; left: 20px; right: 20px; bottom: 16px; height: 48px; border: 1px solid #e4e4e7; border-radius: 12px; padding: 0 14px; display: flex; align-items: center; font-size: 13px; color: #b3b3b3; }
+  .overlay {
+    position: absolute; inset: 52px 12px 12px; background: #fff; border: 1px solid #ececec; border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.03);
+    display: flex; flex-direction: column; opacity: 0; transform: translateY(8px) scale(.985); pointer-events: none;
+    transition: opacity .22s ease, transform .22s ease;
+  }
+  .overlay.open { opacity: 1; transform: none; pointer-events: auto; }
+  .ov-head { height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 16px; border-bottom: 1px solid #f0f0f0; }
+  .ov-title { flex: 1; font-size: 12.5px; font-weight: 600; color: #111; }
+  .ov-body { flex: 1; min-height: 0; overflow-y: auto; padding: 10px 12px 14px; }
+  .ov-body svg { display: block; width: 100%; overflow: visible; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 12px); opacity: 0; pointer-events: none;
+    background: #171717; color: #fff; font-size: 12px; padding: 8px 14px; border-radius: 9px; transition: opacity .2s, transform .2s; z-index: 10;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .note.wide { grid-column: 1 / -1; }
+  table.spec { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.spec th, table.spec td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+  table.spec th { font-weight: 500; color: #8a8a8f; font-size: 11.5px; }
+  table.spec td:first-child { white-space: nowrap; color: #111; font-weight: 500; width: 110px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .plate.st-doing .top, .row.st-doing .rdot { animation: none; }
+    .plate .lift, .overlay { transition: none; }
+  }
+
+
+  /* ---- horizontal mode diagrams ---- */
+  .modes { display: flex; flex-direction: column; gap: 18px; max-width: 900px; margin-bottom: 44px; }
+  .mode-card { background: #fff; border: 1px solid #ececec; border-radius: 14px; padding: 18px 22px 14px; }
+  .mc-head h3 { margin: 0 0 4px; font-size: 14px; font-weight: 600; color: #111; display: flex; align-items: center; gap: 8px; }
+  .mc-head p { margin: 0 0 6px; font-size: 12.5px; line-height: 19px; color: #6b6b70; max-width: 720px; }
+  .pill.soft { background: rgba(31,130,235,.1); color: #1f6fd1; }
+  .mdg { display: block; width: 100%; height: auto; overflow: visible; }
+  .mdg .cap { font-size: 10px; font-weight: 600; letter-spacing: .08em; fill: #a3a3a8; }
+  .mdg .cap.mock { fill: #b0b0b6; }
+  .mdg .cap.doing { fill: #1f6fd1; }
+  .mdg .cap.done { fill: #1f9d55; }
+  .mdg .cap.draft { fill: #1f6fd1; }
+  .mdg .ttl { font-size: 12.5px; font-weight: 600; fill: #111; }
+  .mdg .sub { font-size: 11px; fill: #8a8a8f; }
+  .mdg .ph { font-size: 10px; font-weight: 600; letter-spacing: .1em; fill: #8a8a8f; }
+  .mdg .brk { stroke: #dcdce0; fill: none; }
+  .mdg .dband { fill: #f7f7f9; stroke: #ececef; }
+  .mdg .dlab { font-size: 9.5px; font-weight: 600; letter-spacing: .09em; fill: #a3a3a8; }
+  .mdg .dlab-r { font-size: 10px; font-weight: 400; letter-spacing: 0; fill: #b0b0b6; }
+  .mdg .dcard rect { fill: #fff; stroke: #e4e4e7; }
+  .mdg .dcard text { font-size: 10px; fill: #55555b; }
+  .mdg .dico { fill: none; stroke: #a9a9b1; stroke-width: 1; stroke-linejoin: round; }
+  .mdg .dfeed { fill: none; stroke: #cfcfd6; stroke-width: 1; stroke-dasharray: 3 3; }
+  .mdg .dfeed-h { fill: #cfcfd6; }
+  .mdg .pillb rect { fill: #fff; stroke: #e4e4e7; }
+  .mdg .pillb text { font-size: 10px; font-weight: 600; letter-spacing: .06em; fill: #555; }
+  .mdg .pillb.blue text { fill: #1f6fd1; }
+  .plate.st-mock { --pf: url(#hatch); --ps: #c9c9ce; --pl: rgba(0,0,0,.015); --pr: rgba(0,0,0,.035); --pg: #cfcfd4; }
+  .plate.st-mock .top { stroke-dasharray: 3 3; }
+  .ov-intro { font-size: 12.5px; line-height: 19px; color: #6b6b70; margin: 2px 4px 10px; }
+  .ov-legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 6px 4px 0; font-size: 12px; color: #6b6b70; }
+  .ov-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .ov-legend svg { width: 34px; height: 20px; }
+  .seg { display: inline-flex; background: #f2f2f4; border-radius: 8px; padding: 2px; }
+  .seg button { height: 24px; padding: 0 12px; border: 0; background: transparent; border-radius: 6px; font: inherit; font-size: 12px; color: #6b6b70; cursor: pointer; }
+  .seg button.on { background: #fff; color: #111; box-shadow: 0 1px 2px rgba(0,0,0,.12), 0 0 0 .5px rgba(0,0,0,.04); }
+
+
+  .seg.sm button { height: 20px; padding: 0 9px; font-size: 11px; }
+  .vhit { fill: transparent; cursor: pointer; }
+  .vhit.hl { fill: rgba(0,0,0,.028); }
+  .vhit.pin { fill: rgba(0,0,0,.035); stroke: #111; stroke-width: 1; }
+  .vsvg .ttl { font-size: 12px; font-weight: 600; fill: #111; }
+  .vsvg .ttl.dim { fill: #8a8a8f; }
+  .vsvg .vtag { stroke: none; }
+  .vsvg .vtag.s-done, .vsvg .vtag.s-imported { fill: #eaf3ff; }
+  .vsvg .vtag.s-doing { fill: #eaf3ff; animation: vtag-pulse 1.2s ease-in-out infinite; }
+  .vsvg .vtag.s-todo { fill: #f0f0f2; }
+  .vsvg .vtag.s-mock { fill: #f4f4f6; stroke: #d2d2d7; stroke-width: 1; stroke-dasharray: 3 2; }
+  .vsvg .vtag-t { font-size: 9.5px; font-weight: 600; }
+  .vsvg .vtag-t.s-done, .vsvg .vtag-t.s-imported, .vsvg .vtag-t.s-doing { fill: #1f6fd1; }
+  .vsvg .vtag-t.s-todo, .vsvg .vtag-t.s-mock { fill: #9a9aa0; }
+  @keyframes vtag-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+  .vsvg .sub { font-size: 11px; fill: #6b6b70; }
+  .vsvg .ph { font-size: 8.5px; font-weight: 600; letter-spacing: .1em; fill: #8a8a8f; }
+  .vsvg .brk { stroke: #dcdce0; fill: none; }
+  .vsvg .pillb rect { fill: #fff; stroke: #e4e4e7; }
+  .vsvg .pillb text { font-size: 8.5px; font-weight: 600; letter-spacing: .08em; fill: #555; }
+  .vsvg .pillb.blue text { fill: #1f6fd1; }
+
+  /* notes */
+  .notes { margin-top: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+  .note { background: #fff; border: 1px solid #ececec; border-radius: 12px; padding: 16px 18px; font-size: 12.5px; line-height: 20px; color: #444; }
+  .note h3 { margin: 0 0 8px; font-size: 13px; color: #111; }
+  .note ul { margin: 0; padding-left: 16px; }
+  .note li { margin: 3px 0; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 10px 0 0; font-size: 12px; color: #6b6b70; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend svg { width: 34px; height: 20px; }
+</style>
+</head>
+<body>
+<div class="lab">
+  <h1>Blueprint · 等轴分层图(设计讨论稿)</h1>
+  <p class="lead">灵感来自 Palantir 的 “The Ontology” 与 “平台图”:把「搭一个 Agent」画成一栋自下而上盖起来的楼。
+    下面用同一份状态数据渲染三种方案,可以点步骤模拟对话推进,也可以改侧栏宽度看窄屏表现。</p>
+
+  <div class="ctl">
+    <span class="lbl">对话进度</span>
+    <span id="steps"></span>
+    <span class="sep"></span>
+    <button class="btn" id="play">▶ 自动播放</button>
+    <span class="sep"></span>
+    <span class="lbl">侧栏宽度</span>
+    <span id="widths"></span>
+  </div>
+
+  <h2 class="sec">结构图 · Steps <span class="pill">横向 · 模块层 + 文档层</span></h2>
+  <p class="lead" style="margin-bottom:14px">上面一层是八个模块(怎么做出来),下面一层是支撑它们的设计文档。宏观结构:文档 → 模块 → Agent。</p>
+  <div class="modes">
+    <div class="mode-card">
+      <div class="mc-head"><h3>Steps</h3>
+        <p>按八步顺序推进:理需求 → 挖业务知识 → 产品 / 本体 / Agent 三份方案 → 建本体 → 打造 Skill、MCP 等资源 → 生成 Agent。每一步确认后再进入下一步。</p></div>
+      <div id="mdSteps"></div>
+    </div>
+  </div>
+
+  <h2 class="sec">推荐 · 侧栏「紧凑图 + 列表」联动 <span class="pill">方式 2</span></h2>
+  <p class="lead" style="margin-bottom:14px">图负责「一眼看进度」,下面横平竖直的列表负责「文字和操作」,两者共用同一份状态。试试:鼠标移到板或行上、点击选中、点右上角 ⤢ 在中间区域展开大图、再切换上面的对话进度。</p>
+  <div class="stage">
+    <div class="col">
+      <div class="frame" id="sbFrame">
+        <div class="f-head" data-head></div>
+        <div class="mini-card">
+          <div class="mini-top"><span>Blueprint</span><button class="ico-btn" id="expandBtn" title="在中间区域展开" aria-label="展开大图">⤢</button></div>
+          <div id="isoMini" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+    <div class="center" id="center">
+      <div class="c-bar"><span class="c-dot"></span><span class="c-t">T1 Sourcing strategy</span><span class="c-sp"></span><button class="c-open" id="centerOpen">Blueprint ⤢</button></div>
+      <div class="chat" id="chat"></div>
+      <div class="c-comp">Reply, or press Space to autofill…</div>
+      <div class="overlay" id="overlay" aria-hidden="true">
+        <div class="ov-head">
+          <span class="ov-title">Blueprint · T1 Sourcing strategy</span>
+          <span class="seg" id="ovSeg" hidden><button data-m="steps" class="on">Steps</button></span>
+          <button class="ico-btn" id="ovClose" aria-label="关闭">✕</button>
+        </div>
+        <div class="ov-body" id="bigView"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes" style="margin-top:22px">
+    <div class="note wide">
+      <h3>交互说明</h3>
+      <table class="spec">
+        <tr><th>动作</th><th>图(板)</th><th>列表(行)</th></tr>
+        <tr><td>悬停</td><td>该板描边加深</td><td>该行底色变浅灰;双向同步</td></tr>
+        <tr><td>点击</td><td>固定选中(再点取消)</td><td>同步固定选中,出现深色描边</td></tr>
+        <tr><td>点击后的去向</td><td colspan="2">产品里:已有交付物的节点 → 跳到 Files 里对应文件;未建的节点 → 在输入框预填一句「帮我补上 ○○」。(这里用底部提示示意)</td></tr>
+        <tr><td>对话推进</td><td>施工中的板抬起并描边流动;完成的落下变实体</td><td>状态文字淡入,刚变化的那一行闪一下蓝色光圈</td></tr>
+        <tr><td>⤢ 展开</td><td colspan="2">在中间区域盖一层大图(带标注和光点),Esc、点 ✕ 关闭;对话和左侧仍在底下继续推进</td></tr>
+        <tr><td>键盘</td><td>图对读屏隐藏</td><td>Tab 聚焦行,Enter / 空格选中;列表是权威语义</td></tr>
+      </table>
+    </div>
+    <div class="note">
+      <h3>动效节奏</h3>
+      <ul>
+        <li>常态只有「施工中」那一块在动(描边流动),侧栏小图没有光点。</li>
+        <li>光点上升只在展开的大图里出现,避免侧栏同屏抢戏。</li>
+        <li>状态切换 400–500ms 缓动;<code>prefers-reduced-motion</code> 下全部静止,只保留颜色。</li>
+      </ul>
+    </div>
+    <div class="note">
+      <h3>尺寸与降级</h3>
+      <ul>
+        <li>侧栏小图高度约 150px,不带说明文字,名字只在右侧留一列短标签。</li>
+        <li>侧栏宽度 &lt; 240px:收起图,只剩列表。</li>
+        <li>尚未进入场景(Overview 状态)时整块不出现,和现在的行为一致。</li>
+      </ul>
+    </div>
+    <div class="note">
+      <h3>接到产品页的方式</h3>
+      <ul>
+        <li>数据源不变:<code>FastBlueprint.set(node, state, text)</code> 同时驱动图和行。</li>
+        <li>现有 <code>#fast-bp</code> 里的节点卡片会被「图 + 行」替换,行的状态样式沿用现在的 <code>doing / done / optional</code>。</li>
+        <li>展开层属于中间区域的组件,Fast 页的对话脚本不需要改。</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2 class="sec" style="margin-top:48px">完整版对照 <span class="pill">A 用于展开层 · B 留给场景详情页 / Agent 概览页</span></h2>
+  <div class="cols" id="cols">
+    <div class="col">
+      <h2>0 · 现状(扁平卡片)</h2>
+      <p class="cap">已上线的 Fast 页版本,放这里做对照。</p>
+      <div class="frame"><div class="f-head" data-head></div><div class="base" id="base"></div></div>
+    </div>
+    <div class="col">
+      <h2>A · 等轴堆叠(5 层盖楼)</h2>
+      <p class="cap">五块悬浮板自下而上叠起,右侧用引线标注。施工中的板抬起并蓝色描边,盖好的变实体。</p>
+      <div class="frame"><div class="f-head" data-head></div><div class="f-body" id="isoA"></div></div>
+    </div>
+    <div class="col">
+      <h2>B · 平台图(留给场景详情 / Agent 概览)</h2>
+      <p class="cap">更接近 Palantir 第二张图:需求和知识是输入,设计文档是核心板,Agent 与扩展是输出,之间用纤维线连接。</p>
+      <div class="frame"><div class="f-head" data-head></div><div class="f-body" id="isoB"></div></div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note">
+      <h3>状态语言(A、B 通用)</h3>
+      <div class="legend" id="legend"></div>
+      <ul style="margin-top:12px">
+        <li>线框虚线 = 还没建;更淡的虚线 = 可选,不阻塞。</li>
+        <li>蓝色 + 抬起 + 描边流动 = 本轮对话正在施工。</li>
+        <li>实体灰 + 绿色点缀 = 已建好。</li>
+        <li>连接线:下层建好后,线变深并有光点向上流动,表示「喂给上一层」。</li>
+      </ul>
+    </div>
+    <div class="note">
+      <h3>想和你深聊的几点</h3>
+      <ul>
+        <li><b>A 还是 B?</b> A 进度感强、一眼看出建到哪;B 更优雅、更像 Palantir,但 5 个节点压成 3 段,「需求 / 知识」要并排。</li>
+        <li><b>本体、Skill 放哪?</b> A 里是同一块板上的两个小格;B 里和 Agent 并排放在顶部。</li>
+        <li><b>状态文字保不保留?</b> 现在是每块板配一行「待传合同」这类文字,去掉会更纯粹但信息少。</li>
+        <li><b>点击行为:</b> 点板块后是跳到 Files 里的对应交付物,还是在中间对话里滚到相关消息?</li>
+        <li><b>配色:</b> Palantir 是灰 + 薄荷绿,我们现在是灰 + 蓝(施工)+ 绿(完成)。要不要换成更克制的单色?</li>
+      </ul>
+    </div>
+    <div class="note">
+      <h3>落地成本与风险</h3>
+      <ul>
+        <li>纯 SVG + CSS,不引库;状态切换已经抽成同一个数据结构,和 <code>FastBlueprint.set(node,state,text)</code> 能直接对上。</li>
+        <li>窄屏:按容器宽度重新计算板的大小,标注列固定约 112px;宽度 &lt; 280 时 A 需要把标注折到板下方。</li>
+        <li>高度:A 约 450px,需要在侧栏内滚动;B 约 380px,更容易一屏放下。</li>
+        <li>无障碍:SVG 内文字可读,另需一份隐藏的列表语义给读屏软件。</li>
+        <li>这份讨论稿是独立文件,<b>不影响</b> <code>superagent.html</code> 和 <code>superagent-fast.html</code>。</li>
+      </ul>
+    </div>
+  </div>
+  <h2 class="sec" style="margin-top:56px">模式对照 · Fast / Steps <span class="pill">横向 · 只有模块层，没有文档层</span></h2>
+  <p class="lead" style="margin-bottom:14px">两种开始方式的结构对比。Fast（现在叫「轻量模式」）先走一条快速通道出一版 Agent，再回头把 Mock 逐项补实；Steps（「按流程打造」）按八步顺序一步步做扎实。这里去掉了下面的文档层，只看结构差别。</p>
+  <div class="modes">
+    <div class="mode-card">
+      <div class="mc-head"><h3>Fast <span class="pill">轻量模式</span></h3>
+        <p>对齐需求后，中间的知识、设计、本体、Skill 先用 Mock 顶上，直接生成一版可试用的 Agent；试用中发现不足，再回头把 Mock 逐项换成真实实现。</p></div>
+      <div id="mdFast"></div>
+    </div>
+    <div class="mode-card">
+      <div class="mc-head"><h3>Steps <span class="pill">按流程打造</span></h3>
+        <p>按八步顺序推进：理需求 → 挖业务知识 → 产品 / 本体 / Agent 三份方案 → 建本体 → 打造 Skill、MCP 等资源 → 生成 Agent。每一步确认后再进入下一步。</p></div>
+      <div id="mdStepsLite"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var K = 0.36, A = 0.9; // 等轴投影:横向 0.9,纵向 0.36
+
+  /* ---------- 状态数据(对话进度) ---------- */
+  var NAMES = {
+    agent: ['Agent', '寻源 Agent'], ext: ['本体 · Skill', '可选扩展'], doc: ['设计文档', 'Agent 设计'],
+    know: ['业务知识', '准入标准 · 历史合同'], req: ['需求与目标', '品类 · 触发 · 硬性条件 · 评估']
+  ,
+    onto: ['Ontology', ''], tools: ['Skills · MCP', '']
+  };
+  var STEPS = [
+    { n: '① 进入 T1',   s: { req: ['doing', 'To confirm'] } },
+    { n: '② 第一轮',    s: { req: ['doing', '3/5'] } },
+    { n: '③ 第二轮',    s: { req: ['done', 'Defined'], know: ['doing', 'Need contracts'] } },
+    { n: '④ 选 Fast',   s: { req: ['done', 'Defined'], know: ['doing', 'Need contracts'], doc: ['doing', 'Outlining'] } },
+    { n: '⑤ 文档完成',  s: { req: ['done', 'Defined'], know: ['done', '3 files'], doc: ['done', 'v0.1'], onto: ['optional', 'Optional'], skill: ['optional', 'Optional'], agent: ['doing', 'Generating'] } },
+    { n: '⑥ Agent 就绪', s: { req: ['done', 'Defined'], know: ['done', '3 files'], doc: ['done', 'v0.1'], onto: ['optional', 'Optional'], skill: ['optional', 'Optional'], agent: ['done', 'Ready to try'] } }
+  ];
+  var cur = 0;
+  function st(id) {
+    var o = STEPS[cur].s[id];
+    return o ? { s: o[0], t: o[1] } : { s: 'todo', t: '未生成' };
+  }
+  function extState() { // ext 板:取两个小格里最"活跃"的
+    var a = st('onto'), b = st('skill');
+    var rank = { doing: 3, done: 2, todo: 1, optional: 0 };
+    return rank[a.s] >= rank[b.s] ? a : b;
+  }
+  function stOf(id) { return id === 'ext' ? extState() : id === 'tools' ? st('skill') : st(id); }
+
+  /* ---------- SVG 小工具 ---------- */
+  function polys(cx, cy, s, t) {
+    var w = A * s, h = K * s;
+    return {
+      w: w, h: h,
+      top: cx + ',' + (cy - h) + ' ' + (cx + w) + ',' + cy + ' ' + cx + ',' + (cy + h) + ' ' + (cx - w) + ',' + cy,
+      left: (cx - w) + ',' + cy + ' ' + cx + ',' + (cy + h) + ' ' + cx + ',' + (cy + h + t) + ' ' + (cx - w) + ',' + (cy + t),
+      right: (cx + w) + ',' + cy + ' ' + cx + ',' + (cy + h) + ' ' + cx + ',' + (cy + h + t) + ' ' + (cx + w) + ',' + (cy + t)
+    };
+  }
+  function pts(cx, cy, s) { // top polygon points
+    var w = A * s, h = K * s;
+    return cx + ',' + (cy - h) + ' ' + (cx + w) + ',' + cy + ' ' + cx + ',' + (cy + h) + ' ' + (cx - w) + ',' + cy;
+  }
+
+  /* 图案:100 单位平面,范围 ±50 */
+  function pattern(kind, id, big) {
+    var g = '';
+    if (kind === 'req') {
+      g += '<circle class="s" cx="0" cy="0" r="38"/><circle class="s" cx="0" cy="0" r="26"/><circle class="f" cx="0" cy="0" r="14"/>';
+      g += '<circle class="acc d" cx="0" cy="0" r="4"/>';
+      g += '<path class="s" d="M-48 0H-40M40 0H48M0 -48V-40M0 40V48"/>';
+    } else if (kind === 'know') {
+      var xs = [-33, -9, 15], k = 0;
+      for (var i = 0; i < 3; i++) for (var j = 0; j < 3; j++) {
+        g += '<rect class="f" x="' + xs[j] + '" y="' + xs[i] + '" width="18" height="18" rx="3"/>'; k++;
+      }
+      g += '<circle class="acc d" cx="24" cy="-24" r="3.5"/>';
+    } else if (kind === 'doc') {
+      g += '<rect class="f" x="-32" y="-36" width="38" height="8" rx="2"/>';
+      var ls = [[-20, 64], [-8, 54], [4, 64], [16, 46], [28, 30]];
+      ls.forEach(function (l) { g += '<rect class="s" x="-32" y="' + l[0] + '" width="' + l[1] + '" height="5" rx="2"/>'; });
+      g += '<circle class="acc d" cx="30" cy="-32" r="3.5"/>';
+    } else if (kind === 'ext') {
+      g += '<g class="half ' + st('onto').s + '"><rect class="s" x="-46" y="-30" width="42" height="60" rx="6"/>' +
+        '<path class="s" d="M-34 -14L-22 6M-22 6L-34 18M-22 6L-10 -10"/>' +
+        '<circle class="f" cx="-34" cy="-14" r="5"/><circle class="f" cx="-22" cy="6" r="5"/><circle class="f" cx="-34" cy="18" r="5"/><circle class="f" cx="-10" cy="-10" r="5"/></g>';
+      g += '<g class="half ' + st('skill').s + '"><rect class="s" x="4" y="-30" width="42" height="60" rx="6"/>' +
+        '<rect class="f" x="12" y="-20" width="26" height="9" rx="2.5"/><rect class="f" x="12" y="-5" width="26" height="9" rx="2.5"/><rect class="f" x="12" y="10" width="26" height="9" rx="2.5"/></g>';
+    } else if (kind === 'agent') {
+      g += '<path class="s" d="M-36 -32L0 0L36 -32M-36 32L0 0L36 32"/>';
+      g += '<circle class="s" cx="0" cy="0" r="26"/><circle class="f" cx="0" cy="0" r="12"/><circle class="acc d" cx="0" cy="0" r="3.6"/>';
+      [[-36, -32], [36, -32], [-36, 32], [36, 32]].forEach(function (p) { g += '<circle class="f" cx="' + p[0] + '" cy="' + p[1] + '" r="6"/>'; });
+    } else if (kind === 'graph') { // B 的核心板:对象与链接
+      var N = [[-34, -22], [0, -34], [32, -14], [-18, 8], [16, 20], [-38, 30], [40, 34]];
+      var L = [[0, 1], [1, 2], [0, 3], [3, 4], [2, 4], [3, 5], [4, 6], [1, 3]];
+      L.forEach(function (l) { g += '<path class="s" d="M' + N[l[0]][0] + ' ' + N[l[0]][1] + 'L' + N[l[1]][0] + ' ' + N[l[1]][1] + '"/>'; });
+      var filled = st('doc').s === 'done' ? 7 : st('doc').s === 'doing' ? 4 : 0;
+      N.forEach(function (p, i) { g += '<circle class="f' + '" style="fill-opacity:' + (i < filled ? .35 : 0) + '" cx="' + p[0] + '" cy="' + p[1] + '" r="6.5"/>'; });
+    } else if (kind === 'onto') {
+      var N2 = [[-34, -22], [0, -34], [32, -14], [-18, 8], [16, 20], [-38, 30], [40, 34]];
+      [[0, 1], [1, 2], [0, 3], [3, 4], [2, 4], [3, 5], [4, 6], [1, 3]].forEach(function (l) { g += '<path class="s" d="M' + N2[l[0]][0] + ' ' + N2[l[0]][1] + 'L' + N2[l[1]][0] + ' ' + N2[l[1]][1] + '"/>'; });
+      N2.forEach(function (p) { g += '<circle class="f" cx="' + p[0] + '" cy="' + p[1] + '" r="6.5"/>'; });
+      g += '<circle class="acc d" cx="32" cy="-14" r="3.2"/>';
+    } else if (kind === 'skillp') {
+      [[-24, 62], [-8, 62], [8, 62]].forEach(function (b) { g += '<rect class="f" x="-31" y="' + b[0] + '" width="' + b[1] + '" height="11" rx="3"/>'; });
+      g += '<path class="s" d="M-10 28L2 12L8 20L20 4"/><circle class="acc d" cx="26" cy="-30" r="3.5"/>';
+    } else if (kind === 'mcp') {
+      g += '<rect class="f" x="-40" y="-14" width="26" height="28" rx="5"/><rect class="f" x="14" y="-14" width="26" height="28" rx="5"/>';
+      g += '<path class="s" d="M-14 0H14"/><circle class="f" cx="0" cy="0" r="5"/><path class="s" d="M-30 -22V-14M-22 -22V-14M22 -22V-14M30 -22V-14M-30 14V22M-22 14V22M22 14V22M30 14V22"/><circle class="acc d" cx="0" cy="0" r="2.2"/>';
+    } else if (kind === 'res') {
+      g += '<rect class="s" x="-26" y="-34" width="48" height="36" rx="5"/><rect class="s" x="-34" y="-22" width="48" height="36" rx="5"/><rect class="f" x="-42" y="-8" width="48" height="36" rx="5"/>';
+      g += '<path class="s" d="M-34 4H-6M-34 14H-18"/><circle class="acc d" cx="30" cy="26" r="3.5"/>';
+    } else if (kind === 'screen') {
+      g += '<rect class="s" x="-40" y="-30" width="80" height="60" rx="6"/><rect class="f" x="-30" y="-20" width="26" height="14" rx="2"/><path class="s" d="M-30 6H30M-30 16H12"/>';
+      g += '<circle class="acc d" cx="30" cy="-14" r="3.5"/>';
+    }
+    return g;
+  }
+
+  /* 一块板 */
+  function plate(o) {
+    var s = o.s, t = o.t, p = polys(o.cx, o.cy, s, t), u = s / 100;
+    var m = 'matrix(' + A * u + ',' + K * u + ',' + -A * u + ',' + K * u + ',' + o.cx + ',' + o.cy + ')';
+    return '<g class="plate st-' + o.state + '" data-id="' + o.id + '">' +
+      '<polygon class="ground" points="' + p.top + '"/>' +
+      '<g class="lift">' +
+      '<polygon class="sl" points="' + p.left + '"/><polygon class="sr" points="' + p.right + '"/>' +
+      '<polygon class="top" points="' + p.top + '"/>' +
+      '<g class="pat" transform="' + m + '">' + pattern(o.pat, o.id) + '</g>' +
+      '</g></g>';
+  }
+
+  /* 纤维线:从上板底部到下板顶面(垂直) */
+  function fibers(cxU, cyU, sU, tU, cxL, cyL, sL, ks, hot, on) {
+    var wU = A * sU, hU = K * sU, wL = A * sL, hL = K * sL, out = '';
+    ks.forEach(function (d) { // d 为相对 x 偏移(像素,相对 cxU)
+      var x = cxU + d, offU = Math.abs(x - cxU) / wU, offL = Math.abs(x - cxL) / wL;
+      if (offU > 0.98 || offL > 0.98) return;
+      var y1 = cyU + hU * (1 - offU) + tU, y2 = cyL - hL * (1 - offL);
+      if (y2 - y1 < 4) return;
+      out += '<line class="fiber ' + (hot ? 'hot' : on ? 'on' : '') + '" x1="' + x + '" y1="' + y1 + '" x2="' + x + '" y2="' + y2 + '"/>';
+      if (on) {
+        var dur = (1.6 + (Math.abs(d) % 7) * 0.12).toFixed(2), beg = ((Math.abs(d) * 0.37) % 1.6).toFixed(2);
+        out += '<circle r="1.7" fill="' + (hot ? '#1f82eb' : '#22a05a') + '" cx="' + x + '" cy="' + y2 + '"><animate attributeName="cy" from="' + y2 + '" to="' + y1 +
+          '" dur="' + dur + 's" begin="' + beg + 's" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" dur="' + dur + 's" begin="' + beg + 's" repeatCount="indefinite"/></circle>';
+      }
+    });
+    return out;
+  }
+
+  var STATUS_COLOR = { doing: 'doing', done: 'done' };
+
+  /* ---------- 方案 A ---------- */
+  function renderA(el, opt) {
+    opt = opt || {};
+    var W = el.clientWidth || 312, labelW = opt.big ? 150 : 108, pad = 6;
+    var w = Math.min((W - labelW - pad * 2 - 6) / 2, opt.big ? 88 : 84), s = w / A, t = 7;
+    var ox = opt.big ? Math.max(0, (W - (2 * w + 22 + labelW + pad)) / 2) : 0;
+    var cx = pad + w + 2 + ox, P = Math.round(s * 0.95 + 4);
+    var order = ['agent', 'ext', 'doc', 'know', 'req'];
+    var pat = { agent: 'agent', ext: 'ext', doc: 'doc', know: 'know', req: 'req' };
+    var top0 = 30 + K * s;
+    var cy = {}; order.forEach(function (id, i) { cy[id] = top0 + i * P; });
+    var H = cy.req + K * s + t + 26;
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">';
+    var ks = [-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75].map(function (k) { return k * w; });
+    // 纤维(先画,在板后面)
+    for (var i = 0; i < order.length - 1; i++) {
+      var up = order[i], lo = order[i + 1], sl = stOf(lo).s, su = stOf(up).s;
+      var on = sl === 'done', hot = on && su === 'doing';
+      svg += fibers(cx, cy[up], s, t, cx, cy[lo], s, ks, hot, on);
+    }
+    // 板:从下到上
+    for (var j = order.length - 1; j >= 0; j--) {
+      var id = order[j], o = stOf(id);
+      svg += plate({ id: id, cx: cx, cy: cy[id], s: s, t: t, state: o.s, pat: pat[id] });
+    }
+    // 标注
+    var lx = cx + w + 22;
+    order.forEach(function (id) {
+      var o = stOf(id), hot = o.s === 'doing', y = cy[id];
+      svg += '<g data-lab="' + id + '"><path class="leader ' + (hot ? 'hot' : '') + '" d="M' + (cx + w - 6) + ' ' + (y) + 'H' + (lx - 7) + '"/>' +
+        '<circle class="leaderDot ' + (hot ? 'hot' : '') + '" cx="' + (cx + w - 6) + '" cy="' + y + '" r="2"/>' +
+        '<text class="lname ' + o.s + '" x="' + lx + '" y="' + (y - 2) + '">' + NAMES[id][0] + '</text>' +
+        '<text class="lst ' + STATUS_COLOR[o.s] + '" x="' + lx + '" y="' + (y + 13) + '">' +
+        (o.s === 'done' ? '✓ ' : o.s === 'doing' ? '● ' : '') + (id === 'ext' ? subExt() : o.t) + '</text></g>';
+    });
+    svg += '</svg>';
+    el.innerHTML = svg;
+  }
+  function subExt() {
+    var a = st('onto'), b = st('skill');
+    if (a.s === 'optional' && b.s === 'optional') return '可选';
+    if (a.s === 'todo' && b.s === 'todo') return '未生成';
+    return a.t;
+  }
+
+  /* ---------- 方案 B ---------- */
+  function renderB(el) {
+    var W = el.clientWidth || 312, c = W / 2;
+    var sB = Math.min((W - 40) / 2 / A, 118), sS = Math.min((W - 24) / 4 / A, 74), t = 8, tS = 6;
+    var gap = Math.min(sS * A + 4, W / 4 - 2);
+    var cyTop = 30 + K * sS, cyMid = cyTop + K * sS + tS + 96 + K * sB, cyBot = cyMid + K * sB + t + 96 + K * sS;
+    var H = cyBot + K * sS + tS + 44;
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">';
+    var tops = [{ id: 'ext', cx: c - gap, pat: 'ext' }, { id: 'agent', cx: c + gap, pat: 'agent' }];
+    var bots = [{ id: 'req', cx: c - gap, pat: 'req' }, { id: 'know', cx: c + gap, pat: 'know' }];
+    var ks = [-0.6, -0.3, 0, 0.3, 0.6].map(function (k) { return k * sS * A; });
+    // 纤维:输入 -> 核心(下板顶面);核心 -> 输出
+    bots.forEach(function (b) {
+      var on = stOf(b.id).s === 'done', hot = false;
+      svg += fibers(c, cyMid, sB, t, b.cx, cyBot, sS, [], false, false); // 占位,保持签名一致
+      // 手工:从核心板底面 到 底部小板顶面
+      ks.forEach(function (d) {
+        var x = b.cx + d, offM = Math.abs(x - c) / (A * sB), offB = Math.abs(x - b.cx) / (A * sS);
+        if (offM > .98 || offB > .98) return;
+        var y1 = cyMid + K * sB * (1 - offM) + t, y2 = cyBot - K * sS * (1 - offB);
+        if (y2 - y1 < 4) return;
+        svg += '<line class="fiber ' + (on ? 'on' : '') + '" x1="' + x + '" y1="' + y1 + '" x2="' + x + '" y2="' + y2 + '"/>';
+        if (on) {
+          var dur = (1.5 + (Math.abs(d) % 5) * .15).toFixed(2), beg = ((Math.abs(d) * .41) % 1.5).toFixed(2);
+          svg += '<circle r="1.7" fill="#22a05a" cx="' + x + '" cy="' + y2 + '"><animate attributeName="cy" from="' + y2 + '" to="' + y1 + '" dur="' + dur + 's" begin="' + beg + 's" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" dur="' + dur + 's" begin="' + beg + 's" repeatCount="indefinite"/></circle>';
+        }
+      });
+    });
+    var docOn = stOf('doc').s === 'done';
+    tops.forEach(function (tp) {
+      var hot = stOf(tp.id).s === 'doing';
+      ks.forEach(function (d) {
+        var x = tp.cx + d, offT = Math.abs(x - tp.cx) / (A * sS), offM = Math.abs(x - c) / (A * sB);
+        if (offT > .98 || offM > .98) return;
+        var y1 = cyTop + K * sS * (1 - offT) + tS, y2 = cyMid - K * sB * (1 - offM);
+        if (y2 - y1 < 4) return;
+        svg += '<line class="fiber ' + (hot ? 'hot' : docOn ? 'on' : '') + '" x1="' + x + '" y1="' + y1 + '" x2="' + x + '" y2="' + y2 + '"/>';
+        if (docOn) {
+          var dur = (1.5 + (Math.abs(d) % 5) * .15).toFixed(2), beg = ((Math.abs(d) * .41) % 1.5).toFixed(2);
+          svg += '<circle r="1.7" fill="' + (hot ? '#1f82eb' : '#22a05a') + '" cx="' + x + '" cy="' + y2 + '"><animate attributeName="cy" from="' + y2 + '" to="' + y1 + '" dur="' + dur + 's" begin="' + beg + 's" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" dur="' + dur + 's" begin="' + beg + 's" repeatCount="indefinite"/></circle>';
+        }
+      });
+    });
+    // 板
+    bots.forEach(function (b) { var o = stOf(b.id); svg += plate({ id: b.id, cx: b.cx, cy: cyBot, s: sS, t: tS, state: o.s, pat: b.pat }); });
+    var od = stOf('doc'); svg += plate({ id: 'doc', cx: c, cy: cyMid, s: sB, t: t, state: od.s, pat: 'graph' });
+    tops.forEach(function (tp) { var o = stOf(tp.id); svg += plate({ id: tp.id, cx: tp.cx, cy: cyTop, s: sS, t: tS, state: o.s, pat: tp.pat }); });
+
+    // 标签(白底小胶囊,压住穿过的线)
+    function tag(id, cx, y, label) {
+      var o = stOf(id), sub = (id === 'ext' ? subExt() : o.t), full = (o.s === 'done' ? '✓ ' : o.s === 'doing' ? '● ' : '') + sub;
+      var wd = Math.max(label.length * 12 + 10, 60) + 6, ww = Math.max(wd, full.length * 6.4 + 14);
+      return '<g class="tag" data-lab="' + id + '"><rect x="' + (cx - ww / 2) + '" y="' + y + '" width="' + ww + '" height="34" rx="8"/>' +
+        '<text x="' + cx + '" y="' + (y + 14) + '" text-anchor="middle">' + label + '</text>' +
+        '<text class="sub ' + o.s + '" x="' + cx + '" y="' + (y + 27) + '" text-anchor="middle">' + full + '</text></g>';
+    }
+    svg += tag('ext', c - gap, cyTop + K * sS + tS + 6, '本体 · Skill');
+    svg += tag('agent', c + gap, cyTop + K * sS + tS + 6, 'Agent');
+    svg += tag('doc', c, cyMid + K * sB + t + 6, '设计文档');
+    svg += tag('req', c - gap, cyBot + K * sS + tS + 6, '需求与目标');
+    svg += tag('know', c + gap, cyBot + K * sS + tS + 6, '业务知识');
+    svg += '</svg>';
+    el.innerHTML = svg;
+  }
+
+  /* ---------- 侧栏紧凑 A(无图案、板叠起来) ---------- */
+  var ORDER = ['agent', 'ext', 'doc', 'know', 'req'];
+  function renderMini(el) {
+    var W = el.clientWidth || 290, labelW = 80;
+    var w = Math.min((W - labelW - 28) / 2, 56), s = w / A, t = 5, P = Math.round(1.7 * K * s + t + 2);
+    var ox = Math.max(0, (W - (2 * w + 14 + labelW)) / 2), cx = ox + w + 4;
+    var top0 = 18 + K * s, cy = {};
+    ORDER.forEach(function (id, i) { cy[id] = top0 + i * P; });
+    var H = Math.round(cy.req + K * s + t + 12);
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">';
+    for (var j = ORDER.length - 1; j >= 0; j--) {
+      var id = ORDER[j], o = stOf(id);
+      svg += plate({ id: id, cx: cx, cy: cy[id], s: s, t: t, state: o.s, pat: id });
+    }
+    var lx = cx + w + 12;
+    ORDER.forEach(function (id) {
+      var o = stOf(id);
+      svg += '<text class="mlab ' + o.s + '" data-id="' + id + '" x="' + lx + '" y="' + (cy[id] + 4) + '">' + NAMES[id][0] + '</text>';
+    });
+    el.innerHTML = svg + '</svg>';
+  }
+
+  /* ---------- 侧栏竖版过程图(横向图旋转 90°) ---------- */
+  var VST = [
+    { id: 'req', data: 'req', items: ['req'], steps: 'STEP 1', title: 'Requirements' },
+    { id: 'know', data: 'know', items: ['know'], steps: 'STEP 2', title: 'Business knowledge' },
+    { id: 'doc', data: 'doc', items: ['doc', 'onto', 'agent'], steps: 'STEPS 3–5', title: 'Design plans', subs: ['Product plan', 'Ontology plan', 'Agent plan'] },
+    { id: 'onto', data: 'onto', items: ['onto'], steps: 'STEP 6', title: 'Build ontology' },
+    { id: 'tools', data: 'skill', items: ['skillp', 'mcp', 'res'], steps: 'STEP 7', title: 'Skills · MCP · more', subs: ['Skills', 'MCP', 'Resources'] },
+    { id: 'agent', data: 'agent', items: ['agent'], steps: 'STEP 8', title: 'Generate Agent' }
+  ];
+  function vState(sg) {
+    // sidebar map shows order + structure only; it does not depend on Fast / Steps
+    var s = st(sg.data).s;
+    return s === 'optional' ? 'todo' : s;
+  }
+  function vWord(sg, state) {
+    var r = st(sg.data);
+    if (state === 'mock') return 'Mock';
+    if (state === 'todo') return 'Todo';
+    if (state === 'doing') return r.t || 'Doing';
+    if (state === 'done') return r.t || 'Done';
+    return r.t || state;
+  }
+  function renderVert(el) {
+    var W = el.clientWidth || 250; if (!W) return;
+    var fast = false; // order & structure only — no Fast-lane / mock styling in the sidebar
+    var s = 38, w = A * s, h = K * s, t = 4, P = 28, cx = 6 + w, lx = cx + w + 14;
+    var y = 10, lay = [];
+    VST.forEach(function (sg) {
+      var n = sg.items.length, single = n === 1, top = y;
+      var cys = sg.items.map(function (_, k) { return single ? top + 20 : top + 34 + k * P; });
+      var hgt = single ? 40 : 110;
+      lay.push({ sg: sg, top: top, hgt: hgt, cys: cys, state: vState(sg) });
+      y += hgt + (single ? 4 : 6);
+    });
+    var H = Math.round(y + 4);
+    var svg = '<svg class="vsvg" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '"><defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="#e4e4e8" stroke-width="1.2"/></pattern></defs>';
+
+    function bottomY(L) { return L.cys[L.cys.length - 1] + h + t; }
+    function topY(L) { return L.cys[0] - h; }
+    function tri(x, y0, dir, c) { // dir: 'd' down, 'r' right, 'l' left, 'u' up
+      var p = { d: [x - 3.5, y0 - 6, x, y0, x + 3.5, y0 - 6], r: [x - 6, y0 - 3.5, x, y0, x - 6, y0 + 3.5], l: [x + 6, y0 - 3.5, x, y0, x + 6, y0 + 3.5], u: [x - 3.5, y0 + 6, x, y0, x + 3.5, y0 + 6] }[dir];
+      return '<polygon points="' + p[0] + ',' + p[1] + ' ' + p[2] + ',' + p[3] + ' ' + p[4] + ',' + p[5] + '" fill="' + c + '"/>';
+    }
+    var agentL = lay[5], reqL = lay[0];
+    var laneAOn = !fast || true;
+    // lanes (Fast) — behind plates
+    if (fast) {
+      var xA = 7, dA = 'M' + (cx - w) + ' ' + reqL.cys[0] + ' H' + xA + ' V' + agentL.cys[0] + ' H' + (cx - w - 2);
+      var aOn = st('agent').s !== 'todo';
+      svg += '<path d="' + dA + '" fill="none" stroke="' + (aOn ? '#1f82eb' : '#d2d2d7') + '" stroke-width="1.5"' + (aOn ? '' : ' stroke-dasharray="3 3"') + ' stroke-linejoin="round"/>' + tri(cx - w, agentL.cys[0], 'r', aOn ? '#1f82eb' : '#d2d2d7');
+      if (aOn) svg += '<circle r="2.2" fill="#1f82eb"><animateMotion dur="3.2s" repeatCount="indefinite" path="' + dA + '"/></circle>';
+      var xB = W - 8, bOn = st('agent').s === 'done', bc = bOn ? '#8f8f97' : '#d2d2d7';
+      var mids = lay.slice(1, 5), yTopB = mids[0].cys[Math.floor(mids[0].cys.length / 2)];
+      var dB = 'M' + xB + ' ' + agentL.cys[0] + ' V' + yTopB;
+      svg += '<path d="' + dB + '" fill="none" stroke="' + bc + '" stroke-width="1.3" stroke-dasharray="4 3"/><circle cx="' + xB + '" cy="' + agentL.cys[0] + '" r="2.5" fill="' + bc + '"/>';
+      mids.forEach(function (L) {
+        var yy = L.cys[Math.floor(L.cys.length / 2)];
+        svg += '<path d="M' + xB + ' ' + yy + ' H' + (xB - 7) + '" stroke="' + bc + '" stroke-width="1.3" stroke-dasharray="3 2"/>' + tri(xB - 7, yy, 'l', bc);
+      });
+      if (bOn) svg += '<circle r="2" fill="#22a05a"><animateMotion dur="3.4s" repeatCount="indefinite" path="' + dB + '"/></circle>';
+    }
+    // vertical links between stages
+    for (var i = 0; i < 5; i++) {
+      var a = lay[i], b = lay[i + 1], mockLink = a.state === 'mock' || b.state === 'mock';
+      var lit = a.state === 'done' && !mockLink, col = lit ? '#8f8f97' : '#c9c9ce';
+      var y0 = bottomY(a) - 1, y1 = topY(b);
+      var d = 'M' + cx + ' ' + y0 + ' V' + y1;
+      svg += '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="1"' + (mockLink ? ' stroke-dasharray="3 3"' : '') + '/>' + tri(cx, y1, 'd', col);
+      if (lit) svg += '<circle r="2" fill="#22a05a"><animateMotion dur="1.8s" begin="-' + (i * 0.3 + 0.1).toFixed(1) + 's" repeatCount="indefinite" path="' + d + '"/></circle>';
+    }
+    // plates
+    lay.forEach(function (L) {
+      for (var k = L.sg.items.length - 1; k >= 0; k--) svg += plate({ id: L.sg.id, cx: cx, cy: L.cys[k], s: s, t: t, state: L.state, pat: L.sg.items[k] });
+    });
+    // labels: title + trailing status tag (no STEP N); done = blue, doing = pulsing
+    lay.forEach(function (L) {
+      var sg = L.sg, word = vWord(sg, L.state), single = sg.items.length === 1, dim = L.state === 'mock' || L.state === 'todo';
+      var ty = L.top + 15, tw = word.length * 5.6 + 10, maxT = Math.max(36, W - lx - tw - 10);
+      var title = sg.title.length * 6.7 > maxT ? sg.title.slice(0, Math.max(4, Math.floor(maxT / 6.7) - 1)) + '…' : sg.title;
+      var tx = lx + title.length * 6.7 + 6;
+      svg += '<text class="ttl' + (dim ? ' dim' : '') + '" x="' + lx + '" y="' + ty + '">' + title + '</text>' +
+        '<rect class="vtag s-' + L.state + '" x="' + tx + '" y="' + (ty - 11) + '" width="' + tw + '" height="15" rx="4"/>' +
+        '<text class="vtag-t s-' + L.state + '" x="' + (tx + tw / 2) + '" y="' + (ty - 0.5) + '" text-anchor="middle">' + word + '</text>';
+      if (!single) sg.subs.forEach(function (sub, k) {
+        svg += '<text class="sub" x="' + lx + '" y="' + (L.cys[k] + 4) + '">' + sub + '</text>';
+      });
+    });
+    // lane / phase pills (Fast)
+    if (fast) {
+      var pill = function (x, yc, label, cls) {
+        var len = label.length * 6.1 + 16;
+        return '<g class="pillb ' + (cls || '') + '" transform="translate(' + x + ' ' + yc + ') rotate(-90)"><rect x="' + (-len / 2) + '" y="-7" width="' + len + '" height="14" rx="7"/><text x="0" y="3" text-anchor="middle">' + label + '</text></g>';
+      };
+      svg += pill(7, (reqL.cys[0] + agentL.cys[0]) / 2, 'FAST LANE', 'blue');
+      svg += pill(W - 8, (lay[1].cys[0] + agentL.cys[0]) / 2, 'REFINE');
+    }
+    // hit areas (last, so hover/click work everywhere in a stage)
+    lay.forEach(function (L) {
+      svg += '<rect class="vhit" data-id="' + L.sg.id + '" x="0" y="' + (L.top - 2) + '" width="' + W + '" height="' + (L.hgt + 4) + '" rx="8"/>';
+    });
+    el.innerHTML = svg + '</svg>';
+  }
+
+  var prev = {}, pinned = null;
+  function renderRows(el) {
+    var html = '';
+    ORDER.forEach(function (id) {
+      var o = stOf(id), n = NAMES[id];
+      var txt = id === 'ext' ? subExt() : (o.s === 'todo' ? '未生成' : o.t);
+      var key = o.s + '|' + txt, flash = prev[id] !== undefined && prev[id] !== key && o.s !== 'todo';
+      prev[id] = key;
+      html += '<div class="row st-' + o.s + (flash ? ' flash' : '') + (pinned === id ? ' pin' : '') + '" role="listitem" tabindex="0" data-id="' + id + '">' +
+        '<span class="rdot"></span><span class="rname">' + n[0] + '<small>' + n[1] + '</small></span><span class="rst">' + txt + '</span></div>';
+    });
+    el.innerHTML = html;
+  }
+
+  /* ---------- 中间区域:随进度出现的对话 ---------- */
+  var MSGS = [
+    { at: 0, who: 'agent', html: '<p>已检索到 DJI 现有的 <b>2 份</b>供应商资料和 <b>1 条</b>采购政策。为了打造 T1 寻源策略,先确认几件事:</p><ol><li>主要寻源哪类物料?</li><li>什么时候会触发寻源?</li><li>有哪些硬性条件?</li></ol>', chips: ['req'] },
+    { at: 1, who: 'user', html: '主要是电子元器件和结构件,一般在新品导入或供应商出问题要替换时触发。硬性条件:ISO 9001、月产能不低于 10 万件、交期 4 周以内。' },
+    { at: 1, who: 'agent', html: '<p>明白了,目前这几项已经比较完整:</p><table><tr><th>维度</th><th>当前理解</th></tr><tr><td>寻源品类</td><td>电子元器件、结构件</td></tr><tr><td>触发场景</td><td>新品导入 / 供应商替换</td></tr><tr><td>硬性条件</td><td>ISO 9001 · 月产能 ≥ 10 万 · 交期 ≤ 4 周</td></tr></table><p>还差评估优先级和数据来源,方便说说吗?</p>', chips: ['req'] },
+    { at: 2, who: 'user', html: '质量优先,其次是交期,最后看价格。报价数据在 ERP 里,历史合同我也可以上传。' },
+    { at: 2, who: 'agent', html: '<p>需求已经明确。从你的描述看,你是想<b>打造一个寻源 Agent</b>,关联场景 T1。你希望怎么推进?</p><div class="fakebtns"><span class="fakebtn p">⚡ Fast · 先跑出 POC</span><span class="fakebtn">Steps · 一步步理解需求</span></div>', chips: ['req', 'know'] },
+    { at: 3, who: 'user', html: '⚡ Fast · 先跑出可试用的 POC' },
+    { at: 3, who: 'agent', html: '<p>好,按 Fast 走。我先整理设计文档的框架,合同可以稍后补传。</p>', chips: ['doc'] },
+    { at: 4, who: 'agent', html: '<p>设计文档 v0.1 已整理好,业务知识也已就绪。正在生成寻源 Agent…</p>', chips: ['doc', 'know', 'agent'] },
+    { at: 5, who: 'agent', html: '<p>寻源 Agent 已生成,现在可以试用了。</p>', chips: ['agent'] }
+  ];
+  var chatPrev = -1;
+  function chip(id, at) { // 取「这条消息发出那一刻」的状态快照
+    var r = STEPS[at].s[id], o = r ? { s: r[0], t: r[1] } : { s: 'todo', t: '未生成' }, txt = o.t;
+    return '<span class="chip2 ' + o.s + '" data-id="' + id + '"><i></i><b>' + NAMES[id][0] + '</b>' + txt + '</span>';
+  }
+  function renderChat(el) {
+    var html = '', shown = 0;
+    MSGS.forEach(function (m) {
+      if (m.at > cur) return;
+      shown++;
+      var isNew = m.at === cur && cur !== chatPrev;
+      if (m.who === 'user') html += '<div class="msg user' + (isNew ? ' in' : '') + '">' + m.html + '</div>';
+      else html += '<div class="msg agent' + (isNew ? ' in' : '') + '"><div class="who"><span class="av"></span>AgentOS</div>' + m.html +
+        (m.chips ? '<div class="chips">' + m.chips.map(function (c) { return chip(c, m.at); }).join('') + '</div>' : '') + '</div>';
+    });
+    chatPrev = cur;
+    el.innerHTML = html;
+    el.scrollTop = el.scrollHeight;
+  }
+
+  /* ---------- 现状基线 ---------- */
+  function node(id, extra) {
+    var o = stOf(id), n = NAMES[id];
+    return '<div class="bp-node ' + (extra || '') + '" data-state="' + o.s + '"><span class="bp-body"><span class="bp-name">' + n[0] + '</span><span class="bp-sub">' + n[1] + '</span></span><span class="bp-st">' + (o.s === 'todo' ? '未生成' : o.t) + '</span></div>';
+  }
+  function renderBase(el) {
+    var oa = st('onto'), sk = st('skill');
+    el.innerHTML = node('agent') + '<span class="bp-link"></span>' +
+      '<div class="bp-row"><div class="bp-node bp-node--sm" data-state="' + oa.s + '"><span class="bp-body"><span class="bp-name">本体</span><span class="bp-st">' + (oa.s === 'todo' ? '可选' : oa.t) + '</span></span></div>' +
+      '<div class="bp-node bp-node--sm" data-state="' + sk.s + '"><span class="bp-body"><span class="bp-name">Skill</span><span class="bp-st">' + (sk.s === 'todo' ? '可选' : sk.t) + '</span></span></div></div>' +
+      '<span class="bp-link"></span>' + node('doc') + '<span class="bp-link"></span>' + node('know') + '<span class="bp-link"></span>' + node('req') + '<div style="height:10px"></div>';
+    // 基线里 todo 的「本体/Skill」用虚线
+    el.querySelectorAll('.bp-row .bp-node[data-state="todo"]').forEach(function (n) { n.setAttribute('data-state', 'optional'); });
+  }
+
+  /* ---------- 横向模式图(Fast / Steps) ---------- */
+  var MDW = 800, MDH = 316, MDH_STEPS = 412;
+  /* Steps only: the document layer under the modules — everything above is built from these documents */
+  var DOCS = [
+    ['Requirements brief', 'Success criteria'],
+    ['Contracts · rules', 'Process notes', 'ERP export'],
+    ['Product plan', 'Ontology plan', 'Agent plan'],
+    ['Data source spec', 'Semantic graph'],
+    ['Skill specs', 'MCP specs', 'Resource list'],
+    ['Agent spec', 'Mock register']
+  ];
+  function docLayer(cols, yTops) {
+    var out = '', bandY = 258, cw = 120, ch = 20, gp = 5, y0 = bandY + 30;
+    cols.forEach(function (c, i) {
+      out += '<path class="dfeed" d="M' + c.cx + ' ' + bandY + ' V' + (yTops[i] + 8) + '"/>' +
+        '<polygon class="dfeed-h" points="' + (c.cx - 3.5) + ',' + (yTops[i] + 8) + ' ' + c.cx + ',' + (yTops[i] + 1) + ' ' + (c.cx + 3.5) + ',' + (yTops[i] + 8) + '"/>';
+    });
+    out += '<rect class="dband" x="8" y="' + bandY + '" width="' + (MDW - 16) + '" height="108" rx="10"/>' +
+      '<text class="dlab" x="22" y="' + (bandY + 18) + '">DOCUMENT LAYER</text>' +
+      '<text class="dlab dlab-r" x="' + (MDW - 22) + '" y="' + (bandY + 18) + '" text-anchor="end">Every module above is built from these documents</text>';
+    cols.forEach(function (c, i) {
+      DOCS[i].forEach(function (name, k) {
+        var x = c.cx - cw / 2, y = y0 + k * (ch + gp);
+        out += '<g class="dcard"><rect x="' + x + '" y="' + y + '" width="' + cw + '" height="' + ch + '" rx="5"/>' +
+          '<path class="dico" d="M' + (x + 8) + ' ' + (y + 5) + ' h5 l3 3 v7 h-8 z M' + (x + 13) + ' ' + (y + 5) + ' v3 h3"/>' +
+          '<text x="' + (x + 23) + '" y="' + (y + 13.6) + '">' + name + '</text></g>';
+      });
+    });
+    return out;
+  }
+  function modeDiagram(o) {
+    var mode = o.mode, dyn = !!o.dyn, fast = mode === 'fast', noDocs = !!o.noDocs;
+    var s = 51, w = A * s, h = K * s, t = 6, P = 48, cy0 = 150, X0 = 70, PITCH = 132;
+    var cols = [
+      { items: ['req'], steps: 'STEP 1', title: 'Requirements', sub: ['Goals · triggers · criteria'] },
+      { items: ['know'], steps: 'STEP 2', title: 'Business knowledge', sub: ['Rules · contracts · data'] },
+      { items: ['doc', 'onto', 'agent'], steps: 'STEPS 3–5', title: 'Design plans', sub: ['Product · Ontology', '· Agent plans'] },
+      { items: ['onto'], steps: 'STEP 6', title: 'Build ontology', sub: ['Objects · links · actions'] },
+      { items: ['skillp', 'mcp', 'res'], steps: 'STEP 7', title: 'Skills · MCP · more', sub: ['Tools & resources', 'the Agent can use'] },
+      { items: ['agent'], steps: 'STEP 8', title: 'Generate Agent', sub: ['Assemble & test'] }
+    ];
+    var fastLab = [
+      ['LIGHT', 'Requirements', ['Quick alignment']],
+      ['MOCK', 'Business knowledge', ['Placeholder data']],
+      ['MOCK', 'Design plans', ['Product · Ontology', '· Agent plans']],
+      ['MOCK', 'Ontology', ['Stubbed objects']],
+      ['MOCK', 'Skills · MCP · more', ['Stubbed tools']],
+      ['DRAFT', 'Agent', ['Generated right away']]
+    ];
+    // per-column state
+    var S = function (id) { return st(id).s; }, mk = function (x) { return x === 'todo' ? 'mock' : x; };
+    var states;
+    if (dyn) states = fast ? [S('req'), mk(S('know')), mk(S('doc')), 'mock', 'mock', S('agent')] : [S('req'), S('know'), S('doc'), 'todo', 'todo', S('agent')];
+    else states = fast ? ['done', 'mock', 'mock', 'mock', 'mock', 'doing'] : ['done', 'done', 'done', 'done', 'done', 'doing'];
+    var WORD = { done: 'DONE', doing: 'IN PROGRESS', todo: 'NOT STARTED', mock: 'MOCK', optional: 'OPTIONAL' };
+
+    cols.forEach(function (c, i) {
+      c.cx = X0 + i * PITCH;
+      var n = c.items.length;
+      c.cys = c.items.map(function (_, k) { return cy0 + (k - (n - 1) / 2) * P; });
+      c.state = states[i];
+    });
+
+    var svg = '<svg class="mdg" viewBox="0 0 ' + MDW + ' ' + (fast || noDocs ? MDH : MDH_STEPS) + '" xmlns="http://www.w3.org/2000/svg">' +
+      '<defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="#e4e4e8" stroke-width="1.2"/></pattern></defs>';
+
+    function surf(cy, d) { return cy + h * (1 - Math.abs(d) / w) + t; }
+    var laneAOn = !dyn || S('agent') !== 'todo', laneBOn = !dyn || S('agent') === 'done';
+    var yA = 294, yB = 262;
+
+    // --- Fast lanes (behind plates) ---
+    if (fast) {
+      var c0 = cols[0], c5 = cols[5];
+      var xa0 = c0.cx - 16, xa5 = c5.cx - 16, ya0 = surf(c0.cys[0], -16), ya5 = surf(c5.cys[0], -16);
+      var dA = 'M' + xa0 + ' ' + ya0 + ' V' + yA + ' H' + xa5 + ' V' + ya5;
+      svg += '<path d="' + dA + '" fill="none" stroke="' + (laneAOn ? '#1f82eb' : '#d2d2d7') + '" stroke-width="1.6" stroke-linejoin="round"' + (laneAOn ? '' : ' stroke-dasharray="3 3"') + '/>';
+      svg += '<polygon points="' + (xa5 - 3.5) + ',' + (ya5 + 7) + ' ' + xa5 + ',' + ya5 + ' ' + (xa5 + 3.5) + ',' + (ya5 + 7) + '" fill="' + (laneAOn ? '#1f82eb' : '#d2d2d7') + '"/>';
+      if (laneAOn) svg += '<circle r="2.4" fill="#1f82eb"><animateMotion dur="3s" repeatCount="indefinite" path="' + dA + '"/></circle>';
+      var xb = c5.cx + 16, yb0 = surf(c5.cys[0], 16);
+      var dB = 'M' + xb + ' ' + yb0 + ' V' + yB + ' H' + cols[1].cx;
+      var bc = laneBOn ? '#8f8f97' : '#d2d2d7';
+      svg += '<path d="' + dB + '" fill="none" stroke="#fff" stroke-width="5"/>';
+      svg += '<path d="' + dB + '" fill="none" stroke="' + bc + '" stroke-width="1.3" stroke-dasharray="4 3" stroke-linejoin="round"/>';
+      for (var r = 1; r <= 4; r++) {
+        var cr = cols[r], last = cr.cys[cr.cys.length - 1], yTop = last + h + t;
+        svg += '<path d="M' + cr.cx + ' ' + yB + ' V' + (yTop + 1) + '" fill="none" stroke="' + bc + '" stroke-width="1.3" stroke-dasharray="4 3"/>';
+        svg += '<polygon points="' + (cr.cx - 3.5) + ',' + (yTop + 8) + ' ' + cr.cx + ',' + (yTop + 1) + ' ' + (cr.cx + 3.5) + ',' + (yTop + 8) + '" fill="' + bc + '"/>';
+      }
+      if (laneBOn) svg += '<circle r="2.2" fill="#22a05a"><animateMotion dur="3.4s" repeatCount="indefinite" path="' + dB + '"/></circle>';
+    }
+
+    // --- horizontal links between columns ---
+    for (var i = 0; i < 5; i++) {
+      var a = cols[i], b = cols[i + 1], xr = a.cx + w, xl = b.cx - w;
+      var mockLink = a.state === 'mock' || b.state === 'mock';
+      var lit = dyn ? a.state === 'done' : !fast;
+      var col = lit ? '#8f8f97' : '#c9c9ce';
+      a.cys.forEach(function (ya, ia) {
+        b.cys.forEach(function (yb, ib) {
+          var d = ya === yb ? 'M' + xr + ' ' + ya + ' H' + xl : 'M' + xr + ' ' + ya + ' H' + (xr + 16) + ' L' + xl + ' ' + yb;
+          svg += '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="1"' + (mockLink ? ' stroke-dasharray="3 3"' : '') + '/>';
+          svg += '<polygon points="' + (xl - 6) + ',' + (yb - 3) + ' ' + xl + ',' + yb + ' ' + (xl - 6) + ',' + (yb + 3) + '" fill="' + col + '"/>';
+          if (lit && !mockLink) svg += '<circle r="2" fill="#22a05a"><animateMotion dur="2.4s" begin="-' + (i * 0.4 + (ia + ib) * 0.2 + 0.1).toFixed(1) + 's" repeatCount="indefinite" path="' + d + '"/></circle>';
+        });
+      });
+    }
+
+    // --- plates (stacked: bottom first) ---
+    cols.forEach(function (c) {
+      for (var k = c.items.length - 1; k >= 0; k--) svg += plate({ id: 'md', cx: c.cx, cy: c.cys[k], s: s, t: t, state: c.state, pat: c.items[k] });
+    });
+
+    // --- column labels (top, small caps like the reference) ---
+    cols.forEach(function (c, i) {
+      var cap = dyn ? WORD[c.state] : (fast ? fastLab[i][0] : c.steps);
+      var capCls = dyn ? c.state : (fast ? (i === 0 ? 'light' : fastLab[i][0].toLowerCase()) : '');
+      var title = fast ? fastLab[i][1] : c.title, sub = fast ? fastLab[i][2] : c.sub;
+      svg += '<text class="cap ' + capCls + '" x="' + c.cx + '" y="16" text-anchor="middle">' + cap + '</text>' +
+        '<text class="ttl" x="' + c.cx + '" y="34" text-anchor="middle">' + title + '</text>';
+      sub.forEach(function (line, j) { svg += '<text class="sub" x="' + c.cx + '" y="' + (50 + j * 13) + '" text-anchor="middle">' + line + '</text>'; });
+    });
+
+    // --- Steps: phase brackets / Fast: lane pills ---
+    if (!fast) {
+      if (!noDocs) svg += docLayer(cols, cols.map(function (c) { return c.cys[c.cys.length - 1] + h + t; }));
+      var by = noDocs ? 276 : 382;   // phase brackets: right under the plates when there is no document layer
+      [[0, 1, 'UNDERSTAND'], [2, 2, 'DESIGN'], [3, 4, 'BUILD'], [5, 5, 'SHIP']].forEach(function (p) {
+        var x0 = cols[p[0]].cx - w, x1 = cols[p[1]].cx + w;
+        svg += '<path class="brk" d="M' + x0 + ' ' + by + ' V' + (by + 6) + ' H' + x1 + ' V' + by + '"/><text class="ph" x="' + ((x0 + x1) / 2) + '" y="' + (by + 26) + '" text-anchor="middle">' + p[2] + '</text>';
+      });
+    } else {
+      var pill = function (x, y, label, cls) {
+        var wd = label.length * 6.7 + 22;
+        return '<g class="pillb ' + (cls || '') + '"><rect x="' + (x - wd / 2) + '" y="' + (y - 10) + '" width="' + wd + '" height="20" rx="10"/><text x="' + x + '" y="' + (y + 3.5) + '" text-anchor="middle">' + label + '</text></g>';
+      };
+      svg += pill((cols[0].cx + cols[5].cx) / 2, yA, 'FAST LANE · DRAFT AGENT RIGHT AFTER ALIGNMENT', 'blue');
+      svg += pill((cols[1].cx + cols[5].cx + 16) / 2 - 20, yB, 'TRY IT → REFINE THE MOCKS');
+    }
+    return svg + '</svg>';
+  }
+
+  var ovMode = 'steps';
+  function setMode(m) {
+    ovMode = 'steps';
+    document.querySelectorAll('#ovSeg button, [data-mseg] button').forEach(function (x) { x.classList.toggle('on', x.getAttribute('data-m') === 'steps'); });
+    document.querySelectorAll('.f-chip.mode').forEach(function (c) { c.textContent = 'Steps'; });
+    draw();
+  }
+  function legendHtml() {
+    return [['done', 'Done'], ['doing', 'In progress'], ['mock', 'Mock'], ['todo', 'Not started']].map(function (x) {
+      return '<span><svg viewBox="0 0 34 20">' + plate({ id: 'lg', cx: 17, cy: 9, s: 11, t: 3, state: x[0], pat: 'req' }) + '</svg>' + x[1] + '</span>';
+    }).join('');
+  }
+  function renderOverlay() {
+    document.getElementById('bigView').innerHTML = '<p class="ov-intro">Steps · 模块层 + 文档层。上面是八个环节,下面是支撑它们的设计文档。</p>' + modeDiagram({ mode: 'steps', dyn: true }) +
+      '<div class="ov-legend">' + legendHtml() + '</div>';
+  }
+
+  /* ---------- 公共 ---------- */
+  var heads = document.querySelectorAll('[data-head]');
+  heads.forEach(function (h) {
+    h.innerHTML = '<div class="f-back">‹ Overview</div><div class="f-title">T1 Sourcing strategy (v2.1 new step)</div>' +
+      '<div class="f-chips"><span class="f-chip">Business</span><span class="f-chip"><i></i>Crafting</span><span class="f-chip mode">Fast</span></div>';
+  });
+
+  function draw() {
+    var fw = document.getElementById('sbFrame').clientWidth;
+    document.querySelector('.mini-card').style.display = fw && fw < 240 ? 'none' : '';
+    renderVert(document.getElementById('isoMini'));
+    renderChat(document.getElementById('chat'));
+    if (document.getElementById('overlay').classList.contains('open')) renderOverlay();
+    var md = document.getElementById('mdSteps');
+    if (md) md.innerHTML = modeDiagram({ mode: 'steps' });
+    var mf = document.getElementById('mdFast'); if (mf) mf.innerHTML = modeDiagram({ mode: 'fast' });
+    var ml = document.getElementById('mdStepsLite'); if (ml) ml.innerHTML = modeDiagram({ mode: 'steps', noDocs: true });
+    applyPin();
+    renderBase(document.getElementById('base'));
+    renderA(document.getElementById('isoA'));
+    renderB(document.getElementById('isoB'));
+    document.querySelectorAll('.step-b').forEach(function (b, i) { b.classList.toggle('on', i === cur); });
+  }
+
+  var stepsEl = document.getElementById('steps');
+  STEPS.forEach(function (sp, i) {
+    var b = document.createElement('button'); b.className = 'btn step-b'; b.textContent = sp.n; b.style.marginRight = '4px';
+    b.onclick = function () { stopPlay(); cur = i; draw(); };
+    stepsEl.appendChild(b);
+  });
+  var widthsEl = document.getElementById('widths');
+  [280, 320, 360].forEach(function (w) {
+    var b = document.createElement('button'); b.className = 'btn wb'; b.textContent = w + 'px'; b.style.marginRight = '4px';
+    b.onclick = function () { setW(w); };
+    widthsEl.appendChild(b);
+  });
+  function setW(w) {
+    document.getElementById('cols').style.setProperty('--w', w + 'px');
+    document.querySelectorAll('.col').forEach(function (c) { c.style.setProperty('--w', w + 'px'); });
+    document.querySelectorAll('.wb').forEach(function (b) { b.classList.toggle('on', b.textContent === w + 'px'); });
+    draw();
+  }
+  var timer = null;
+  function stopPlay() { if (timer) { clearInterval(timer); timer = null; document.getElementById('play').textContent = '▶ 自动播放'; } }
+  document.getElementById('play').onclick = function () {
+    if (timer) return stopPlay();
+    cur = 0; draw();
+    document.getElementById('play').textContent = '■ 停止';
+    timer = setInterval(function () { cur++; if (cur >= STEPS.length) { stopPlay(); cur = STEPS.length - 1; } draw(); }, 2200);
+  };
+
+  // 悬浮 / 选中联动:板、短标签、行 三方同步
+  function applyHL(id) {
+    document.querySelectorAll('.plate').forEach(function (p) { p.classList.toggle('sel', p.getAttribute('data-id') === id); });
+    document.querySelectorAll('.row').forEach(function (r) { r.classList.toggle('hl', r.getAttribute('data-id') === id); });
+    document.querySelectorAll('.mlab, .chip2, .vhit').forEach(function (r) { r.classList.toggle('hl', r.getAttribute('data-id') === id); });
+  }
+  function applyPin() {
+    document.querySelectorAll('.plate').forEach(function (p) { p.classList.toggle('pin', p.getAttribute('data-id') === pinned); });
+    document.querySelectorAll('.row, .vhit').forEach(function (r) { r.classList.toggle('pin', r.getAttribute('data-id') === pinned); });
+  }
+  function idOf(e) { var el = e.target.closest ? e.target.closest('[data-id],[data-lab]') : null; if (!el) return null; var id = el.getAttribute('data-id') || el.getAttribute('data-lab'); return NAMES[id] ? id : null; }
+  document.addEventListener('mouseover', function (e) { var id = idOf(e); if (id) applyHL(id); });
+  document.addEventListener('mouseout', function () { applyHL(pinned); });
+  var toastT = null;
+  function toast(msg) {
+    var el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show');
+    clearTimeout(toastT); toastT = setTimeout(function () { el.classList.remove('show'); }, 2600);
+  }
+  function pick(id) {
+    pinned = pinned === id ? null : id; applyPin(); applyHL(pinned);
+    if (!pinned) return;
+    var o = stOf(id), nm = NAMES[id][0];
+    toast(o.s === 'done' || o.s === 'doing'
+      ? '示意:跳到 Files → ' + nm + ' 对应的交付物'
+      : '示意:在输入框预填「帮我补上' + nm + '」');
+  }
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('#overlay') && !e.target.closest('[data-id]')) return;
+    var id = idOf(e); if (id && e.target.closest('#sbFrame, #overlay, #chat')) pick(id);
+  });
+  document.addEventListener('keydown', function (e) {
+    var row = e.target.closest && e.target.closest('.row');
+    if (row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); pick(row.getAttribute('data-id')); }
+    if (e.key === 'Escape') closeOv();
+  });
+  // 展开层
+  var ov = document.getElementById('overlay');
+  function openOv() { ov.classList.add('open'); ov.setAttribute('aria-hidden', 'false'); draw(); }
+  function closeOv() { ov.classList.remove('open'); ov.setAttribute('aria-hidden', 'true'); }
+  document.getElementById('expandBtn').onclick = function () { ov.classList.contains('open') ? closeOv() : openOv(); };
+  document.getElementById('ovClose').onclick = closeOv;
+  document.getElementById('ovSeg').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    setMode(b.getAttribute('data-m'));
+  });
+  document.getElementById('centerOpen').onclick = function () { ov.classList.contains('open') ? closeOv() : openOv(); };
+
+  // 图例
+  document.getElementById('legend').innerHTML = [
+    ['todo', '未建'], ['optional', '可选'], ['doing', '施工中'], ['done', '已建']
+  ].map(function (x) {
+    return '<span><svg viewBox="0 0 34 20">' + plate({ id: 'lg', cx: 17, cy: 9, s: 11, t: 3, state: x[0], pat: 'req' }) + '</svg>' + x[1] + '</span>';
+  }).join('');
+
+  var m = /step=(\d)/.exec(location.hash); if (m) cur = Math.min(+m[1], STEPS.length - 1);
+  var mw = /w=(\d+)/.exec(location.hash);
+  setW(mw ? +mw[1] : 320);
+  window.addEventListener('resize', draw);
+  var mp = /pin=(\w+)/.exec(location.hash); if (mp) { pinned = mp[1]; draw(); applyHL(pinned); }
+  var mm = /mode=(\w+)/.exec(location.hash); if (mm) setMode(mm[1]);
+  if (/open=1/.test(location.hash)) openOv();
+})();
+</script>
+</body>
+</html>

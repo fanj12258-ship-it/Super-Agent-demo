@@ -1,0 +1,30 @@
+<!doctype html><meta charset=utf-8><title>AgentOS avatar options</title><body style="font:13px -apple-system,sans-serif;background:#fff;color:#171717;padding:32px"><h3 style="margin:0 0 4px">AgentOS 头像候选 · 小机器人</h3><p style="color:#8a8a8f;margin:0 0 24px">浅色圆底，白蓝机身、深蓝面罩，一只眼睛会眨，隔几秒眨一下。从左到右：28px、40px、放大。</p><div style="display:flex;align-items:center;gap:28px"><span id=a style="width:28px;height:28px;display:inline-block"></span><span id=b style="width:40px;height:40px;display:inline-block"></span><span id=c style="width:200px;height:200px;display:inline-block"></span></div><script>var AV_N = 0;
+  function avatarMarkHtml() {
+    var id = 'aoav' + (++AV_N);
+    var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var blink = still ? '' : '<animate attributeName="ry" values="1.85;1.85;.2;1.85;1.85" keyTimes="0;.9;.94;.98;1" dur="5s" repeatCount="indefinite"/>';
+    var blinkG = still ? '' : '<animate attributeName="ry" values="2.6;2.6;.5;2.6;2.6" keyTimes="0;.9;.94;.98;1" dur="5s" repeatCount="indefinite"/>';
+    return (
+      '<svg width="100%" height="100%" viewBox="0 0 28 28" fill="none" aria-hidden="true">' +
+      '<defs>' +
+      '<linearGradient id="' + id + 'b" x1="4" y1="2" x2="24" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#f4f5ff"/><stop offset="1" stop-color="#d9defa"/></linearGradient>' +
+      '<linearGradient id="' + id + 's" x1="8" y1="7" x2="20" y2="22" gradientUnits="userSpaceOnUse"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#cfd8fb"/></linearGradient>' +
+      '<linearGradient id="' + id + 'v" x1="8" y1="9" x2="20" y2="19" gradientUnits="userSpaceOnUse"><stop stop-color="#2a45d8"/><stop offset="1" stop-color="#0e1c80"/></linearGradient>' +
+      '<filter id="' + id + 'g" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation=".7"/></filter>' +
+      '</defs>' +
+      '<circle cx="14" cy="14" r="14" fill="url(#' + id + 'b)"/>' +
+      '<path d="M11 7V4.6" stroke="#aab6ee" stroke-width=".9" stroke-linecap="round"/><circle cx="11" cy="4" r="1" fill="#3a5af0"/>' +
+      '<rect x="2.9" y="12" width="3.4" height="6.6" rx="1.7" fill="#2a47d6"/><rect x="21.7" y="12" width="3.4" height="6.6" rx="1.7" fill="#2a47d6"/>' +
+      '<rect x="5" y="7" width="18" height="14.6" rx="6.4" fill="url(#' + id + 's)"/>' +
+      '<rect x="7.1" y="9.2" width="13.8" height="10.2" rx="4.2" fill="url(#' + id + 'v)"/>' +
+      '<path d="M9.4 10.6c1.6-.7 5.4-.9 9.2-.1" stroke="#fff" stroke-opacity=".28" stroke-width=".8" stroke-linecap="round"/>' +
+      '<g filter="url(#' + id + 'g)" opacity=".9"><ellipse cx="11.1" cy="13.6" rx="1.9" ry="2.6" fill="#2de2ff">' + blinkG + '</ellipse>' +
+      '<path d="M18.5 12.3 16.1 13.7 18.5 15.1" stroke="#2de2ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>' +
+      '<ellipse cx="11.1" cy="13.6" rx="1.35" ry="1.85" fill="#fff">' + blink + '</ellipse>' +
+      '<path d="M18.5 12.3 16.1 13.7 18.5 15.1" stroke="#a9f6ff" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<path d="M11.9 16.9Q14.2 18.8 16.5 16.9" stroke="#b9f7ff" stroke-width=".95" stroke-linecap="round"/>' +
+      '</svg>'
+    );
+  }
+
+  ["a","b","c"].forEach(function(i){document.getElementById(i).innerHTML=avatarMarkHtml()})</script>

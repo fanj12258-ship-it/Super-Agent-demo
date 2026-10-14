@@ -1,0 +1,24 @@
+/* Fast POC page ONLY — scene card shown inside the chat (same look as the sidebar scene card). */
+.fsc {
+  margin: 10px 0 4px; width: 100%;
+  border: 1px solid var(--border, #ececec); border-radius: var(--radius-card, 12px); background: var(--bg, #fff);
+  overflow: hidden;
+}
+.fsc-app { padding: 12px 14px 12px; }
+.fsc-title { margin: 0; font-size: 13.5px; line-height: 20px; font-weight: 600; color: var(--text-primary, #111); letter-spacing: -.005em; }
+.fsc-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 6px; }
+.fsc-desc { margin: 7px 0 0; font-size: 12px; line-height: 18px; color: var(--text-quiet, #666); }
+.fsc-prio {
+  display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px;
+  background: var(--bg-chip, #f7f7f8); font-size: 11px; font-weight: 500; color: var(--text-secondary, #8a8a8f);
+}
+.fsc-kids { padding: 0 10px 10px; display: flex; flex-direction: column; gap: 8px; }
+.fsc-biz { padding: 10px 12px; border-radius: 8px; background: var(--bg-subtle, #fafafa); border: 1px solid var(--border-soft, #f0f0f0); }
+.fsc-biz-title { margin: 0; font-size: 12.5px; line-height: 18px; font-weight: 600; color: var(--text-primary, #111); }
+.fsc-foot {
+  display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 10px 14px;
+  border-top: 1px solid var(--border-soft, #f0f0f0);
+}
+.fsc-result { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary, #8a8a8f); animation: fsc-in .3s ease-out; }
+.fsc-result svg { color: var(--status-live-text, #1f9d55); }
+@keyframes fsc-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }

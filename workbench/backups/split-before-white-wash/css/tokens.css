@@ -1,0 +1,40 @@
+/* tokens.css — :root design tokens, base reset, body */
+
+:root {
+  --text: #333333;
+  --text-secondary: #8c8c8c;
+  --placeholder: #b3b3b3;
+  --divider: #e6e6e6;
+  --hover: #f5f5f5;
+  --selected: #e5f4ff;
+  --search-bg: #f5f5f5;
+  --brand-red: #f24822;
+  --file-blue: #0d99ff;
+
+  /* Locked popover chrome — account menu is the source of truth */
+  --popover-bg: #ffffff;
+  --popover-border: #ececec;
+  --popover-radius: 14px;
+  --popover-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --popover-sep: #f0f0f0;
+  --popover-font: 13px;
+  --popover-pad: 6px;
+  --popover-item-h: 34px;
+  --popover-item-radius: 8px;
+  --popover-item-pad-x: 10px;
+  --popover-gap: 8px;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  display: flex;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text);
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; text-align: left; }
+svg { display: block; flex-shrink: 0; }

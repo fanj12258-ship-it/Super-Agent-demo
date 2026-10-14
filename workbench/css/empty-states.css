@@ -1,0 +1,83 @@
+/* empty-states.css — generic .empty, Coming-soon hero art, Market / AI Ops page wash (.has-hero) */
+
+.empty {
+  padding: 56px 24px;
+  border: 1px dashed #e4e4e4;
+  border-radius: 12px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+  background: #fafafa;
+}
+.empty strong { display: block; margin-bottom: 4px; color: #333; font-weight: 600; }
+
+/* Coming-soon empty states — soft wash into page, no hard panel */
+.empty-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: min(520px, calc(100vh - 200px));
+  margin: -32px;
+  padding: 96px 40px 112px;
+  text-align: center;
+  overflow: hidden;
+  background: transparent; /* gradient lives on .main.has-hero so it spans the top bar too */
+}
+/* Content pages (Scenario, Agent, Knowledge, Skill, Ontology, MCP, Files) use the plain
+   white .main background — no wash (tried a light blue wash, reverted 2026-10-10).
+   Only the empty "coming soon" pages get a wash. It covers the whole right pane
+   (top bar + body); every layer fades to transparent / #fff, so there is no visible seam. */
+.main.has-hero {
+  background:
+    radial-gradient(ellipse 55% 60% at 50% 40%, rgba(13, 153, 255, 0.11), transparent 100%),
+    radial-gradient(ellipse 40% 40% at 72% 20%, rgba(106, 84, 240, 0.05), transparent 100%),
+    linear-gradient(180deg, #f4f7fb 0%, #fafbfd 42%, #ffffff 100%);
+}
+.main.has-hero.is-ops {
+  background:
+    radial-gradient(ellipse 55% 60% at 50% 40%, rgba(34, 197, 94, 0.10), transparent 100%),
+    radial-gradient(ellipse 40% 40% at 28% 22%, rgba(13, 153, 255, 0.05), transparent 100%),
+    linear-gradient(180deg, #f3f8f5 0%, #f8fbf9 42%, #ffffff 100%);
+}
+.empty-hero-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 440px;
+}
+.empty-art { display: block; width: 220px; height: 132px; margin: 0 0 22px; }
+.empty-eyebrow {
+  margin: 0 0 14px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9aa3b2;
+}
+.empty-hero.is-ops .empty-eyebrow { color: #8aa396; }
+.empty-hero h2 {
+  margin: 0 0 12px;
+  font-size: 24px; line-height: 32px; font-weight: 600;
+  letter-spacing: -0.03em; color: #111;
+}
+.empty-hero p {
+  margin: 0 0 28px;
+  font-size: 14px; line-height: 22px; color: #8c8c8c;
+}
+.empty-cta {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 36px; padding: 0 18px; border-radius: 999px;
+  background: rgba(23, 23, 23, 0.92); color: #fff;
+  font-size: 13px; font-weight: 600;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.12);
+  cursor: default;
+}
+.empty-cta span.chev { opacity: 0.5; font-size: 10px; margin-left: 2px; }
+.empty-link {
+  margin-top: 16px;
+  font-size: 12px; font-weight: 500; color: #a8aeb8;
+}
