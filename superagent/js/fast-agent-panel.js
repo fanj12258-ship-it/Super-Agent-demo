@@ -9,6 +9,7 @@
   'use strict';
   var NAME = 'Sourcing Agent v0.1';
   var registered = false, wrap, tabs = {}, panes = {}, thread, input, sendBtn, busy = false, mocksEl;
+  var repairNotes = {};
 
   var PROMPTS = [
     { q: '新品要导入 PCB 板，帮我筛出候选供应商并比价', k: 'pcb' },
@@ -78,13 +79,35 @@
   function addUser(text) {
     var m = el('div', 'fa-msg fa-user'); m.textContent = text; thread.appendChild(m); toBottom();
   }
+  function diagnose(message) {
+    var composer = document.getElementById('composer-input');
+    if (!composer) return;
+    var context = [];
+    for (var i = 0; i < thread.children.length; i++) {
+      var turn = thread.children[i];
+      if (turn.classList.contains('fa-user')) context.push('用户：' + turn.textContent);
+      else if (turn.diagnosisContext) context.push(turn.diagnosisContext);
+      if (turn === message) break;
+    }
+    var draft = '请诊断以下 Sourcing Strategy Agent v0.1 会话，分析回答、工具调用和 Mock 的问题，并给出改进建议。\n\n' + context.join('\n\n');
+    composer.value = (composer.value.trim() ? composer.value + '\n\n' : '') + draft;
+    composer.dispatchEvent(new Event('input', { bubbles: true }));
+    composer.focus();
+    composer.setSelectionRange(composer.value.length, composer.value.length);
+  }
   async function ask(text, key) {
     if (busy) return;
     busy = true; sendBtn.disabled = true;
     var empty = thread.querySelector('.fa-empty'); if (empty) empty.remove();
     addUser(text);
     if (window.FastSandbox) window.FastSandbox.state.trial.push({ q: text, ok: key !== 'other' });
-    var a = ANSWERS[key] || ANSWERS.other;
+    var original = ANSWERS[key] || ANSWERS.other;
+    var a = { tools: original.tools, md: original.md + (repairNotes[key] || '') };
+    if (repairNotes[key] && key === 'pcb') {
+      a.md = a.md.replace('优先 Rongxin Circuit，Xinyue Circuit 作为候补', 'Rongxin Circuit 可进入证据核验；Xinyue Circuit 仅进入准入待审核清单')
+        .replace('全部通过 | 78', '清单已准入，风险证据待核验 | 78（样例）');
+    }
+    if (repairNotes[key] && key === 'haoyu') a.md = a.md.replace('要求 Haoyu 提交 8D 整改报告；同时让 Shengda 打样 500 件，两周后再评估。', '要求 Haoyu 提交 8D 整改报告；Shengda 先完成准入与交期例外审批，通过后再制定打样计划。');
     var m = el('div', 'fa-msg fa-agent');
     var tl = el('div', 'fa-tools');
     var body = el('div', 'ao-answer answer-body chat-prose fa-body');
@@ -98,6 +121,15 @@
     }
     await sleep(200);
     await stream(body, a.md);
+    m.diagnosisContext = '工具执行：\n' + a.tools.map(function (tool) { return '- ' + tool + ' [MOCK]'; }).join('\n') + '\n\nAgent：\n' + a.md;
+    var actions = el('div', 'fa-actions');
+    var diagnosis = el('button', 'fa-diagnose');
+    diagnosis.type = 'button';
+    diagnosis.title = '诊断';
+    diagnosis.setAttribute('aria-label', '诊断此会话');
+    diagnosis.innerHTML = '<img src="assets/diagnosis.svg" width="16" height="16" alt="">';
+    diagnosis.addEventListener('click', function () { diagnose(m); });
+    actions.appendChild(diagnosis); m.appendChild(actions); toBottom();
     busy = false; sendBtn.disabled = !input.value.trim();
   }
 
@@ -205,5 +237,14 @@
     if (k && tabs[k]) sub(k);
   }
 
-  window.FastAgentPanel = { open: open, prompts: PROMPTS };
+  window.FastAgentPanel = {
+    open: open, prompts: PROMPTS,
+    repair: function (key, note) { repairNotes[key] = '\n\n**诊断修复**\n\n' + note; },
+    preview: function (text, key) {
+      open('try');
+      if (busy) return;
+      thread.innerHTML = '';
+      return ask(text, key);
+    }
+  };
 })();

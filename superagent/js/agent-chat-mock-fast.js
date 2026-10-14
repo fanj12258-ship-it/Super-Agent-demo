@@ -900,11 +900,12 @@
     syncSendState();
     var FI = window.FastIntake;
     var FC = window.FastCompany;
-    var jPlan = jOn ? FJ.take()
+    var diagnosisPlan = window.FastDiagnosis && window.FastDiagnosis.plan(text);
+    var jPlan = diagnosisPlan || (jOn ? FJ.take()
       : (window.FastChange && window.FastChange.match(text) ? window.FastChange.plan()
       : (FC && FC.active() ? FC.take()
       : (FI && FI.active() ? FI.take()
-      : (CV ? CV.plan(text) : null))));
+      : (CV ? CV.plan(text) : null)))));
     runAssistantTurn(text, row, jPlan).catch(function (e) { console.error(e); busy = false; });
   }
 
