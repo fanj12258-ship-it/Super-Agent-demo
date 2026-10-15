@@ -26,6 +26,7 @@ for (const page of pages) {
 await rm(output, { recursive: true, force: true })
 await mkdir(output, { recursive: true })
 for (const path of [
+  'index.html',
   ...pages,
   'workbench/css', 'workbench/js', 'workbench/assets',
   'superagent/css', 'superagent/js', 'superagent/assets',

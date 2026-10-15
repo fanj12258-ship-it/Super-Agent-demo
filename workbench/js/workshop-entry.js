@@ -1,6 +1,6 @@
 /* Enter Workshop — sidebar button → Workshop (Super Agent Fast).
    Relative path works over file:// and any static host. */
-var WORKSHOP_URL = '../superagent/superagent-fast.html';
+var WORKSHOP_URL = '../superagent/superagent-fast.html?entry=workshop';
 
 document.getElementById('btnWorkshop').addEventListener('click', function () {
   window.location.href = WORKSHOP_URL;
@@ -8,7 +8,7 @@ document.getElementById('btnWorkshop').addEventListener('click', function () {
 
 /* Scenario view: "Continue crafting" on the FIRST card (and its business rows) → Super Agent (returning-user page:
    assets already exist, several conversations, the Agent opens with a recap). Other cards stay as they are. */
-var RETURNING_URL = '../superagent/superagent.html';
+var RETURNING_URL = '../superagent/superagent.html?entry=workshop';
 
 document.addEventListener('click', function (e) {
   var btn = e.target.closest('[data-scene-action][data-scene-mode="craft"]');

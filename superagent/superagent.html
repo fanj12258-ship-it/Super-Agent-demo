@@ -3,6 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    (function () {
+      var KEY = 'ao-workshop-entry';
+      try {
+        var params = new URLSearchParams(location.search);
+        if (params.get('entry') === 'workshop') {
+          sessionStorage.setItem(KEY, '1');
+          params.delete('entry');
+          history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : '') + location.hash);
+          return;
+        }
+        if (sessionStorage.getItem(KEY) === '1') return;
+        if ((document.referrer || '').indexOf('agentos-workbench') !== -1) {
+          sessionStorage.setItem(KEY, '1');
+          return;
+        }
+      } catch (e) { return; }
+      location.replace('../workbench/agentos-workbench.html');
+    })();
+  </script>
   <title>AgentOS Chat</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
