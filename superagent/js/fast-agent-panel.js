@@ -82,15 +82,20 @@
   function diagnose(message) {
     var composer = document.getElementById('composer-input');
     if (!composer) return;
-    var context = [];
+    var context = [], rounds = 0;
     for (var i = 0; i < thread.children.length; i++) {
       var turn = thread.children[i];
-      if (turn.classList.contains('fa-user')) context.push('用户：' + turn.textContent);
+      if (turn.classList.contains('fa-user')) {
+        context.push('用户：' + turn.textContent);
+        rounds += 1;
+      }
       else if (turn.diagnosisContext) context.push(turn.diagnosisContext);
       if (turn === message) break;
     }
     var draft = '请诊断以下 Sourcing Strategy Agent v0.1 会话，分析回答、工具调用和 Mock 的问题，并给出改进建议。\n\n' + context.join('\n\n');
-    composer.value = (composer.value.trim() ? composer.value + '\n\n' : '') + draft;
+    var label = '诊断 · 会话日志 · ' + rounds + ' 轮对话';
+    if (window.FastUpload && window.FastUpload.addContext) window.FastUpload.addContext(label, draft);
+    else composer.value = (composer.value.trim() ? composer.value + '\n\n' : '') + draft;
     composer.dispatchEvent(new Event('input', { bubbles: true }));
     composer.focus();
     composer.setSelectionRange(composer.value.length, composer.value.length);

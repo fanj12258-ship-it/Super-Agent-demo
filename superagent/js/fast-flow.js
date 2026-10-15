@@ -151,7 +151,8 @@
       after: async function (c) {
         var card = window.FastMode.choiceCard({
           title: '是否直接生成 Agent',
-          hint: '选「先继续完善」，我们就一步步做扎实',
+          hint: false,
+          compact: true,
           list: true, noModeSet: true,
           mapLink: '查看完整蓝图', mapMode: 'fast',
           summary: [
@@ -160,9 +161,9 @@
             ['Mock 部分', '本体（由 ERP 字段字典生成）· Skill 规则 · ERP 样例数据'],
           ],
           options: [
-            { id: 'go', name: '直接生成 Agent', tag: '推荐', desc: '约 1 分钟生成可试用版本，在右侧面板里直接提问；Mock 部分会明确标注，之后逐项替换。' },
-            { id: 'refine', name: '先继续完善', desc: '先把本体和 Skill 做扎实再生成，一步步推进。' },
-            { id: 'later', name: '先到这里，稍后继续', desc: '保留现有文档和决策，随时可以回来继续。' },
+            { id: 'go', name: '直接生成 Agent', tag: '推荐' },
+            { id: 'refine', name: '先继续完善' },
+            { id: 'later', name: '先到这里，稍后继续' },
           ],
         });
         seg(c, card.node);

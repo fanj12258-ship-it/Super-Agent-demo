@@ -18,6 +18,7 @@
 
   var FTI = window.FileTypeIcons;
   var attached = [];
+  var contexts = {};
   var running = false;
 
   function esc(s) {
@@ -29,8 +30,14 @@
   function docs() { return (window.FastDocs && window.FastDocs.all()) || []; }
   function icon(name, size) { return FTI ? FTI.markup(name, size || 14) : ''; }
 
+  function diagnosisIcon() {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M14.7 6.3a4 4 0 0 0-5 5L4.6 16.4a2 2 0 1 0 2.8 2.8l5.1-5.1a4 4 0 0 0 5.2-5.2l-2.4 2.4-2.6-.6-.6-2.6 2.6-1.8Z"/>' +
+      '<path d="M18.5 2.5v3M17 4h3"/></svg>';
+  }
+  function isDiagnosis(name) { return String(name).indexOf('诊断 · 会话日志 ·') === 0; }
   function chipHtml(name, removable) {
-    return '<span class="composer-ref-icon">' + icon(name, 14) + '</span>' +
+    return '<span class="composer-ref-icon">' + (isDiagnosis(name) ? diagnosisIcon() : icon(name, 14)) + '</span>' +
       '<span class="composer-ref-label">' + esc(name) + '</span>' +
       (removable
         ? '<button type="button" class="composer-ref-remove fd-chip-x" aria-label="Remove ' + esc(name) + '">' +
@@ -39,7 +46,7 @@
   }
   function chipNode(name, removable) {
     var c = document.createElement('span');
-    c.className = 'composer-ref fd-chip';
+    c.className = 'composer-ref fd-chip' + (isDiagnosis(name) ? ' fd-chip-diagnosis' : '');
     c.setAttribute('data-doc', name);
     c.setAttribute('role', 'button');
     c.tabIndex = 0;
@@ -84,6 +91,7 @@
     var chip = x.closest('.fd-chip');
     var name = chip.getAttribute('data-doc');
     attached = attached.filter(function (n) { return n !== name; });
+    delete contexts[name];
     chip.remove();
     changed();
   });
@@ -220,12 +228,20 @@
     take: function () {
       var out = attached.slice();
       attached = [];
+      out.forEach(function (name) { delete contexts[name]; });
       collapsed = true;
       row.innerHTML = '';
       changed();
       return out;
     },
     add: function (name) { attach(name, true); },
+    addContext: function (name, payload) {
+      contexts[name] = payload;
+      attach(name, true);
+    },
+    contextText: function () {
+      return attached.map(function (name) { return contexts[name] || ''; }).filter(Boolean).join('\n\n');
+    },
     attachAll: function () { docs().forEach(function (d) { attach(d.name, false); }); },
     chips: function (names) {
       var w = document.createElement('div');

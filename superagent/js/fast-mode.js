@@ -97,10 +97,10 @@
   function choiceCard(opts) {
     opts = opts || {};
     var box = document.createElement('div');
-    box.className = 'fm-choice';
+    box.className = 'fm-choice' + (opts.compact ? ' is-compact' : '');
     box.innerHTML =
       '<div class="fm-choice-head"><span class="fm-choice-t">' + (opts.title || '想怎么开始打造？') + '</span>' +
-      '<span class="fm-choice-h">' + (opts.hint || '之后也可以随时告诉我换一种做法') + '</span></div>' +
+      (opts.hint === false ? '' : '<span class="fm-choice-h">' + (opts.hint || '之后也可以随时告诉我换一种做法') + '</span>') + '</div>' +
       (opts.summary
         ? '<dl class="fm-choice-sum">' + opts.summary.map(function (r) {
             return '<div><dt>' + r[0] + '</dt><dd>' + r[1] + '</dd></div>';
@@ -123,7 +123,7 @@
         '<span class="fm-opt-name">' + name + '</span>' +
         (tag ? '<span class="fm-opt-tag">' + tag + '</span>' : '') +
         '<svg class="fm-opt-check" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.3L5 8.8l4.5-5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' +
-        '<span class="fm-opt-desc">' + desc + '</span>' + mini(map) + '</button>';
+        (desc ? '<span class="fm-opt-desc">' + desc + '</span>' : '') + mini(map) + '</button>';
     }
     box.querySelectorAll('.fm-opt').forEach(function (b) {
       var id = b.getAttribute('data-pick'), nm = b.querySelector('.fm-opt-name');

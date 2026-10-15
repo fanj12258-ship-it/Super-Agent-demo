@@ -890,6 +890,7 @@
     /* upload round with nothing attached yet → attach the mock bundle so the story still holds */
     var CV = window.FastConversations, jOn = !!(FJ && FJ.active() && (!CV || CV.isJourney()));
     if (FU && !FU.has() && jOn && FJ.needsUpload && FJ.needsUpload()) FU.attachAll();
+    var contextText = FU && FU.contextText ? FU.contextText() : '';
     var atts = FU ? FU.take() : [];
     if (!text && !atts.length) return;
     busy = true;
@@ -900,7 +901,8 @@
     syncSendState();
     var FI = window.FastIntake;
     var FC = window.FastCompany;
-    var diagnosisPlan = window.FastDiagnosis && window.FastDiagnosis.plan(text);
+    var planText = text + (text && contextText ? '\n\n' : '') + contextText;
+    var diagnosisPlan = window.FastDiagnosis && window.FastDiagnosis.plan(planText);
     var jPlan = diagnosisPlan || (jOn ? FJ.take()
       : (window.FastChange && window.FastChange.match(text) ? window.FastChange.plan()
       : (FC && FC.active() ? FC.take()

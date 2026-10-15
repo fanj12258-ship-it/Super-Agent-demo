@@ -288,6 +288,15 @@
   padding-left: 13px;
 }
 .fm-choice-opts.is-list .fm-opt-desc { padding-left: 36px; margin-top: 2px; }
+.fm-choice.is-compact .fm-choice-opts.is-list { gap: 6px; }
+.fm-choice.is-compact .fm-choice-opts.is-list .fm-opt {
+  min-height: 42px;
+  padding: 6px 10px;
+  gap: 0;
+  justify-content: center;
+}
+.fm-choice.is-compact .fm-choice-opts.is-list .fm-opt.is-rec { padding-left: 11px; }
+.fm-choice.is-compact .fm-opt-ico { width: 26px; height: 26px; }
 .fm-choice.is-done .fm-opt { pointer-events: none; opacity: .45; }
 .fm-choice.is-done .fm-opt.is-picked { opacity: 1; border-color: #1a1a1a; background: var(--bg); box-shadow: none; }
 .fm-choice.is-done .fm-opt.is-picked .fm-opt-check { opacity: 1; }
