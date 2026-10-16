@@ -1,0 +1,91 @@
+/* main-layout.css — main pane, top bar, tab buttons, toolbar, grid base */
+
+/* ───────── Main ───────── */
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; background: #fff; }
+.main-top {
+  height: 54px;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.main-tab-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.main-tab-btn {
+  width: 20px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #111;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+.main-tab-btn:hover { background: #f3f3f3; }
+.main-tab-btn:active { background: #ececec; }
+.main-tab-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111;
+  line-height: 20px;
+}
+.main-body { flex: 1; overflow: auto; padding: 32px; }
+.main-title { font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 4px; }
+.main-desc { margin: 0 0 20px; color: var(--text-secondary); font-size: 13px; line-height: 20px; }
+.res-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.res-count { font-size: 12px; color: var(--text-secondary); }
+.res-toolbar-actions { display: flex; align-items: center; gap: 8px; }
+.res-chip {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid #ebebeb;
+  background: #fff;
+  font-size: 12px;
+  color: #555;
+}
+.res-chip.is-on { background: #111; border-color: #111; color: #fff; }
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+.grid-agent {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 300px);
+  gap: 16px;
+  align-items: stretch;
+}
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 300px);
+  gap: 14px;
+}
+
+.card {
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+  text-align: left;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease, transform 0.14s ease;
+}
+.card:hover {
+  border-color: #ddd;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.07);
+  transform: translateY(-1px);
+}

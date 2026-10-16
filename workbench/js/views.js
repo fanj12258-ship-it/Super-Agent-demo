@@ -11,6 +11,8 @@ var RENDERERS = {
   files: renderFiles
 };
 
+var ontologyDetailOpen = false;
+
 function renderList(key) {
   if (key === 'files') return renderFiles();
   var list = listFor(key);
@@ -30,6 +32,7 @@ function activateView(key) {
     if (on) target = i;
   });
   if (!target) return;
+  ontologyDetailOpen = false;
   if (key === 'files') {
     filesState.rootId = null;
     filesState.space = 'public';
@@ -49,14 +52,73 @@ function shiftView(delta) {
   activateView(next);
 }
 
+function syncMainTop(key) {
+  var prev = document.getElementById('mainTabPrev');
+  var next = document.getElementById('mainTabNext');
+  var label = document.getElementById('mainTopLabel');
+  var isFilesDrilldown = key === 'files' && !!filesState.rootId;
+  var isOntologyDrilldown = key === 'ontology' && ontologyDetailOpen;
+  var isDrilldown = isFilesDrilldown || isOntologyDrilldown;
+
+  next.hidden = isDrilldown;
+  next.style.display = isDrilldown ? 'none' : '';
+  prev.setAttribute('aria-label', isDrilldown ? 'Back' : 'Previous tab');
+  prev.title = isDrilldown ? 'Back' : 'Previous tab';
+
+  if (isOntologyDrilldown) {
+    label.textContent = 'Enterprise ontology graph';
+    return;
+  }
+
+  if (!isFilesDrilldown) {
+    label.textContent = (VIEWS[key] || { title: key }).title;
+    return;
+  }
+
+  var root = filesRootById(filesState.rootId);
+  var current = root ? root.name : 'Files';
+  if (root && filesState.path.length) {
+    current = filesFolderName(root, filesState.space, filesState.path[filesState.path.length - 1]);
+  }
+  label.textContent = current;
+}
+
+function renderFilesContent() {
+  content.innerHTML = renderFiles();
+  syncMainTop('files');
+}
+
+function backInFiles() {
+  if (!filesState.rootId) return false;
+  if (filesState.path.length) filesState.path = filesState.path.slice(0, -1);
+  else filesState.rootId = null;
+  renderFilesContent();
+  return true;
+}
+
+function backFromOntologyDetail() {
+  if (!ontologyDetailOpen) return false;
+  ontologyDetailOpen = false;
+  render('ontology');
+  return true;
+}
+
 function render(key) {
   var v = VIEWS[key] || { title: key, desc: '' };
   var titleEl = document.getElementById('mainTitle');
   var descEl = document.getElementById('mainDesc');
-  document.getElementById('mainTopLabel').textContent = v.title;
+  syncMainTop(key);
   var mainEl = document.querySelector('main.main');
+  var isOntologyDetail = key === 'ontology' && ontologyDetailOpen;
+  mainEl.classList.toggle('is-ontology-detail', isOntologyDetail);
   mainEl.classList.toggle('has-hero', !!EMPTY_HERO[key]);
   mainEl.classList.toggle('is-ops', key === 'aiops');
+  if (isOntologyDetail) {
+    titleEl.hidden = true;
+    descEl.hidden = true;
+    content.innerHTML = '<iframe class="ontology-embed" src="../分仓智能补货本体可视化(1).html" title="Enterprise ontology graph"></iframe>';
+    return;
+  }
   if (EMPTY_HERO[key]) {
     titleEl.hidden = true;
     descEl.hidden = true;
@@ -68,11 +130,19 @@ function render(key) {
   titleEl.textContent = v.title;
   descEl.textContent = SCOPED[key] ? (currentTeam + ' · ' + v.desc) : v.desc;
   if (key === 'files') {
-    content.innerHTML = renderFiles();
+    renderFilesContent();
     return;
   }
   if (CATALOG[key] || (key === 'scenario')) {
     content.innerHTML = renderList(key);
+    if (key === 'ontology') {
+      var ontologyGraphCard = content.querySelector('.on-graph-card');
+      if (ontologyGraphCard) {
+        ontologyGraphCard.setAttribute('role', 'button');
+        ontologyGraphCard.setAttribute('tabindex', '0');
+        ontologyGraphCard.setAttribute('aria-label', 'Open Enterprise ontology graph');
+      }
+    }
     return;
   }
   content.innerHTML = '<div class="empty"><strong>Nothing here yet</strong>' + escapeHtmlModal(v.desc) + '</div>';
@@ -141,6 +211,12 @@ function renderEmptyHero(key) {
 
 
 content.addEventListener('click', function (e) {
+  var ontologyGraph = e.target.closest('.on-graph-card');
+  if (ontologyGraph) {
+    ontologyDetailOpen = true;
+    render('ontology');
+    return;
+  }
   var moreBtn = e.target.closest('[data-scene-more]');
   if (moreBtn) {
     e.stopPropagation();
@@ -157,20 +233,20 @@ content.addEventListener('click', function (e) {
     filesState.rootId = filesRoot.getAttribute('data-files-open-root');
     filesState.space = 'public';
     filesState.path = [];
-    content.innerHTML = renderFiles();
+    renderFilesContent();
     return;
   }
   var filesSpace = e.target.closest('[data-files-space]');
   if (filesSpace) {
     filesState.space = filesSpace.getAttribute('data-files-space');
     filesState.path = [];
-    content.innerHTML = renderFiles();
+    renderFilesContent();
     return;
   }
   var filesFolder = e.target.closest('[data-files-open-folder]');
   if (filesFolder && !e.target.closest('[data-files-act]')) {
     filesState.path = filesState.path.concat([filesFolder.getAttribute('data-files-open-folder')]);
-    content.innerHTML = renderFiles();
+    renderFilesContent();
     return;
   }
   var filesCrumb = e.target.closest('[data-files-crumb]');
@@ -185,7 +261,7 @@ content.addEventListener('click', function (e) {
       var idx = parseInt(crumb, 10);
       if (!isNaN(idx)) filesState.path = filesState.path.slice(0, idx + 1);
     }
-    content.innerHTML = renderFiles();
+    renderFilesContent();
     return;
   }
   var filesAct = e.target.closest('[data-files-act]');
@@ -208,11 +284,24 @@ content.addEventListener('click', function (e) {
   }
 });
 
+content.addEventListener('keydown', function (e) {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.on-graph-card')) {
+    e.preventDefault();
+    ontologyDetailOpen = true;
+    render('ontology');
+  }
+});
+
 items.forEach(function (el) {
   el.addEventListener('click', function () {
     activateView(el.dataset.view);
   });
 });
 
-document.getElementById('mainTabPrev').addEventListener('click', function () { shiftView(-1); });
+document.getElementById('mainTabPrev').addEventListener('click', function () {
+  var active = document.querySelector('.nav-item.is-active');
+  if (active && active.dataset.view === 'ontology' && backFromOntologyDetail()) return;
+  if (active && active.dataset.view === 'files' && backInFiles()) return;
+  shiftView(-1);
+});
 document.getElementById('mainTabNext').addEventListener('click', function () { shiftView(1); });
