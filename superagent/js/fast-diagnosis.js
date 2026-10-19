@@ -7,7 +7,9 @@
     var head = document.createElement('div'); head.className = 'ff-head';
     var label = document.createElement('span'); label.className = 'ff-t'; label.textContent = title;
     head.appendChild(label); box.appendChild(head);
-    var detail = document.createElement('div'); detail.className = 'ff-ready-s'; detail.textContent = description; box.appendChild(detail);
+    if (description) {
+      var detail = document.createElement('div'); detail.className = 'ff-ready-s'; detail.textContent = description; box.appendChild(detail);
+    }
     var foot = document.createElement('div'); foot.className = 'ff-foot';
     buttons.forEach(function (action, i) {
       var button = document.createElement('button'); button.type = 'button';
@@ -43,14 +45,14 @@
       },
       segments: [{ md: '**诊断分析**\n\n针对「' + question + '」：\n\n' + note + '\n\n**拟修改文件**\n\n| 范围 | 文件 | 计划改动 |\n|---|---|---|\n' + changes.map(function (x) { return '| ' + x.join(' | ') + ' |'; }).join('\n') + '\n\n另新增诊断报告与回归记录。ERP 数据仍为 Mock；本次不接入真实 ERP，也不将缺失证据标为已验证。', gap: 200 }],
       after: async function (c) {
-        card(c, '是否按这个计划执行修复？', '确认后更新上述 SDP 和 Agent 文件；现在尚未执行改动。', [
-          { label: '允许，执行修复', run: async function (box, button) {
+        card(c, '是否按这个计划执行？', '', [
+          { label: '允许执行', run: async function (box, button) {
             if (state !== 'pending') return;
-            state = 'running'; disable(box); button.textContent = '正在修复…';
+            state = 'running'; disable(box); button.textContent = '正在执行…';
             while (window.FastChat.isBusy()) await new Promise(function (resolve) { setTimeout(resolve, 100); });
             try {
-              await window.FastChat.run(repairPlan()); state = repaired ? 'done' : 'failed'; button.textContent = repaired ? '修复已完成' : '修复失败，请重新诊断';
-            } catch (error) { state = 'failed'; button.textContent = '修复失败'; }
+              await window.FastChat.run(repairPlan()); state = repaired ? 'done' : 'failed'; button.textContent = repaired ? '执行完成' : '执行失败，请重试';
+            } catch (error) { state = 'failed'; button.textContent = '执行失败'; }
           } },
           { label: '暂不执行', run: function (box, button) { if (state !== 'pending') return; state = 'cancelled'; disable(box); button.textContent = '已取消，未修改'; } }
         ]);
@@ -77,7 +79,7 @@
           await api.V({ id: 'repair-check-' + id, icon: 'command', label: '已同步修复文档与回答规则', details: ['保留全部 Mock 标注', '待 Preview 回放原问题'] });
           repaired = true;
         },
-        segments: [{ md: '**修复完成**\n\n' + changes.map(function (x) { return '- **' + x[0] + '**：[' + x[1] + '](' + encodeURIComponent(x[1]) + ') — ' + x[2]; }).join('\n') + '\n\n本次修复：' + note + '\n\n产物：[诊断报告](' + encodeURIComponent(report) + ') · [回归记录](' + encodeURIComponent(regression) + ')。\n\n修复已应用于当前演示会话的文档与 Agent 回答；原问题等待 Preview 复测。', gap: 200 }],
+        segments: [{ md: '**执行完成**\n\n' + changes.map(function (x) { return '- **' + x[0] + '**：[' + x[1] + '](' + encodeURIComponent(x[1]) + ') — ' + x[2]; }).join('\n') + '\n\n本次修改：' + note + '\n\n产物：[诊断报告](' + encodeURIComponent(report) + ') · [回归记录](' + encodeURIComponent(regression) + ')。\n\n修复已应用于当前演示会话的文档与 Agent 回答；原问题等待 Preview 复测。', gap: 200 }],
         after: async function (c) {
           card(c, '要一键 Preview 这个 Agent 吗？', '在右侧重新运行原问题，查看修复后的回答。', [
             { label: '一键 Preview Agent', run: function (box, button) { disable(box); button.textContent = '已打开 Preview'; window.FastAgentPanel.preview(question, key); } },

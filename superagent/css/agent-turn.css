@@ -169,6 +169,12 @@
   height: var(--ao-dt-viewport-max);
 }
 
+.process-viewport.is-generating.is-dynamic {
+  height: auto;
+  min-height: 0;
+  max-height: 300px;
+}
+
 .process-viewport:hover,
 .process-viewport:focus-within {
   scrollbar-color: rgba(0, 0, 0, 0.16) transparent;

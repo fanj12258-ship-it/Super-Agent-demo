@@ -142,6 +142,7 @@
     var box = el('div', 'fa-chat');
     thread = el('div', 'fa-thread');
     thread.appendChild(el('div', 'fa-empty',
+      '<div class="fa-empty-mark" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="5" y="8.5" width="18" height="14" rx="5" stroke="currentColor" stroke-width="1.5"/><path d="M14 8.5V5.5M11 14v2M17 14v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="14" cy="4.5" r="1.2" fill="currentColor"/></svg></div>' +
       '<div class="fa-empty-t">试试问它一个真实问题</div><div class="fa-empty-s">这一版用样例数据和规则桩回答，标注 <span class="fa-mk">MOCK</span> 的部分之后会逐项替换。</div>' +
       '<div class="fa-prompts">' + PROMPTS.map(function (p) { return '<button type="button" class="fa-prompt" data-k="' + p.k + '">' + esc(p.q) + '</button>'; }).join('') + '</div>'));
     var bar = el('div', 'fa-input');
