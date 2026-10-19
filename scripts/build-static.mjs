@@ -6,6 +6,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const output = resolve(root, 'dist')
 const pages = [
   'workbench/agentos-workbench.html',
+  'workbench/agent-try.html',
   'superagent/superagent-fast.html',
   'superagent/superagent.html',
 ]
@@ -27,6 +28,7 @@ await rm(output, { recursive: true, force: true })
 await mkdir(output, { recursive: true })
 for (const path of [
   'index.html',
+  '分仓智能补货本体可视化(1).html',
   ...pages,
   'workbench/css', 'workbench/js', 'workbench/assets',
   'superagent/css', 'superagent/js', 'superagent/assets',
