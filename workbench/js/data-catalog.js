@@ -21,6 +21,13 @@ var EMPTY_HERO = {
     cta: 'Browse Market',
     note: 'Marketplace is coming soon in this demo'
   },
+  mcp: {
+    cls: '',
+    title: 'Connect MCP servers for your team',
+    desc: 'Browse Model Context Protocol servers and connectors — then pull the right ones into this project space.',
+    cta: 'Browse MCP',
+    note: 'MCP catalog is coming soon in this demo'
+  },
   aiops: {
     cls: ' is-ops',
     title: 'Keep every agent run in view',

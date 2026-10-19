@@ -31,10 +31,39 @@
 .main-tab-btn:hover { background: #f3f3f3; }
 .main-tab-btn:active { background: #ececec; }
 .main-tab-label {
+  min-width: 0;
   font-size: 14px;
   font-weight: 600;
   color: #111;
   line-height: 20px;
+}
+.main-top.is-files-crumbs .main-tab-label {
+  flex: 1;
+  font-weight: 400;
+}
+.main-top-crumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+}
+.main-top-crumbs .fb-crumb {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b6b6b;
+  white-space: nowrap;
+}
+.main-top-crumbs .fb-crumb:hover { color: #111; }
+.main-top-crumbs .fb-crumb.is-now {
+  color: #111;
+  font-weight: 600;
+  cursor: default;
+}
+.main-top-crumbs .fb-crumb-sep {
+  color: #c4c4c4;
+  font-size: 13px;
 }
 .main-body { flex: 1; overflow: auto; padding: 32px; }
 .main.is-ontology-detail .main-body {

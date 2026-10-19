@@ -308,15 +308,6 @@ function renderFiles() {
   }
   var space = filesState.space === 'personal' ? 'personal' : 'public';
   var nodes = filesNodesAtPath(root, space, filesState.path);
-  var crumbs = '<button type="button" class="fb-crumb" data-files-crumb="root">Files</button>' +
-    '<span class="fb-crumb-sep">/</span>' +
-    '<button type="button" class="fb-crumb' + (filesState.path.length ? '' : ' is-now') + '" data-files-crumb="hub">' + escapeHtmlModal(root.name) + '</button>';
-  for (var c = 0; c < filesState.path.length; c++) {
-    var fname = filesFolderName(root, space, filesState.path[c]);
-    var isLast = c === filesState.path.length - 1;
-    crumbs += '<span class="fb-crumb-sep">/</span>' +
-      '<button type="button" class="fb-crumb' + (isLast ? ' is-now' : '') + '" data-files-crumb="' + c + '">' + escapeHtmlModal(fname) + '</button>';
-  }
 
   var rows = nodes.length ? nodes.map(function (n) {
     var isFolder = n.kind === 'folder';
@@ -338,7 +329,7 @@ function renderFiles() {
   }).join('') : '<div class="fb-empty">This folder is empty</div>';
 
   return '<div class="fb">' +
-    '<div class="fb-bar"><div class="fb-crumbs">' + crumbs + '</div>' +
+    '<div class="fb-bar">' +
     '<div class="fb-tools">' +
     '<button type="button" class="fb-tool" title="Search" aria-label="Search"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6.2" cy="6.2" r="3.7" stroke="currentColor" stroke-width="1.3"/><path d="M9 9l2.6 2.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>' +
     '<button type="button" class="fb-tool" title="New" aria-label="New"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2.8v8.4M2.8 7h8.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>' +

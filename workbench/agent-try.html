@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Try Agent · AgentOS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/layout-sidebar.css" />
+  <link rel="stylesheet" href="css/agent-try.css" />
+</head>
+<body>
+  <div class="try-app">
+    <aside class="sidebar try-sidebar" aria-label="Try sidebar">
+      <a class="sb-brand try-brand" href="agentos-workbench.html" aria-label="Back to Workbench" title="Back to Workbench">
+        <img src="assets/agentos-logo.png" alt="AgentOS 1.0 beta" />
+      </a>
+      <div class="try-sidebar-body" id="trySidebarBody">
+        <section class="try-rail" aria-label="Agents">
+          <div class="try-rail-title">Agents</div>
+          <div class="try-rail-list" id="tryAgentList"></div>
+        </section>
+        <div class="try-rail-split" aria-hidden="true"></div>
+        <section class="try-rail try-rail-chats" aria-label="Recent chats">
+          <div class="try-rail-title">Recent chats</div>
+          <div class="try-rail-list" id="tryChatList"></div>
+        </section>
+      </div>
+    </aside>
+
+    <div class="try-main is-empty" id="tryMain">
+      <header class="try-top">
+        <div class="try-top-inner">
+          <div class="try-agent">
+            <span class="try-ava" id="tryAva">A</span>
+            <div class="try-meta">
+              <div class="try-name" id="tryName">Agent</div>
+              <div class="try-sub" id="trySub">Try session · Demo</div>
+            </div>
+          </div>
+          <span class="try-chip"><i></i>Live · Try</span>
+        </div>
+      </header>
+
+      <main class="try-thread" id="tryThread" aria-label="Conversation">
+        <div class="try-thread-inner" id="tryThreadInner"></div>
+      </main>
+
+      <div class="try-composer-wrap" id="tryComposerWrap">
+        <div class="try-empty-lead" id="tryEmptyLead">
+          <div class="try-empty-title" id="tryEmptyTitle">Supplier discovery assistant</div>
+          <p class="try-empty-desc" id="tryEmptyDesc">From T1 strategy, I search 16+ sources, tag suppliers, and sync the pool to T3/T4 after your review.</p>
+        </div>
+        <form class="try-composer" id="tryForm">
+          <div class="try-composer-field">
+            <textarea class="try-input" id="tryInput" rows="1" placeholder="Ask anything…" aria-label="Message input" autocomplete="off" spellcheck="false"></textarea>
+          </div>
+          <div class="try-composer-toolbar">
+            <div class="try-composer-toolbar-left">
+              <button type="button" class="try-plus" aria-label="Add">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+              <button type="button" class="try-plus" id="tryAttach" aria-label="Upload documents" title="Upload documents">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m21 11.5-8.6 8.6a5.2 5.2 0 0 1-7.4-7.4l8.8-8.8a3.5 3.5 0 0 1 4.9 4.9l-8.8 8.8a1.8 1.8 0 0 1-2.5-2.5l8.1-8.1"/></svg>
+              </button>
+            </div>
+            <div class="try-composer-toolbar-right">
+              <button type="button" class="try-model" aria-label="Model">
+                <span>Auto</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              <button type="submit" class="try-send" id="trySend" aria-label="Send" disabled>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 11.2V3.4M4.2 6.1 7 3.3l2.8 2.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/agent-try.js"></script>
+</body>
+</html>

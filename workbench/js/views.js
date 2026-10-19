@@ -52,10 +52,27 @@ function shiftView(delta) {
   activateView(next);
 }
 
+function filesTopCrumbsHtml() {
+  var root = filesRootById(filesState.rootId);
+  if (!root) return '';
+  var space = filesState.space === 'personal' ? 'personal' : 'public';
+  var html = '<button type="button" class="fb-crumb" data-files-crumb="root">Files</button>' +
+    '<span class="fb-crumb-sep">/</span>' +
+    '<button type="button" class="fb-crumb' + (filesState.path.length ? '' : ' is-now') + '" data-files-crumb="hub">' + escapeHtmlModal(root.name) + '</button>';
+  for (var c = 0; c < filesState.path.length; c++) {
+    var fname = filesFolderName(root, space, filesState.path[c]);
+    var isLast = c === filesState.path.length - 1;
+    html += '<span class="fb-crumb-sep">/</span>' +
+      '<button type="button" class="fb-crumb' + (isLast ? ' is-now' : '') + '" data-files-crumb="' + c + '">' + escapeHtmlModal(fname) + '</button>';
+  }
+  return html;
+}
+
 function syncMainTop(key) {
   var prev = document.getElementById('mainTabPrev');
   var next = document.getElementById('mainTabNext');
   var label = document.getElementById('mainTopLabel');
+  var mainTop = document.getElementById('mainTop');
   var isFilesDrilldown = key === 'files' && !!filesState.rootId;
   var isOntologyDrilldown = key === 'ontology' && ontologyDetailOpen;
   var isDrilldown = isFilesDrilldown || isOntologyDrilldown;
@@ -64,6 +81,7 @@ function syncMainTop(key) {
   next.style.display = isDrilldown ? 'none' : '';
   prev.setAttribute('aria-label', isDrilldown ? 'Back' : 'Previous tab');
   prev.title = isDrilldown ? 'Back' : 'Previous tab';
+  if (mainTop) mainTop.classList.toggle('is-files-crumbs', isFilesDrilldown);
 
   if (isOntologyDrilldown) {
     label.textContent = 'Enterprise ontology graph';
@@ -75,12 +93,7 @@ function syncMainTop(key) {
     return;
   }
 
-  var root = filesRootById(filesState.rootId);
-  var current = root ? root.name : 'Files';
-  if (root && filesState.path.length) {
-    current = filesFolderName(root, filesState.space, filesState.path[filesState.path.length - 1]);
-  }
-  label.textContent = current;
+  label.innerHTML = '<span class="main-top-crumbs">' + filesTopCrumbsHtml() + '</span>';
 }
 
 function renderFilesContent() {
@@ -172,6 +185,28 @@ var EMPTY_ART = {
       '<path d="M24 22v6M21 25h6" stroke="#c4daf3" stroke-width="1.3" stroke-linecap="round"/>' +
       '<circle cx="200" cy="108" r="2.5" fill="#cfe2f6"/><circle cx="16" cy="96" r="2" fill="#dbe9f8"/>' +
     '</svg>',
+  mcp:
+    '<svg class="empty-art" viewBox="0 0 220 132" fill="none" aria-hidden="true">' +
+      '<defs><filter id="mcpSh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#0d99ff" flood-opacity="0.10"/></filter></defs>' +
+      '<rect x="22" y="36" width="84" height="64" rx="10" fill="#fff" stroke="#e1ebf8" transform="rotate(-7 64 68)"/>' +
+      '<rect x="34" y="52" width="36" height="5" rx="2.5" fill="#e6eef8" transform="rotate(-7 64 68)"/>' +
+      '<rect x="34" y="62" width="52" height="4" rx="2" fill="#eef3fa" transform="rotate(-7 64 68)"/>' +
+      '<rect x="114" y="32" width="84" height="64" rx="10" fill="#fff" stroke="#e1ebf8" transform="rotate(7 156 64)"/>' +
+      '<rect x="126" y="48" width="36" height="5" rx="2.5" fill="#e6eef8" transform="rotate(7 156 64)"/>' +
+      '<rect x="126" y="58" width="52" height="4" rx="2" fill="#eef3fa" transform="rotate(7 156 64)"/>' +
+      '<g filter="url(#mcpSh)"><rect x="60" y="20" width="100" height="88" rx="12" fill="#fff" stroke="#d9e6f6"/></g>' +
+      '<circle cx="80" cy="42" r="8" fill="#0d99ff" fill-opacity="0.16"/>' +
+      '<path d="M76.5 42.2l2.4 2.4 4.4-4.8" stroke="#0d99ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<rect x="94" y="37" width="44" height="5" rx="2.5" fill="#d5e3f5"/>' +
+      '<rect x="94" y="46" width="28" height="4" rx="2" fill="#e8eff9"/>' +
+      '<rect x="72" y="64" width="76" height="5" rx="2.5" fill="#e8eff9"/>' +
+      '<rect x="72" y="74" width="58" height="5" rx="2.5" fill="#e8eff9"/>' +
+      '<rect x="72" y="88" width="32" height="10" rx="5" fill="#0d99ff" fill-opacity="0.14"/>' +
+      '<rect x="110" y="88" width="38" height="10" rx="5" fill="#171717" fill-opacity="0.88"/>' +
+      '<path d="M194 20v8M190 24h8" stroke="#a9c9ee" stroke-width="1.4" stroke-linecap="round"/>' +
+      '<path d="M24 22v6M21 25h6" stroke="#c4daf3" stroke-width="1.3" stroke-linecap="round"/>' +
+      '<circle cx="200" cy="108" r="2.5" fill="#cfe2f6"/><circle cx="16" cy="96" r="2" fill="#dbe9f8"/>' +
+    '</svg>',
   aiops:
     '<svg class="empty-art" viewBox="0 0 220 132" fill="none" aria-hidden="true">' +
       '<defs><filter id="opSh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#22c55e" flood-opacity="0.10"/></filter></defs>' +
@@ -199,7 +234,7 @@ var EMPTY_ART = {
 
 function renderEmptyHero(key) {
   var cfg = EMPTY_HERO[key];
-  var eye = key === 'aiops' ? 'AI Ops' : 'Market';
+  var eye = (VIEWS[key] && VIEWS[key].title) || key;
   return '<div class="empty-hero' + (cfg.cls || '') + '"><div class="empty-hero-inner">' +
     (EMPTY_ART[key] || '') +
     '<div class="empty-eyebrow">Coming soon · ' + eye + '</div>' +
@@ -249,21 +284,6 @@ content.addEventListener('click', function (e) {
     renderFilesContent();
     return;
   }
-  var filesCrumb = e.target.closest('[data-files-crumb]');
-  if (filesCrumb) {
-    var crumb = filesCrumb.getAttribute('data-files-crumb');
-    if (crumb === 'root') {
-      filesState.rootId = null;
-      filesState.path = [];
-    } else if (crumb === 'hub') {
-      filesState.path = [];
-    } else {
-      var idx = parseInt(crumb, 10);
-      if (!isNaN(idx)) filesState.path = filesState.path.slice(0, idx + 1);
-    }
-    renderFilesContent();
-    return;
-  }
   var filesAct = e.target.closest('[data-files-act]');
   if (filesAct) {
     e.stopPropagation();
@@ -276,13 +296,33 @@ content.addEventListener('click', function (e) {
   var action = btn.getAttribute('data-agent-action');
   var name = btn.getAttribute('data-agent') || 'Agent';
   if (action === 'try') {
-    alert('Try “' + name + '” — wire this to a chat / run session.');
+    location.href = 'agent-try.html?agent=' + encodeURIComponent(name);
   } else if (action === 'goto-publish') {
     alert('Open system config to publish “' + name + '” (status is changed there, not on this card).');
   } else if (action === 'build') {
     alert('Continue building “' + name + '” — wire this to Workshop.');
   }
 });
+
+function handleFilesCrumbClick(e) {
+  var filesCrumb = e.target.closest('[data-files-crumb]');
+  if (!filesCrumb) return;
+  e.preventDefault();
+  var crumb = filesCrumb.getAttribute('data-files-crumb');
+  if (crumb === 'root') {
+    filesState.rootId = null;
+    filesState.path = [];
+  } else if (crumb === 'hub') {
+    filesState.path = [];
+  } else {
+    var idx = parseInt(crumb, 10);
+    if (!isNaN(idx)) filesState.path = filesState.path.slice(0, idx + 1);
+  }
+  renderFilesContent();
+}
+
+var mainTopEl = document.getElementById('mainTop');
+if (mainTopEl) mainTopEl.addEventListener('click', handleFilesCrumbClick);
 
 content.addEventListener('keydown', function (e) {
   if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.on-graph-card')) {
