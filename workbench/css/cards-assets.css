@@ -314,7 +314,7 @@
 .ea-home-primary .ea-node { stroke:#000; }
 .ea-home-canvases .ea-node-soft { fill:#000; stroke:#000; }
 .ea-home-canvases .ea-chip,.ea-home-canvases .ea-line { fill:#ddd; }
-.ea-home-canvases .ea-card { min-height:352px; }
+.ea-home-canvases .ea-card { min-height:0; }
 .ea-home-canvases .ea-preview { background:#f6f4ff; }
 .ea-home-canvases .ea-name { font-size:13px; }
 .ea-home-canvases .ea-desc { margin:2px 0 8px; font-size:13px; }

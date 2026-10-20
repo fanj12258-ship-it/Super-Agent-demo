@@ -19,6 +19,6 @@
 .market-grid .mcp-logo { width:32px; height:32px; border-radius:8px; font-size:13px; font-weight:400; box-shadow:none; }
 .market-grid .mcp-card>span:last-child { min-width:0; }
 .market-grid .mcp-name { font-size:13px; line-height:18px; font-weight:600; letter-spacing:0; }
-.market-grid .mcp-desc { display:block; margin-top:8px; font-size:13px; line-height:18px; color:var(--text-secondary); overflow:visible; -webkit-line-clamp:unset; }
+.market-grid .mcp-desc { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; height:36px; margin-top:8px; font-size:13px; line-height:18px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; }
 .market-grid .mcp-updated { margin-top:8px; font-size:13px; line-height:18px; color:var(--text-secondary); }
 .market-grid .mcp-pill { height:auto; padding:3px 8px; font-size:13px; line-height:18px; font-weight:400; color:var(--text-secondary); background:#f7f7f7; }
