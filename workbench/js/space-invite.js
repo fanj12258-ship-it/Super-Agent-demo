@@ -18,7 +18,7 @@ function spaceIcon(name) { return '<img class="si-icon" src="assets/space-invite
 function spaceButton(label, action, cls) { return '<button type="button" class="si-button '+(cls||'')+'" data-si-action="'+action+'">'+label+'</button>'; }
 function spaceNav() {
   var groups = [['FED Member Management','members',[['members','FDE Members']]],['Enterprise Organization Management','organization',[['enterprise','Enterprise Admin']]],['Organization Management','organization',[['member-management','Member Management'],['roles','Role Management'],['permissions','Permission Management'],['data','Data Management'],['security','Security Management'],['isolation','Isolation Fields']]]];
-  return '<nav class="si-nav" aria-label="Space management">'+groups.map(function(g){return '<details open><summary>'+spaceIcon(g[1])+'<span>'+g[0]+'</span><span>⌃</span></summary>'+g[2].map(function(p){var enabled=['members','roles','data'].includes(p[0]);return '<button type="button" '+(enabled?'data-si-page="'+p[0]+'"':'disabled title="Not included in this demo"')+' class="'+(spaceAdmin.page===p[0]?'is-current':'')+'">'+p[1]+'</button>';}).join('')+'</details>';}).join('')+'<button class="si-return" type="button" data-si-exit>← Back to Workbench</button></nav>';
+  return '<nav class="si-nav" aria-label="Space management">'+groups.map(function(g){return '<details open><summary>'+spaceIcon(g[1])+'<span>'+g[0]+'</span><span>⌃</span></summary>'+g[2].map(function(p){var enabled=['members','roles','data'].includes(p[0]);return '<button type="button" '+(enabled?'data-si-page="'+p[0]+'"':'disabled title="Not included in this demo"')+' class="'+(spaceAdmin.page===p[0]?'is-current':'')+'">'+p[1]+'</button>';}).join('')+'</details>';}).join('')+'</nav>';
 }
 function openSpaceAdmin() {
   closeAcct();
@@ -56,9 +56,19 @@ function spaceDialog(action,index){
 document.getElementById('spaceInviteEntry').addEventListener('click',openSpaceAdmin);
 document.addEventListener('click',function(e){
   var page=e.target.closest('[data-si-page]');if(page){spaceAdmin.page=page.dataset.siPage;spaceAdmin.query='';policyState.creating=false;renderSpaceAdmin();}
-  if(e.target.closest('[data-si-exit]')){document.body.classList.remove('space-admin');var active=document.querySelector('.nav-item.is-active');render(active?active.dataset.view:'scenario');document.getElementById('userBtn').focus();}
   var tab=e.target.closest('[data-si-tab]'),sub=e.target.closest('[data-si-subtab]');if(tab||sub){if(tab){spaceAdmin.dataTab=tab.dataset.siTab;spaceAdmin.query='';policyState.creating=false;}if(sub)spaceAdmin.subTab=sub.dataset.siSubtab;renderSpaceAdmin();}
   var b=e.target.closest('[data-si-action]');if(!b)return;var a=b.dataset.siAction.split(':'),i=Number(a[1]);if(a[0]==='delete-role'){if(window.confirm('Delete role “'+spaceRoles[i]+'” from this demo?')){spaceRoles.splice(i,1);renderSpaceAdmin();}}else if(a[0]==='revoke'||a[0]==='grant'){spaceRevoked[i]=a[0]==='revoke';renderSpaceAdmin();}else if(a[0]==='view-policy'){spaceAdmin.dataTab='Permissions View';spaceAdmin.query=spacePolicies[i];renderSpaceAdmin();}else spaceDialog(a[0],i);
 });
 content.addEventListener('input',function(e){if(e.target.id!=='spaceSearch')return;var pos=e.target.selectionStart;spaceAdmin.query=e.target.value;renderSpaceAdmin();var input=document.getElementById('spaceSearch');input.focus();try{input.setSelectionRange(pos,pos);}catch(_){} });
 content.addEventListener('change',function(e){if(e.target.hasAttribute('data-si-member'))spaceMembers[Number(e.target.dataset.siMember)][2]=e.target.value;});
+
+// The brand is the shared home entry from management and workspace views.
+document.getElementById('workbenchHome').addEventListener('click', function () {
+  document.body.classList.remove('space-admin');
+  policyState.creating = false;
+  policyState.editing = null;
+  policyDraft = null;
+  closeAcct();
+  activateView('scenario');
+  document.querySelector('.main-body').scrollTop = 0;
+});
