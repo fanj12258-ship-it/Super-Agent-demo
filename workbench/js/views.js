@@ -14,6 +14,7 @@ var RENDERERS = {
 var ontologyDetailOpen = false;
 
 function renderList(key) {
+  if (key === 'enterprise-assets') return toolbar(2) + renderEnterpriseHome(listFor(key));
   if (key === 'files') return renderFiles();
   var list = listFor(key);
   if (!list.length) {
@@ -34,6 +35,7 @@ function activateView(key) {
   if (!target) return;
   ontologyDetailOpen = false;
   marketState.detail = false;
+  enterpriseAssetDetail = null;
   if (key === 'files') {
     filesState.rootId = null;
     filesState.space = 'public';
@@ -77,7 +79,8 @@ function syncMainTop(key) {
   var isFilesDrilldown = key === 'files' && !!filesState.rootId;
   var isOntologyDrilldown = key === 'ontology' && ontologyDetailOpen;
   var isMarketDetail = key === 'market' && marketState.detail;
-  var isDrilldown = isFilesDrilldown || isOntologyDrilldown || isMarketDetail;
+  var isEnterpriseDetail = key === 'enterprise-assets' && !!enterpriseAssetDetail;
+  var isDrilldown = isFilesDrilldown || isOntologyDrilldown || isMarketDetail || isEnterpriseDetail;
 
   next.hidden = isDrilldown;
   next.style.display = isDrilldown ? 'none' : '';
@@ -85,6 +88,11 @@ function syncMainTop(key) {
   prev.title = isDrilldown ? 'Back' : 'Previous tab';
   if (mainTop) mainTop.classList.toggle('is-files-crumbs', isFilesDrilldown);
 
+  if (isEnterpriseDetail) {
+    var canvas = enterpriseCanvasById(enterpriseAssetDetail);
+    label.innerHTML = '<button type="button" data-enterprise-back aria-label="Back to Enterprise Assets">' + (canvas ? canvas.title : enterpriseAssetDetail === 'documents' ? 'Enterprise Documents' : 'Business Landscape') + '</button>';
+    return;
+  }
   if (isMarketDetail) {
     label.innerHTML = '<span class="market-crumbs"><button type="button" data-market-back>Market</button><span>/</span><button type="button" data-market-back>Skill Market</button><span>/</span><span>Skill detail</span></span>';
     return;
@@ -133,6 +141,13 @@ function render(key) {
   mainEl.classList.toggle('is-market', key === 'market');
   mainEl.classList.toggle('has-hero', key !== 'market' && !!EMPTY_HERO[key]);
   mainEl.classList.toggle('is-ops', key === 'aiops');
+  mainEl.classList.toggle('is-enterprise-detail', key === 'enterprise-assets' && !!enterpriseAssetDetail);
+  if (key === 'enterprise-assets' && enterpriseAssetDetail) {
+    titleEl.hidden = true;descEl.hidden = true;content.innerHTML = '';
+    var canvas = enterpriseCanvasById(enterpriseAssetDetail);
+    content.appendChild(window.EnterpriseAssets.build(canvas ? 'canvas' : enterpriseAssetDetail, canvas));
+    return;
+  }
   if (isOntologyDetail) {
     titleEl.hidden = true;
     descEl.hidden = true;
@@ -355,6 +370,7 @@ items.forEach(function (el) {
 
 document.getElementById('mainTabPrev').addEventListener('click', function () {
   var active = document.querySelector('.nav-item.is-active');
+  if (active && active.dataset.view === 'enterprise-assets' && backFromEnterpriseAsset()) return;
   if (active && active.dataset.view === 'market' && backFromMarketDetail()) return;
   if (active && active.dataset.view === 'ontology' && backFromOntologyDetail()) return;
   if (active && active.dataset.view === 'files' && backInFiles()) return;

@@ -19,9 +19,8 @@ document.addEventListener('click', function (e) {
   window.location.href = RETURNING_URL;
 });
 
-// Enterprise cards open the same T1 scenario room with the requested deliverable.
+// Enterprise cards open their content inside the Workbench pattern.
 document.addEventListener('click', function (event) {
   var card = event.target.closest('[data-enterprise-asset]');
-  if (!card) return;
-  window.location.href = '../superagent/superagent.html?entry=workshop&asset=' + encodeURIComponent(card.dataset.enterpriseAsset);
+  if (card) openEnterpriseAsset(card.dataset.enterpriseAsset);
 });

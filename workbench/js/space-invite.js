@@ -29,7 +29,7 @@ function openSpaceAdmin() {
 }
 function renderSpaceAdmin() {
   document.getElementById('spaceAdminNav').innerHTML=spaceNav();
-  var main=document.querySelector('main.main');main.classList.remove('has-hero','is-market','is-ontology-detail','is-ops');
+  var main=document.querySelector('main.main');main.classList.remove('is-enterprise-detail','has-hero','is-market','is-ontology-detail','is-ops');
   document.getElementById('mainTitle').hidden=true;document.getElementById('mainDesc').hidden=true;
   var title=spaceAdmin.page==='members'?'FDE Members':spaceAdmin.page==='roles'?'Role Management':'Data Management';
   document.getElementById('mainTopLabel').innerHTML='<span class="si-breadcrumb">'+(spaceAdmin.page==='members'?'FDE Member Management':'Organization Management')+' / <strong>'+title+'</strong></span>';
