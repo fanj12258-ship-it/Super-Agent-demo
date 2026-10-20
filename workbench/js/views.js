@@ -14,7 +14,7 @@ var RENDERERS = {
 var ontologyDetailOpen = false;
 
 function renderList(key) {
-  if (key === 'enterprise-assets') return toolbar(2) + renderEnterpriseHome(listFor(key));
+  if (key === 'enterprise-assets') return toolbar(3) + renderEnterpriseHome(listFor(key));
   if (key === 'files') return renderFiles();
   var list = listFor(key);
   if (!list.length) {
@@ -90,7 +90,7 @@ function syncMainTop(key) {
 
   if (isEnterpriseDetail) {
     var canvas = enterpriseCanvasById(enterpriseAssetDetail);
-    label.innerHTML = '<button type="button" data-enterprise-back aria-label="Back to Enterprise Assets">' + (canvas ? canvas.title : enterpriseAssetDetail === 'documents' ? 'Enterprise Documents' : 'Business Landscape') + '</button>';
+    label.innerHTML = '<button type="button" data-enterprise-back aria-label="Back to Enterprise Assets">' + (canvas ? canvas.title : enterpriseAssetDetail === 'documents' ? 'Enterprise Documents' : enterpriseAssetDetail === 'planning' ? 'Scenario Planning' : 'Business Landscape') + '</button>';
     return;
   }
   if (isMarketDetail) {

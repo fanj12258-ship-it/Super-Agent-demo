@@ -214,6 +214,7 @@ function renderMcp(list) {
 }
 
 function enterpriseAssetPreview(kind) {
+  if(kind==='planning')return '<img class="ea-planning-preview" src="../superagent/assets/enterprise/planning-roadmap.svg" width="418" height="175" alt="">';
   if (kind === 'canvas') {
     return '<svg class="ea-preview-svg" viewBox="0 0 300 152" fill="none" aria-hidden="true">' +
       '<rect x="58" y="22" width="184" height="108" rx="10" class="ea-page ea-page-main"/>' +
@@ -254,7 +255,7 @@ function renderEnterpriseAssets(list) {
     return '<button type="button" class="card ea-card ea-' + it.kind + '" data-enterprise-asset="' + it.kind + '">' +
       '<div class="ea-preview">' + enterpriseAssetPreview(it.kind) + '</div>' +
       '<div class="ea-body"><div class="ea-title-row"><span class="ea-icon">' +
-      (it.kind === 'canvas'
+      (it.kind === 'planning' ? '<img src="../superagent/assets/enterprise/planning-compass.svg" width="16" height="16" alt="">' : it.kind === 'canvas'
         ? '<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="2.5" y="3" width="15" height="14" rx="2"/><path d="M2.5 7h15M9 7v10M9 12h8.5"/></svg>'
         : it.kind === 'landscape'
         ? '<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="4" r="2"/><circle cx="4" cy="15" r="2"/><circle cx="16" cy="15" r="2"/><path d="m9 5.7-4 7.5m6-7.5 4 7.5M6 15h8"/></svg>'

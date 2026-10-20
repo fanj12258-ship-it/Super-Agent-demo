@@ -332,6 +332,7 @@ var CATALOG = {
       count: '6 business domains',
       meta: '42 processes · Updated 2h ago'
     },
+    {kind:'planning',name:'Scenario Planning',desc:'Identify high-value AI scenarios, prioritize opportunities, and build a phased delivery roadmap.',count:'3 applications',meta:'10 scenarios · Updated 2h ago'},
     {
       kind: 'canvas',
       name: 'Scenario Definition Canvas',

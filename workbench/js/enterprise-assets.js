@@ -14,7 +14,7 @@ function renderEnterpriseHome(list) {
   return '<section class="ea-home-primary">'+primary+'</section><section class="ea-home-canvases"><h2>Scenario Definition Canvas</h2><div class="ea-grid">'+cards+'</div></section>';
 }
 function openEnterpriseAsset(id) {
-  if(!['documents','landscape'].includes(id)&&!enterpriseCanvasById(id))return;
+  if(!['documents','landscape','planning'].includes(id)&&!enterpriseCanvasById(id))return;
   enterpriseAssetDetail=id;
   render('enterprise-assets');
   document.querySelector('.main-body').scrollTop=0;

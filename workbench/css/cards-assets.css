@@ -334,3 +334,9 @@
 .main.is-enterprise-detail .ea-grid-card { margin:16px 0; }
 .main.is-enterprise-detail .ea-room-content { padding:12px; }
 .main.is-enterprise-detail [data-enterprise-back] { padding:0; background:none; border:0; color:inherit; font:inherit; cursor:pointer; }
+
+.ea-home-primary .ea-card { width:clamp(300px,calc((100% - 32px)/3),620px); }
+.ea-planning-preview { display:block; max-width:100%; object-fit:contain; }
+.ea-planning .ea-icon { background:#f5f5f5; }
+@media(max-width:1100px) { .ea-home-primary .ea-card { width:calc((100% - 16px)/2); } }
+@media(max-width:800px) { .ea-home-primary .ea-card { width:100%; } }
