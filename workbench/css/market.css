@@ -5,26 +5,20 @@
 .market-tabs { display: flex; gap: 32px; border-bottom: 1px solid var(--divider); margin-bottom: 16px; }
 .market-tabs button { padding: 12px 0; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #595959; font: inherit; font-size: 13px; cursor: pointer; }
 .market-tabs button[aria-selected="true"] { color: var(--file-blue); border-bottom-color: var(--file-blue); }
-.market-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.market-card { border: 1px solid #d9d9d9; border-radius: 16px; background: white; overflow: hidden; min-width: 0; text-align: left; color: var(--text); font: inherit; padding: 0; }
-.market-skill { cursor: pointer; }
-.market-skill:hover { border-color: var(--file-blue); }
 .market-card:focus-visible, .market-tabs button:focus-visible, .market-document:focus-visible { outline: 2px solid var(--file-blue); outline-offset: 2px; }
-.market-skill pre { height: 126px; overflow: hidden; margin: 0; padding: 12px 16px; background: #fafafa; border-bottom: 1px solid var(--divider); font: 13px/20px ui-monospace, SFMono-Regular, Consolas, monospace; color: #595959; white-space: pre; }
-.market-card-copy { padding: 16px; min-width: 0; }
-.market-card-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.market-card h2 { margin: 0; font-size: 13px; line-height: 18px; font-weight: 600; }
-.market-card p { margin: 8px 0; color: var(--text-secondary); font-size: 13px; line-height: 18px; }
-.market-tags { display: flex; gap: 4px; }
 .market-tag { display: inline-block; border-radius: 20px; background: #f7f7f7; color: var(--text-secondary); font-size: 13px; line-height: 18px; font-weight: 400; padding: 3px 8px; }
-.market-mcp { display: flex; gap: 14px; padding: 16px; align-items: flex-start; }
-.market-mcp .market-card-copy { padding: 0; }
-.market-avatar { display: grid; place-items: center; flex: 0 0 32px; height: 32px; border-radius: 8px; background: #1f82eb; color: white; font-size: 13px; }
 .market-detail h2 { display: flex; align-items: center; gap: 4px; font-size: 16px; line-height: 24px; margin: 16px 0; font-weight: 600; }
 .market-detail h2:first-child { margin-top: 0; }
 .market-document { white-space: pre-wrap; overflow: auto; border: 1px solid #d9d9d9; border-radius: 8px; padding: 12px; font-size: 13px; line-height: 18px; margin-bottom: 16px; color: #262626; }
 .market-overview { height: 246px; }
 .market-crumbs { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 400; }
 .market-crumbs button { padding: 0; border: 0; background: none; color: var(--text-secondary); font: inherit; cursor: pointer; }
-@media (max-width: 1050px) { .market-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 700px) { .market-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Market MCP card — Figma 35:6760. */
+.market-grid .mcp-card { grid-template-columns:32px minmax(0,1fr); gap:14px; padding:16px; border:1px solid #d9d9d9; border-radius:14px; }
+.market-grid .mcp-logo { width:32px; height:32px; border-radius:8px; font-size:13px; font-weight:400; box-shadow:none; }
+.market-grid .mcp-card>span:last-child { min-width:0; }
+.market-grid .mcp-name { font-size:13px; line-height:18px; font-weight:600; letter-spacing:0; }
+.market-grid .mcp-desc { display:block; margin-top:8px; font-size:13px; line-height:18px; color:var(--text-secondary); overflow:visible; -webkit-line-clamp:unset; }
+.market-grid .mcp-updated { margin-top:8px; font-size:13px; line-height:18px; color:var(--text-secondary); }
+.market-grid .mcp-pill { height:auto; padding:3px 8px; font-size:13px; line-height:18px; font-weight:400; color:var(--text-secondary); background:#f7f7f7; }

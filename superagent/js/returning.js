@@ -287,5 +287,5 @@
 
   seedWorkspace();
   seedConversations();
-  setTimeout(runRecap, 600);
+  if (!new URLSearchParams(location.search).has('asset')) setTimeout(runRecap, 600);
 })();

@@ -237,7 +237,7 @@
 /* Enterprise Assets — two top-level enterprise context surfaces */
 .ea-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(280px, 420px));
+  grid-template-columns: repeat(3, minmax(280px, 420px));
   gap: 16px;
   align-items: stretch;
 }
@@ -295,4 +295,10 @@
 
 @media (max-width: 860px) {
   .ea-grid { grid-template-columns: minmax(280px, 1fr); }
+}
+
+.ea-canvas .ea-preview { background: #f6f4ff; }
+.ea-canvas .ea-icon { color: #7659d6; background: #f0ebff; }
+@media (min-width: 981px) and (max-width: 1250px) {
+  .ea-grid { grid-template-columns: repeat(2, minmax(280px, 420px)); }
 }

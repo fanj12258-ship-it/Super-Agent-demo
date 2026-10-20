@@ -331,6 +331,13 @@ var CATALOG = {
       desc: 'A connected view of business domains, capabilities, processes, and the scenarios they support.',
       count: '6 business domains',
       meta: '42 processes · Updated 2h ago'
+    },
+    {
+      kind: 'canvas',
+      name: 'Scenario Definition Canvas',
+      desc: 'Define scenario goals, participants, workflows, and success criteria in a shared canvas.',
+      count: 'Scenario definitions',
+      meta: 'Goals · Roles · Workflows'
     }
   ]
 };

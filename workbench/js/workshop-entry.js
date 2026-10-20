@@ -18,3 +18,10 @@ document.addEventListener('click', function (e) {
   if (!card || card !== first) return;
   window.location.href = RETURNING_URL;
 });
+
+// Enterprise cards open the same T1 scenario room with the requested deliverable.
+document.addEventListener('click', function (event) {
+  var card = event.target.closest('[data-enterprise-asset]');
+  if (!card) return;
+  window.location.href = '../superagent/superagent.html?entry=workshop&asset=' + encodeURIComponent(card.dataset.enterpriseAsset);
+});

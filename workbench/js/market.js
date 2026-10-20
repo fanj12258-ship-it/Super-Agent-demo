@@ -11,11 +11,32 @@ function renderMarket() {
   var tabs = '<div class="market-tabs" role="tablist" aria-label="Market catalogs">' + ['skill', 'mcp'].map(function (tab) {
     return '<button type="button" role="tab" aria-selected="' + (marketState.tab === tab) + '" aria-controls="marketPanel" id="marketTab-' + tab + '" data-market-tab="' + tab + '">' + (tab === 'skill' ? 'Skill Market' : 'MCP Market') + '</button>';
   }).join('') + '</div>';
-  var cards = Array.from({ length: 6 }, function () {
-    if (marketState.tab === 'mcp') return '<article class="market-card market-mcp"><span class="market-avatar">O</span><div class="market-card-copy"><h2>Builtin-OSS</h2><p>Built-in Alibaba Cloud OSS pre-signed URL tools (reuses mcp.proxy.minio config; AK/SK are server-side only). Supports oss_presign_get and upload pre-sign.</p><p>Updated: 2026-08-28 15:08</p><span class="market-tag">Ontology</span></div></article>';
-    return '<button type="button" class="market-card market-skill" data-market-skill aria-label="Open Code Review Assistant skill detail"><pre>' + escapeHtmlModal(marketPreview) + '</pre><div class="market-card-copy"><div class="market-card-title"><h2>Code Review Assistant</h2><span class="market-tag">V5.0</span></div><p>Structured code review on Git diffs or PRs — spot logic bugs, security risks, and style issues, then suggest actionable fixes. Supports team-specific check rules.</p><p>Updated: 2026-07-06 22:59</p><div class="market-tags"><span class="market-tag">code-review</span><span class="market-tag">git</span><span class="market-tag">pr</span></div></div></button>';
-  }).join('');
-  return tabs + '<div class="market-grid" id="marketPanel" role="tabpanel" aria-labelledby="marketTab-' + marketState.tab + '">' + cards + '</div>';
+  var isSkill = marketState.tab === 'skill';
+  var entry = {
+    slug: 'code-review-assistant', title: 'Code Review Assistant', version: 'V5.0',
+    desc: 'Structured code review on Git diffs or PRs — spot logic bugs, security risks, and style issues, then suggest actionable fixes. Supports team-specific check rules.',
+    updated: '2026-07-06 22:59', tags: ['code-review', 'git', 'pr']
+  };
+  var mcpEntries = [
+    { name: 'Cloud Storage', letter: 'C', tag: 'Storage', updated: '2026-10-12 15:08',
+      desc: 'Browse shared files, generate secure download links, and upload deliverables to cloud storage. Keep project materials organized in one place.' },
+    { name: 'Knowledge Search', letter: 'K', tag: 'Knowledge', updated: '2026-10-10 09:30',
+      desc: 'Search internal documentation, policies, and support articles. Return relevant passages with source references for grounded answers.' },
+    { name: 'CRM Connector', letter: 'C', tag: 'Sales', updated: '2026-10-08 14:45',
+      desc: 'Look up customer accounts, review opportunities, and record follow-up notes. Give agents the sales context needed to prepare the next conversation.' },
+    { name: 'SQL Analytics', letter: 'S', tag: 'Data', updated: '2026-10-06 11:20',
+      desc: 'Explore database schemas and run read-only queries against reporting datasets. Turn operational questions into structured tables and metric summaries.' },
+    { name: 'Issue Tracker', letter: 'I', tag: 'Engineering', updated: '2026-10-04 16:10',
+      desc: 'Find issues, inspect release milestones, and prepare task updates. Connect engineering work with the decisions and discussions behind it.' },
+    { name: 'Calendar & Meetings', letter: 'M', tag: 'Productivity', updated: '2026-10-02 10:05',
+      desc: 'Check team availability, retrieve upcoming meetings, and draft event details. Help agents coordinate schedules and prepare meeting briefs.' }
+  ].map(function (it) { it.color = '#1f82eb'; return it; });
+  // Reuse workspace renderers to keep the Market card layouts consistent.
+  var entries = Array.from({ length: 6 }, function () { return entry; });
+  var cards = isSkill ? renderSkill(entries) : renderMcp(mcpEntries);
+  cards = cards.replace('class="grid-agent"', 'class="grid-agent market-grid" id="marketPanel" role="tabpanel" aria-labelledby="marketTab-' + marketState.tab + '"');
+  if (isSkill) cards = cards.replace(/class="card sk-card"/g, 'class="card sk-card market-skill" data-market-skill aria-label="Open Code Review Assistant skill detail"');
+  return tabs + cards;
 }
 
 function backFromMarketDetail() {
