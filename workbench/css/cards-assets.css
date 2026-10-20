@@ -150,7 +150,8 @@
 }
 .on-divider { height: 1px; background: var(--divider); }
 .on-object-sets { padding-top: 16px; }
-.on-list {
+.on-list,
+.ea-home-canvases .ea-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, 300px);
   gap: 16px;
@@ -303,12 +304,11 @@
   .ea-grid { grid-template-columns: repeat(2, minmax(280px, 420px)); }
 }
 /* Enterprise Assets catalog — primary assets followed by scenario canvases. */
-.ea-home-primary .ea-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.ea-home-primary .ea-grid { display:flex; flex-wrap:wrap; gap:16px; }
 .ea-home-canvases { border-top:1px solid var(--divider); margin-top:16px; padding-top:16px; }
 .ea-home-canvases>h2 { margin:0 0 16px; font-size:16px; line-height:24px; font-weight:600; }
-.ea-home-canvases .ea-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
-.ea-home-primary .ea-card { min-height:318px; }
-.ea-home-primary .ea-preview { background:#fafafa; }
+.ea-home-primary .ea-card { width:clamp(420px,50%,620px); min-height:318px; border-radius:12px; }
+.ea-home-primary .ea-preview { height:190px; flex-shrink:0; background:#fafafa; }
 .ea-home-primary .ea-heading,.ea-home-primary .ea-chip,.ea-home-canvases .ea-heading { fill:#000; }
 .ea-home-primary .ea-link { stroke:#000; }
 .ea-home-primary .ea-node { stroke:#000; }
@@ -323,8 +323,7 @@
 .ea-home-tags span { padding:2px 8px; border-radius:20px; background:#f0eaff; color:#7b35d5; }
 .ea-home-tags span+span { background:#fff6e6; color:#d99519; }
 .ea-home-primary .ea-foot,.ea-home-canvases .ea-foot { font-size:13px; gap:8px; flex-wrap:wrap; }
-@media(max-width:1150px) { .ea-home-primary .ea-grid,.ea-home-canvases .ea-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-@media(max-width:800px) { .ea-home-primary .ea-grid,.ea-home-canvases .ea-grid { grid-template-columns:minmax(0,1fr); } }
+@media(max-width:800px) { .ea-home-primary .ea-card { width:100%; } }
 /* Full-page enterprise detail — Figma pattern 313:64262. */
 .main.is-enterprise-detail .main-body { padding:0; background:white; }
 .main.is-enterprise-detail #mainContent { min-height:100%; }

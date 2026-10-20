@@ -322,7 +322,7 @@ var CATALOG = {
       kind: 'documents',
       name: 'Enterprise Documents',
       desc: 'Policies, operating standards, process guides, and institutional knowledge shared across the enterprise.',
-      count: '128 documents',
+      count: '6 business domains',
       meta: '12 collections · Updated today'
     },
     {
