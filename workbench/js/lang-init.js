@@ -12,3 +12,6 @@ langBtns.forEach(function (b) {
 setLang('en');
 
 render('scenario');
+if (new URLSearchParams(window.location.search).get('view') === 'space-invite') {
+  openSpaceAdmin();
+}

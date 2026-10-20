@@ -12,11 +12,20 @@ function renderMarket() {
     return '<button type="button" role="tab" aria-selected="' + (marketState.tab === tab) + '" aria-controls="marketPanel" id="marketTab-' + tab + '" data-market-tab="' + tab + '">' + (tab === 'skill' ? 'Skill Market' : 'MCP Market') + '</button>';
   }).join('') + '</div>';
   var isSkill = marketState.tab === 'skill';
-  var entry = {
-    slug: 'code-review-assistant', title: 'Code Review Assistant', version: 'V5.0',
-    desc: 'Structured code review on Git diffs or PRs — spot logic bugs, security risks, and style issues, then suggest actionable fixes. Supports team-specific check rules.',
-    updated: '2026-07-06 22:59', tags: ['code-review', 'git', 'pr']
-  };
+  var entries = [
+    { slug: 'code-review-assistant', title: 'Code Review Assistant', version: 'V5.0', updated: '2026-10-12 22:59', tags: ['code-review', 'git', 'quality'],
+      desc: 'Review pull requests for logic bugs, security risks, and maintainability. Return prioritized findings with actionable fixes and file references.' },
+    { slug: 'sales-follow-up', title: 'Sales Follow-up Assistant', version: 'V2.1', updated: '2026-10-10 14:30', tags: ['sales', 'crm', 'email'],
+      desc: 'Turn customer conversations into personalized follow-up emails. Capture commitments, next steps, and account updates for the sales team.' },
+    { slug: 'contract-risk-check', title: 'Contract Risk Check', version: 'V1.4', updated: '2026-10-08 11:15', tags: ['legal', 'contract', 'risk'],
+      desc: 'Highlight payment terms, liability clauses, and renewal obligations. Prepare a clause-by-clause review brief with questions for the legal team.' },
+    { slug: 'meeting-notes', title: 'Meeting Notes Generator', version: 'V3.0', updated: '2026-10-06 09:45', tags: ['meeting', 'notes', 'productivity'],
+      desc: 'Transform meeting transcripts into concise summaries, decisions, and action items. Assign owners and due dates to keep the team aligned.' },
+    { slug: 'data-analysis-brief', title: 'Data Analysis Brief', version: 'V1.8', updated: '2026-10-04 16:20', tags: ['analysis', 'metrics', 'report'],
+      desc: 'Translate operational metrics into a clear business brief. Explain trends, flag anomalies, and suggest focused follow-up questions.' },
+    { slug: 'incident-triage', title: 'Incident Triage', version: 'V2.3', updated: '2026-10-02 13:10', tags: ['incident', 'sre', 'triage'],
+      desc: 'Group incoming alerts, assess customer impact, and identify likely causes. Draft a triage summary with recommended investigation steps.' }
+  ];
   var mcpEntries = [
     { name: 'Cloud Storage', letter: 'C', tag: 'Storage', updated: '2026-10-12 15:08',
       desc: 'Browse shared files, generate secure download links, and upload deliverables to cloud storage. Keep project materials organized in one place.' },
@@ -32,10 +41,15 @@ function renderMarket() {
       desc: 'Check team availability, retrieve upcoming meetings, and draft event details. Help agents coordinate schedules and prepare meeting briefs.' }
   ].map(function (it) { it.color = '#1f82eb'; return it; });
   // Reuse workspace renderers to keep the Market card layouts consistent.
-  var entries = Array.from({ length: 6 }, function () { return entry; });
   var cards = isSkill ? renderSkill(entries) : renderMcp(mcpEntries);
   cards = cards.replace('class="grid-agent"', 'class="grid-agent market-grid" id="marketPanel" role="tabpanel" aria-labelledby="marketTab-' + marketState.tab + '"');
-  if (isSkill) cards = cards.replace(/class="card sk-card"/g, 'class="card sk-card market-skill" data-market-skill aria-label="Open Code Review Assistant skill detail"');
+  if (isSkill) {
+    var cardIndex = 0;
+    cards = cards.replace(/class="card sk-card"/g, function () {
+      var skill = entries[cardIndex++];
+      return 'class="card sk-card market-skill" data-market-skill aria-label="Open ' + escapeHtmlModal(skill.title) + ' skill detail"';
+    });
+  }
   return tabs + cards;
 }
 
