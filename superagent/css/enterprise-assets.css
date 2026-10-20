@@ -105,8 +105,6 @@
 .ea-revenue-chart { padding:16px 18px; border:1px solid #edf0f4; border-radius:8px; background:#fbfcfe; }
 .ea-revenue-chart-heading { display:flex; justify-content:space-between; gap:16px; margin-bottom:14px; }
 .ea-revenue-chart-heading>span { color:#939aa5; }
-.ea-revenue-stack { display:flex; gap:3px; height:12px; border-radius:4px; overflow:hidden; margin-bottom:20px; }
-.ea-revenue-stack>i { flex:var(--share); background:var(--fill); }
 .ea-revenue-row { display:grid; grid-template-columns:minmax(120px,1fr) minmax(60px,2fr) 40px; gap:18px; align-items:center; margin-top:12px; }
 .ea-revenue-name { display:flex; align-items:center; gap:8px; color:#656e7b; }
 .ea-revenue-name>i { width:8px; height:8px; flex:none; border-radius:3px; background:var(--fill); }
