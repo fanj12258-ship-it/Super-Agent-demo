@@ -14,7 +14,7 @@ var RENDERERS = {
 var ontologyDetailOpen = false;
 
 function renderList(key) {
-  if (key === 'enterprise-assets') return toolbar(3) + renderEnterpriseHome(listFor(key));
+  if (key === 'enterprise-assets') return renderEnterpriseHome(listFor(key));
   if (key === 'files') return renderFiles();
   var list = listFor(key);
   if (!list.length) {

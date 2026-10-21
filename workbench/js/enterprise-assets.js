@@ -11,7 +11,7 @@ function enterpriseCanvasById(id) { return enterpriseCanvasItems.find(function(x
 function renderEnterpriseHome(list) {
   var primary = renderEnterpriseAssets(list.filter(function(it){return it.kind!=='canvas';}));
   var cards = enterpriseCanvasItems.map(function(it){return '<button type="button" class="card ea-card ea-canvas" data-enterprise-asset="'+it.id+'"><div class="ea-body"><div class="ea-title-row"><span class="ea-icon"><svg width="16" height="16" aria-hidden="true"><use href="#ws-canvas"/></svg></span><span class="ea-name">'+(it.cardTitle||it.title)+'</span><span class="ea-arrow" aria-hidden="true">→</span></div><div class="ea-scenario-name">'+it.scenario+'</div><p class="ea-desc">'+it.desc+'</p><div class="ea-home-tags"><span>Business</span><span>Crafting</span></div><div class="ea-foot"><span>6 business domains</span><span>42 processes · Updated 2h ago</span></div></div></button>';}).join('');
-  return '<section class="ea-home-primary">'+primary+'</section><section class="ea-home-canvases"><h2>Scenario Definition Canvas</h2><div class="ea-grid">'+cards+'</div></section>';
+  return '<section class="ea-home-primary"><h2 class="on-section-title">Enterprise Assets</h2>'+primary+'</section><section class="ea-home-canvases"><div class="on-section-head"><h2 class="on-section-title">Scenario Definition Canvas</h2><span>'+enterpriseCanvasItems.length+'</span></div><div class="ea-grid">'+cards+'</div></section>';
 }
 function openEnterpriseAsset(id) {
   if(!['documents','landscape','planning'].includes(id)&&!enterpriseCanvasById(id))return;
