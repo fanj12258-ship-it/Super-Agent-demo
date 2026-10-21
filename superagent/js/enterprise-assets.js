@@ -103,7 +103,7 @@
       flows.tobe.label=context.title+' To-Be workflow';
       flows.tobe.nodes=context.steps.map(function(title,i){var col=i<4?i:7-i;return [title,i<4?'Supplier operations · '+context.scenario:'Review & follow-up · Sample step',30+240*col,i<4?75:300];});
       flows.tobe.edges=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]];
-      stories=[{title:context.scenario+' — Primary workflow',steps:context.steps.map(function(step,i){return (i+1)+'. '+step+'. Record the outcome and pass the case to the next responsible owner.';})},{title:'Exception handling and review',steps:['Identify incomplete or inconsistent supplier information.','Route the case to the responsible reviewer with the supporting evidence.','Capture the decision and resume the approved workflow.']},{title:'Completion and follow-up',steps:['Publish the approved outcome to the supplier record.','Notify relevant sourcing and operations teams.','Track follow-up actions and maintain the audit trail.']}];
+      stories=[{title:context.scenario+' — Primary workflow',steps:context.steps.map(function(step){return step+'. Record the outcome and pass the case to the next responsible owner.';})},{title:'Exception handling and review',steps:['Identify incomplete or inconsistent supplier information.','Route the case to the responsible reviewer with the supporting evidence.','Capture the decision and resume the approved workflow.']},{title:'Completion and follow-up',steps:['Publish the approved outcome to the supplier record.','Notify relevant sourcing and operations teams.','Track follow-up actions and maintain the audit trail.']}];
     }
     return build(kind);
   }};
