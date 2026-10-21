@@ -149,3 +149,6 @@
 .space-admin .si-nav summary { padding:9px 12px; line-height:18px; }
 .space-admin .si-nav button { padding-top:9px; padding-bottom:9px; line-height:18px; }
 @media(max-width:800px) { .space-admin .main.is-fde-members .si-tools { width:100%; } .space-admin .main.is-fde-members .si-row { flex-wrap:wrap; } }
+
+.si-static-roles button:disabled,.si-static-roles input:disabled { cursor:default; opacity:1; -webkit-text-fill-color:currentColor; }
+.si-static-roles .si-row { cursor:default; }

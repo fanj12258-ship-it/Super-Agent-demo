@@ -330,3 +330,16 @@
 @media (prefers-reduced-motion: reduce) {
   .bp-box, .bp-card, .bp-ce { transition: none; }
 }
+
+/* Paper previews fill the viewport even when the document is short. */
+.fd-scroll:has(.fd-doc) { padding-bottom:0; }
+.fd-pane:has(> .fd-doc):not([hidden]) { display:flex; flex-direction:column; min-height:100%; box-sizing:border-box; }
+.fd-pane > .fd-doc { flex:1 0 auto; width:100%; min-height:100%; margin-bottom:0; box-sizing:border-box; }
+
+/* Match the enterprise file breadcrumb inset below the tab bar. */
+.fd-meta { padding-top:12px; }
+
+/* Shared file preview canvas and breadcrumb alignment. */
+.fd-view,.right-panel-inner:has(.fd-view:not([hidden])) .right-panel-head { background:#f7f7f9; }
+.fd-meta { padding:12px 12px 10px; line-height:18px; }
+.fd-scroll { background:#f7f7f9; padding-left:12px; padding-right:12px; }

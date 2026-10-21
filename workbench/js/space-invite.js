@@ -17,8 +17,8 @@ var spaceRevoked = {};
 function spaceIcon(name) { return '<img class="si-icon" src="assets/space-invite/' + name + '.svg" alt="">'; }
 function spaceButton(label, action, cls) { return '<button type="button" class="si-button '+(cls||'')+'" data-si-action="'+action+'">'+label+'</button>'; }
 function spaceNav() {
-  var groups = [['FED Member Management','members',[['members','FDE Members']]],['Enterprise Organization Management','organization',[['enterprise','Enterprise Admin']]],['Organization Management','organization',[['member-management','Member Management'],['roles','Role Management'],['permissions','Permission Management'],['data','Data Management'],['security','Security Management'],['isolation','Isolation Fields']]]];
-  return '<nav class="si-nav" aria-label="Space management">'+groups.map(function(g){return '<details open><summary>'+spaceIcon(g[1])+'<span>'+g[0]+'</span><span>⌃</span></summary>'+g[2].map(function(p){var enabled=['members','roles','data'].includes(p[0]);return '<button type="button" '+(enabled?'data-si-page="'+p[0]+'"':'disabled title="Not included in this demo"')+' class="'+(spaceAdmin.page===p[0]?'is-current':'')+'">'+p[1]+'</button>';}).join('')+'</details>';}).join('')+'</nav>';
+  var groups = [['FED Member Management','members',[['members','FDE Members']]],['Enterprise Organization Management','organization',[['enterprise','Enterprise Admin']]],['Organization Management','organization',[['member-management','Member Management'],['permissions','Permission Management'],['data','Data Management'],['security','Security Management'],['isolation','Isolation Fields']]]];
+  return '<nav class="si-nav" aria-label="Space management">'+groups.map(function(g){return '<details open><summary>'+spaceIcon(g[1])+'<span>'+g[0]+'</span><span>⌃</span></summary>'+g[2].map(function(p){var enabled=['members','data'].includes(p[0]);return '<button type="button" '+(enabled?'data-si-page="'+p[0]+'"':'disabled title="Not included in this demo"')+' class="'+(spaceAdmin.page===p[0]?'is-current':'')+'">'+p[1]+'</button>';}).join('')+'</details>';}).join('')+'</nav>';
 }
 function openSpaceAdmin() {
   closeAcct();
@@ -28,6 +28,7 @@ function openSpaceAdmin() {
   renderSpaceAdmin();
 }
 function renderSpaceAdmin() {
+  if(spaceAdmin.page==='roles'){spaceAdmin.page='members';spaceAdmin.query='';}
   document.getElementById('spaceAdminNav').innerHTML=spaceNav();
   var main=document.querySelector('main.main');main.classList.toggle('is-fde-members',spaceAdmin.page==='members');main.classList.remove('is-enterprise-detail','has-hero','is-market','is-ontology-detail','is-ops');
   document.getElementById('mainTitle').hidden=true;document.getElementById('mainDesc').hidden=true;
@@ -38,6 +39,10 @@ function renderSpaceAdmin() {
   var isMembers=spaceAdmin.page==='members';
   var rows=isMembers?spaceMembers.map(function(m,i){if(!m.join(' ').toLowerCase().includes(spaceAdmin.query.toLowerCase()))return '';return '<div class="si-row"><span class="si-avatar" style="background:'+m[3]+'">'+escapeHtmlModal(m[0][0])+'</span><div class="si-person"><strong>'+escapeHtmlModal(m[0])+'</strong><span>'+escapeHtmlModal(m[1])+'</span></div><select aria-label="Role for '+escapeHtmlModal(m[0])+'" data-si-member="'+i+'">'+Array.from(new Set([m[2]].concat(spaceRoles,['Business Analyst','Designer','Engineer']))).map(function(r){return '<option '+(r===m[2]?'selected':'')+'>'+escapeHtmlModal(r)+'</option>';}).join('')+'</select></div>';}).join(''):spaceRoles.map(function(r,i){if(!r.toLowerCase().includes(spaceAdmin.query.toLowerCase()))return '';return '<div class="si-row si-role-row">'+spaceIcon('user')+'<strong>'+escapeHtmlModal(r)+'</strong><div class="si-row-actions">'+spaceButton('Edit','edit-role:'+i,'si-link')+spaceButton('Delete','delete-role:'+i,'si-danger')+'</div></div>';}).join('');
   content.innerHTML='<section class="si-panel"><header class="si-toolbar"><div>'+(isMembers?'Member List':'Role List')+' <span class="si-count">'+(isMembers?spaceMembers.length:spaceRoles.length)+' members</span></div><div class="si-tools">'+search+spaceButton(isMembers?'+ Invite Member':'+ Create Role',isMembers?'invite':'create-role','si-solid')+'</div></header><div class="si-list">'+(rows||'<p class="si-empty">No matching results</p>')+'</div></section>';
+  if(!isMembers){
+    content.querySelector('.si-panel').classList.add('si-static-roles');
+    content.querySelectorAll('button,input').forEach(function(control){control.disabled=true;control.setAttribute('aria-disabled','true');});
+  }
 }
 function renderSpaceData(search){
   if(policyState.creating)return renderPolicyEditor();

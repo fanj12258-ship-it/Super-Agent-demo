@@ -339,3 +339,16 @@
 - Implementation: superagent/js/enterprise-assets.js, superagent/css/enterprise-assets.css, superagent/assets/enterprise/{history,info,sync}.svg.
 
 - Scroll containment: enterprise detail headers remain outside `.ea-article-scroll`; only the article body scrolls, with keyboard focus support and scroll position preserved when review controls rerender. The outer FastDocs/Workbench viewport clips overflow to avoid competing vertical scrollbars. Applies to all four enterprise asset detail types.
+
+### Shared line tabs
+
+- Visual reference: Workbench Files Public space / Personal space. 32px height, 12px horizontal padding, 2px gap, 13px text, neutral baseline, black semibold selected label and 2px underline. No selected pill background.
+- Structure: legacy tab classes adapt to one shared stylesheet; existing selection attributes, click handlers, close controls and horizontal overflow remain intact.
+- State and feedback: selected states use is-on/is-active/is-cur/is-current/on or aria-selected=true; hover darkens text, keyboard focus has an inset outline, disabled tabs are muted.
+- Trigger and dismissal: existing tab selection/close events; tab content lifecycle remains owned by each feature.
+- Reuse scope: Files, Market, management, enterprise asset views, scene sidebar, ontology, flow, conversation and document tabs, sheet tabs, and switching dialog. Composable shared presentation; no changes to underlying demo data.
+- Implementation: superagent/css/line-tabs.css, Workbench and Superagent entrypoints, and workshop shell/generated pages. Replaces per-feature visual differences while preserving event contracts.
+
+- Fixed review chrome: company title, tabs, and review row are moved into `.ea-fixed-chrome`, a nonshrinking sibling before `.ea-article-scroll`. This replaces sticky descendants so scrolling to the end cannot move or compress review rows.
+
+Enterprise Profile section navigation uses the ontology segmented control style: gray rounded group, black selected segment, and aria-pressed state; section anchor scrolling is preserved.

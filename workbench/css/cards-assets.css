@@ -306,6 +306,8 @@
 }
 /* Enterprise Assets catalog — primary assets followed by scenario canvases. */
 .ea-home-primary .ea-grid { display:flex; flex-wrap:wrap; gap:16px; }
+.ea-home-primary .ea-card { display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; padding:0; }
+.ea-home-primary .ea-preview { width:100%; }
 .ea-home-canvases { border-top:1px solid var(--divider); margin-top:16px; padding-top:16px; }
 
 
@@ -341,3 +343,13 @@
 .ea-planning .ea-icon { background:#f5f5f5; }
 
 .main.is-enterprise-detail .main-body { min-height:0; overflow:hidden; }
+
+.main.is-enterprise-detail .main-top { height:54px; }
+
+.main.is-enterprise-detail .main-top { flex:0 0 54px; min-height:54px; box-sizing:border-box; }
+.main.is-enterprise-detail #mainContent { overflow:hidden; }
+
+/* Keep list and detail navigation at the same vertical position. */
+.main.is-enterprise-page .main-top { height:54px; min-height:54px; flex:0 0 54px; box-sizing:border-box; }
+
+.main.is-enterprise-detail .ea-room-content.ea-agent-view { padding:16px 32px; }

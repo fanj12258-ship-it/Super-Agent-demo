@@ -1,0 +1,33 @@
+/* Shared line tabs: Files / Public space is the visual reference.
+   Explicit adapters keep legacy tab state and event handlers intact. */
+:root { --line-tab-height:32px; --line-tab-gap:2px; --line-tab-padding:12px; --line-tab-border:#ececec; --line-tab-active:#111; --line-tab-muted:#777; }
+:is(.fb-spaces,.market-tabs,.si-tabs,.ea-room-tabs,.doc-subtabs,.og-tabs,.fa-tabs,.cv-tabs,.fd-sheet-tabs,.fsw-seg) { display:flex !important; align-items:center !important; gap:var(--line-tab-gap) !important; min-height:var(--line-tab-height); height:auto !important; padding-top:0 !important; padding-bottom:0 !important; border:0 !important; border-bottom:1px solid var(--line-tab-border) !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; overflow-x:auto; flex-shrink:0; }
+:is(.fb-space,.market-tabs>button,.si-tabs>button,.ea-room-tabs>button,.doc-subtab,.og-tabs>button,.fa-tab,.cv-tab,.fd-sheet-tab,.fsw-seg>button) { box-sizing:border-box !important; display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto !important; position:relative; height:var(--line-tab-height) !important; min-height:var(--line-tab-height); padding:0 var(--line-tab-padding) !important; margin:0 0 -1px !important; border:0 !important; border-bottom:2px solid transparent !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; color:var(--line-tab-muted) !important; font-size:13px !important; font-weight:500 !important; line-height:18px !important; letter-spacing:normal; white-space:nowrap; cursor:pointer; }
+:is(.fb-space,.market-tabs>button,.si-tabs>button,.ea-room-tabs>button,.doc-subtab,.og-tabs>button,.fa-tab,.cv-tab,.fd-sheet-tab,.fsw-seg>button):is(.is-on,.is-active,.is-cur,.is-current,.on,[aria-selected="true"]) { color:var(--line-tab-active) !important; border-bottom-color:transparent !important; font-weight:600 !important; }
+:is(.fb-space,.market-tabs>button,.si-tabs>button,.ea-room-tabs>button,.doc-subtab,.og-tabs>button,.fa-tab,.cv-tab,.fd-sheet-tab,.fsw-seg>button):hover:not(:disabled) { color:var(--line-tab-active) !important; }
+:is(.fb-space,.market-tabs>button,.si-tabs>button,.ea-room-tabs>button,.doc-subtab,.og-tabs>button,.fa-tab,.cv-tab,.fd-sheet-tab,.fsw-seg>button):focus-visible { outline:2px solid #a7ccf7; outline-offset:-2px; }
+:is(.fb-space,.market-tabs>button,.si-tabs>button,.ea-room-tabs>button,.doc-subtab,.og-tabs>button,.fa-tab,.cv-tab,.fd-sheet-tab,.fsw-seg>button):disabled { opacity:.45; cursor:not-allowed; }
+.og-tabs button.is-on::after { content:none !important; }
+.fd-tab-name { font-size:13px !important; font-weight:inherit !important; }
+
+/* Inset the indicator by the horizontal hit-area padding. */
+:is(.fb-space,.market-tabs>button,.si-tabs>button,.ea-room-tabs>button,.doc-subtab,.og-tabs>button,.fa-tab,.cv-tab,.fd-sheet-tab,.fsw-seg>button):is(.is-on,.is-active,.is-cur,.is-current,.on,[aria-selected="true"])::before { content:""; position:absolute; height:2px; background:var(--line-tab-active); left:var(--line-tab-padding); right:var(--line-tab-padding); bottom:-2px; pointer-events:none; }
+
+/* The leading label starts at the content edge, without a leading hit-area inset. */
+:is(.fb-space,.market-tabs>button,.si-tabs>button,.ea-room-tabs>button,.doc-subtab,.og-tabs>button,.fa-tab,.cv-tab,.fd-sheet-tab,.fsw-seg>button):first-child { padding-left:0 !important; }
+:is(.fb-space,.market-tabs>button,.si-tabs>button,.ea-room-tabs>button,.doc-subtab,.og-tabs>button,.fa-tab,.cv-tab,.fd-sheet-tab,.fsw-seg>button):first-child::before { left:0; }
+
+/* Enterprise detail tabs align with the 40px review row below. */
+.ea-room-tabs { --line-tab-height:40px; height:40px !important; min-height:40px; box-sizing:border-box; }
+
+/* File names keep a readable width; extra tabs scroll horizontally. */
+.right-panel-head .fd-tabs .fd-tab { flex:0 0 auto !important; width:max-content; max-width:260px; gap:6px; }
+.right-panel-head .fd-tabs .fd-tab-name { flex:0 1 auto; min-width:0; }
+.right-panel-head .fd-tabs .fd-tab-x { flex:none; }
+
+/* Workshop file tabs retain the production pill treatment. */
+.right-panel-head .fd-tabs { border-bottom:0; }
+.right-panel-head .fd-tabs .fd-tab { height:30px; padding:0 8px 0 10px; border:0; border-radius:8px; margin:0; background:transparent; box-shadow:none; color:var(--text-secondary,#8c8c8c); }
+.right-panel-head .fd-tabs .fd-tab.is-active { background:#fff; color:var(--text-primary,#111); box-shadow:none; }
+.right-panel-head .fd-tabs .fd-tab::before { content:none; }
+.main-column-head,.right-panel-head { height:var(--workshop-head-h,48px); min-height:var(--workshop-head-h,48px); flex:0 0 var(--workshop-head-h,48px); box-sizing:border-box; border-bottom:1px solid var(--divider,#e6e6e6); }

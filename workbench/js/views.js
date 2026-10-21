@@ -141,6 +141,7 @@ function render(key) {
   mainEl.classList.toggle('is-market', key === 'market');
   mainEl.classList.toggle('has-hero', key !== 'market' && !!EMPTY_HERO[key]);
   mainEl.classList.toggle('is-ops', key === 'aiops');
+  mainEl.classList.toggle('is-enterprise-page', key === 'enterprise-assets');
   mainEl.classList.toggle('is-enterprise-detail', key === 'enterprise-assets' && !!enterpriseAssetDetail);
   if (key === 'enterprise-assets' && enterpriseAssetDetail) {
     titleEl.hidden = true;descEl.hidden = true;content.innerHTML = '';
