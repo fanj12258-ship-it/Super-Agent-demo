@@ -51,28 +51,52 @@
     var filesAny = false;
     Object.keys(groups).forEach(function (k) {
       var g = groups[k];
-      g.group.classList.toggle('has-items', g.n > 0);
+      var hasItems = g.n > 0 || Object.keys(g.folders).length > 0;
+      g.group.classList.toggle('has-items', hasItems);
       if (g.count) g.count.textContent = g.n;
-      if (g.n > 0) filesAny = true;
+      if (hasItems) filesAny = true;
     });
     scroll.classList.toggle('has-any', filesAny);
   }
 
   /* optional leading mark for one folder — the enterprise dossier uses its own, not the outline folder */
   var marks = {};
-  function ensureFolder(g, name) {
+  var updatedEntries = {};
+  function setEntryUpdated(name, on) {
+    updatedEntries[name] = !!on;
+    Object.keys(groups).forEach(function (kind) {
+      var g = groups[kind];
+      var folder = g.folders[name];
+      if (folder) folder.node.classList.toggle('has-update-dot', !!on);
+      Array.prototype.forEach.call(g.tree.querySelectorAll('.file'), function (row) {
+        var label = row.querySelector('.name');
+        if (label && label.textContent === name) row.classList.toggle('has-update-dot', !!on);
+      });
+    });
+  }
+  function ensureFolder(g, name, options) {
     if (g.folders[name]) return g.folders[name];
+    var opts = options || {};
+    var open = opts.open !== false;
+    var collapsible = opts.collapsible !== false;
     var mark = marks[name];
     var icon = !mark ? '' : (typeof mark === 'string' ? mark : (mark.icon || ''));
     var tag = mark && typeof mark === 'object' ? mark.tag : '';
     var node = document.createElement('div');
-    node.className = 'node is-open is-new' + (icon ? ' is-dossier' : '');
+    node.className = 'node' + (open ? ' is-open' : '') + (collapsible ? '' : ' is-static-folder') +
+      (opts.animate === false ? '' : ' is-new') + (icon ? ' is-dossier' : '');
     node.setAttribute('data-kind', 'folder');
     node.setAttribute('role', 'treeitem');
-    node.setAttribute('aria-expanded', 'true');
-    node.innerHTML = CHEV + (icon || FOLDER) + '<span class="label">' + esc(name) + '</span>' +
+    if (opts.openAsset) {
+      node.setAttribute('data-enterprise-asset', opts.openAsset);
+      node.setAttribute('tabindex', '0');
+      node.setAttribute('aria-label', '打开' + name);
+    }
+    if (collapsible) node.setAttribute('aria-expanded', open ? 'true' : 'false');
+    node.innerHTML = (collapsible ? CHEV : '') + (icon || FOLDER) + '<span class="label">' + esc(name) + '</span>' +
       (tag ? '<span class="folder-tag">' + esc(tag) + '</span>' : '') +
       '<div class="row-actions"><button type="button" class="more" aria-label="More">' + MORE + '</button></div>';
+    node.classList.toggle('has-update-dot', !!updatedEntries[name]);
     node.addEventListener('animationend', function () { node.classList.remove('is-new'); });
     g.tree.appendChild(node);
     g.folders[name] = { node: node, files: [] };
@@ -96,7 +120,7 @@
     var doc = window.FastDocs && window.FastDocs.find(name);
     var glyph = (doc && doc.kind === 'flow' && window.FastFlowBoard) ? window.FastFlowBoard.fileIcon() : (FTI ? FTI.svg(type) : '');
     var row = document.createElement('div');
-    row.className = 'file is-new' + (folder ? ' indent-1' : '');
+    row.className = 'file is-new' + (kind === 'deliverable' ? ' has-update-dot' : '') + (folder ? ' indent-1' : '');
     row.setAttribute('data-kind', 'file');
     row.setAttribute('role', 'treeitem');
     if (doc) row.setAttribute('data-doc', doc.name);
@@ -124,6 +148,12 @@
     if (e.target.closest('.more')) return;
     var folderRow = e.target.closest('#fast-materials .node, #fast-deliverables .node');
     if (folderRow) {
+      if (folderRow.hasAttribute('data-enterprise-asset')) {
+        setEntryUpdated(folderRow.querySelector('.label').textContent, false);
+        if (window.EnterpriseAssets) window.EnterpriseAssets.open(folderRow.getAttribute('data-enterprise-asset'));
+        return;
+      }
+      if (folderRow.classList.contains('is-static-folder')) return;
       var open = !folderRow.classList.contains('is-open');
       folderRow.classList.toggle('is-open', open);
       folderRow.setAttribute('aria-expanded', open ? 'true' : 'false');
@@ -135,10 +165,19 @@
     }
     var row = e.target.closest('#fast-materials .file, #fast-deliverables .file');
     if (!row) return;
+    var rowName = row.querySelector('.name');
+    if (rowName) setEntryUpdated(rowName.textContent, false);
     scroll.querySelectorAll('.file.is-active').forEach(function (r) { r.classList.remove('is-active'); });
     row.classList.add('is-active');
   }
   scroll.addEventListener('click', onTreeClick);
+  scroll.addEventListener('keydown', function (e) {
+    var folder = e.target.closest('[data-enterprise-asset]');
+    if (!folder || (e.key !== 'Enter' && e.key !== ' ')) return;
+    e.preventDefault();
+    setEntryUpdated(folder.querySelector('.label').textContent, false);
+    if (window.EnterpriseAssets) window.EnterpriseAssets.open(folder.getAttribute('data-enterprise-asset'));
+  });
 
   function showTab(files) {
     var t = files ? filesTab : sceneTab;
@@ -161,7 +200,25 @@
     addDeliverable: function (name) { return add('deliverable', name); },
     markFolder: function (name, html) { marks[name] = html; },
     addMaterial: function (name) { return add('material', name); },
+    addFolder: function (kind, name, options) {
+      var g = groups[kind];
+      if (!g) return null;
+      var folder = ensureFolder(g, name, options);
+      sync();
+      return folder.node;
+    },
+    removeEmptyFolder: function (kind, name) {
+      var g = groups[kind];
+      var folder = g && g.folders[name];
+      if (!folder || folder.files.length) return false;
+      folder.node.remove();
+      delete g.folders[name];
+      sync();
+      return true;
+    },
     showTab: showTab,
+    markUpdated: function (name) { setEntryUpdated(name, true); },
+    clearUpdated: function (name) { setEntryUpdated(name, false); },
     showSyncTip: function (message) {
       if (!syncTip) return;
       if (syncTipText && message) syncTipText.textContent = message;
@@ -172,6 +229,7 @@
       var g = groups[kind]; if (!g) return;
       Object.keys(g.folders).forEach(function (k) {
         var f = g.folders[k];
+        if (f.node.classList.contains('is-static-folder')) return;
         f.node.classList.remove('is-open'); f.node.setAttribute('aria-expanded', 'false');
         f.files.forEach(function (r) { r.classList.add('is-hidden'); });
       });
@@ -179,6 +237,7 @@
     markNew: function () { if (filesTab && !filesTab.classList.contains('is-active')) filesTab.classList.add('has-dot'); },
     reset: function () {
       Object.keys(groups).forEach(function (k) { groups[k].tree.innerHTML = ''; groups[k].n = 0; groups[k].folders = {}; });
+      updatedEntries = {};
       if (syncTip) syncTip.hidden = true;
       sync();
     },

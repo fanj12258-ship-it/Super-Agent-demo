@@ -114,30 +114,30 @@
   flex-direction: column;
   gap: 0;
   padding: 2px 0 6px;
+  font-size: 13px;
+  line-height: 18px;
 }
 
 .files-scroll .tree .is-hidden { display: none !important; }
 
-.files-scroll .tree .node {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 1.75px 8px;
-  border-radius: 0;
-  color: var(--text-primary, #18181b);
-  cursor: pointer;
-  user-select: none;
-  font-size: 12px;
-}
+.files-scroll .tree .node,
 .files-scroll .tree .file {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 6px;
   padding: 1.75px 8px;
   border-radius: 0;
+  font-size: 13px;
+  line-height: 18px;
   cursor: pointer;
+}
+.files-scroll .tree .node {
+  gap: 5px;
+  color: var(--text-primary, #18181b);
+  user-select: none;
+}
+.files-scroll .tree .file {
+  gap: 6px;
 }
 
 .files-scroll .tree .node::after,
@@ -208,11 +208,24 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 13px;
   font-weight: 500;
-  line-height: 16px;
+  line-height: 18px;
 }
 .files-scroll .tree .node[class*="indent-"] .label {
   font-weight: 400;
+}
+.files-scroll .tree .has-update-dot > .label::after,
+.files-scroll .tree .file.has-update-dot .name::after {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--status-error, #e5484d);
+  box-shadow: 0 0 0 1px var(--bg, #fff);
+  vertical-align: 1px;
 }
 
 /* Seti-style file icons (self-colored · js/file-type-icons.js) */
@@ -242,9 +255,9 @@
 }
 .files-scroll .tree .file .name {
   min-width: 0;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 400;
-  line-height: 16px;
+  line-height: 18px;
   color: var(--text-primary, #18181b);
   overflow: hidden;
   text-overflow: ellipsis;

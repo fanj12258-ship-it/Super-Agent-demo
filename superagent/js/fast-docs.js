@@ -216,7 +216,8 @@
     if (!panes[d.name]) { panes[d.name] = buildPane(d); scroll.appendChild(panes[d.name]); }
     Object.keys(panes).forEach(function (k) { panes[k].hidden = k !== d.name; });
     scroll.scrollTop = 0;
-    meta.hidden = d.kind === 'agent';
+    meta.hidden = d.kind === 'agent' || d.kind === 'enterprise';
+    view.classList.toggle('is-enterprise', d.kind === 'enterprise');
     view.classList.toggle('is-agent', d.kind === 'agent');
     view.classList.toggle('is-flow', d.kind === 'flow');
     meta.innerHTML = d.kind === 'agent' ? '' :

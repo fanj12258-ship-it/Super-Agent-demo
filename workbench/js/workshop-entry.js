@@ -18,3 +18,9 @@ document.addEventListener('click', function (e) {
   if (!card || card !== first) return;
   window.location.href = RETURNING_URL;
 });
+
+// Enterprise cards open their content inside the Workbench pattern.
+document.addEventListener('click', function (event) {
+  var card = event.target.closest('[data-enterprise-asset]');
+  if (card) openEnterpriseAsset(card.dataset.enterpriseAsset);
+});

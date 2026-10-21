@@ -12,6 +12,8 @@
   var bp = document.getElementById('fast-bp');
   var chatMain = document.getElementById('chat-main');
   if (!host || !bp) return;
+  /* Remove the old phase-2 frost mask so the structure map stays visible. */
+  bp.querySelectorAll('.bpi-phase2').forEach(function (n) { n.remove(); });
 
   var K = 0.36, A = 0.9;
   // one shared <pattern> for "mock" plates (hatched fill) — referenced from CSS as url(#bpi-hatch)
@@ -193,84 +195,8 @@
     });
     if (!big) lay.forEach(function (L) { if (last[L.sg.id] === undefined) last[L.sg.id] = L.state; });
     target.innerHTML = svg + '</g></svg>';
-    if (!big) renderFoot(lay);
     return stat ? target.innerHTML : lay;
   }
-
-  /* ---------- footer inside the Blueprint card: progress · current focus · legend ---------- */
-  var footEl = document.getElementById('bp-foot');
-  /* next-step guidance under the map — clear "what to do now", no secondary action button */
-  var NEXT = {
-    req: '当前阶段：分析讨论你的需求',
-    know: '当前阶段：挖掘业务场景的知识',
-    doc: '当前阶段：产出初步的设计方案',
-    onto: '当前阶段：打造本体建设',
-    tools: '当前阶段：装配 Skill、MCP 等零部件',
-    agent: '当前阶段：开始生成 Agent',
-  };
-  /* alternates shown when the user hits Skip — first entry is always the real current stage */
-  var ALT = {
-    req: ['建议：先补充一个具体的业务场景和目标', '建议：说说现有流程里最耗时的环节'],
-    know: ['建议：上传历史报价单或合同样例', '建议：补充准入标准、评分口径等规则'],
-    doc: ['建议：先确认关键决策，再看设计方案', '建议：核对方案里的数据来源是否齐全'],
-    onto: ['建议：检查对象与关系是否覆盖核心业务', '建议：为关键属性补充真实样例'],
-    tools: ['建议：优先接入 ERP 数据源', '建议：先从比价 Skill 开始装配'],
-    agent: ['建议：先试用这版 Agent，哪里不够再补', '建议：用历史案例回测一遍'],
-    sand: ['建议：先替换最关键的 Mock', '建议：在右侧试用 Agent，确认效果'],
-    hard: ['建议：优先替换影响结论的 Mock', '建议：补齐上线门槛里缺的验证项']
-  };
-  var skipKey = '', skipN = 0, lastLay = null;
-  function pick(key, base) {
-    if (key !== skipKey) { skipKey = key; skipN = 0; }
-    var pool = [base].concat(ALT[key] || []);
-    return { text: pool[skipN % pool.length], alt: skipN % pool.length > 0, can: pool.length > 1 };
-  }
-  function skipBtn(on) { return on ? '<button type="button" class="bp-skip" data-bp-skip>Skip<svg viewBox="0 0 12 12" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2.5 7.5 6 4 9.5"/></svg></button>' : ''; }
-  function docsOf(id) { return VDOCS[id] || VSUBDOC[id] || []; }
-  function renderFoot(lay) {
-    if (!footEl || !lay) return;
-    lastLay = lay;
-    var total = lay.length;
-    var n = lay.filter(function (L) { return L.state === 'done' || L.state === 'imported'; }).length;
-    var m = lay.filter(function (L) { return L.state === 'mock'; }).length;
-    var SB = window.FastSandbox, st = SB && SB.state;
-    var focusHtml = '', cls = '';
-    if (st && st.generated) {
-      var left = SB.mocksLeft(), tip, hint;
-      if (st.phase === 'production') { tip = '已发布 v1.0 · 正式环境'; hint = '可在右侧试用正式 Agent，或打开 Sandbox 查看清单'; cls = 'prod'; }
-      else if (st.phase === 'hardening') { tip = '当前阶段：清零 Mock，完成上线门槛'; hint = '加固中 · 还剩 ' + left + ' 处 Mock'; cls = 'hard'; }
-      else { tip = 'Agent 已可试用：试用后告诉我哪里要改'; hint = left + ' 处 Mock 待替换'; cls = 'sand'; }
-      var pk = st.phase === 'production' ? null : pick(st.phase === 'hardening' ? 'hard' : 'sand', tip);
-      focusHtml =
-        '<div class="bp-focus ' + cls + (pk && pk.alt ? ' is-alt' : '') + '"><div class="bp-focus-h"><b>' + (pk ? pk.text : tip) + '</b></div>' +
-        '<div class="bp-focus-sub">' + hint + '</div>' + skipBtn(pk && pk.can) + '</div>';
-    } else {
-      var nx = lay.filter(function (L) { return L.state === 'todo' || L.state === 'doing'; })[0];
-      if (nx) {
-        var id = nx.sg.id, docs = docsOf(id);
-        var docBits = docs.length
-          ? '<div class="bp-focus-docs">' + docs.map(function (d) { return '<span class="bp-focus-doc">' + d + '</span>'; }).join('') + '</div>'
-          : '';
-        var pk2 = pick(id, NEXT[id]);
-        focusHtml =
-          '<div class="bp-focus' + (pk2.alt ? ' is-alt' : '') + '"><div class="bp-focus-h"><b>' + pk2.text + '</b></div>' +
-          '<div class="bp-focus-sub">' + nx.sg.title + (docs.length ? ' · 本步相关 ' + docs.length + ' 份文档' : '') + '</div>' +
-          docBits + skipBtn(pk2.can) + '</div>';
-      } else {
-        focusHtml = '<div class="bp-focus prod"><div class="bp-focus-h"><b>全部步骤已完成</b></div></div>';
-      }
-    }
-    footEl.innerHTML =
-      '<div class="bp-prog"><span>Progress</span><b>' + n + ' / ' + total + (m ? ' <em>· ' + m + ' Mock</em>' : '') + '</b></div>' +
-      '<div class="bp-bar"><i class="d" style="width:' + (n / total * 100).toFixed(1) + '%"></i><i class="m" style="width:' + (m / total * 100).toFixed(1) + '%"></i></div>' +
-      focusHtml +
-      (showMap() ? '<div class="bp-legend bp-maplg"><span><i class="mk keep"></i>沿用</span><span><i class="mk check"></i>需校对</span><span><i class="mk mock"></i>Mock 需改</span><span><i class="mk new"></i>需再创作</span></div>' : '') +
-      '<div class="bp-legend"><span><i class="lg done"></i>Done</span><span><i class="lg mock"></i>Mock</span><span><i class="lg imp"></i>Imported</span><span><i class="lg todo"></i>To do</span></div>';
-  }
-  if (footEl) footEl.addEventListener('click', function (e) {
-    if (!e.target.closest('[data-bp-skip]')) return;
-    skipN++; renderFoot(lastLay);
-  });
   document.addEventListener('fastsandbox', function () { renderSide(); applyMarks(); });
 
   /* ---------- big view (centre): the two horizontal mode diagrams (Fast / Steps) from js/fast-flowmap.js ---------- */

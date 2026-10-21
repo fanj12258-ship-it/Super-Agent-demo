@@ -150,7 +150,8 @@
 }
 .on-divider { height: 1px; background: var(--divider); }
 .on-object-sets { padding-top: 16px; }
-.on-list {
+.on-list,
+.ea-home-canvases .ea-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, 300px);
   gap: 16px;
@@ -237,7 +238,7 @@
 /* Enterprise Assets — two top-level enterprise context surfaces */
 .ea-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(280px, 420px));
+  grid-template-columns: repeat(3, minmax(280px, 420px));
   gap: 16px;
   align-items: stretch;
 }
@@ -296,3 +297,46 @@
 @media (max-width: 860px) {
   .ea-grid { grid-template-columns: minmax(280px, 1fr); }
 }
+
+.ea-canvas .ea-preview { background: #f6f4ff; }
+.ea-canvas .ea-icon { color: #7659d6; background: #f0ebff; }
+@media (min-width: 981px) and (max-width: 1250px) {
+  .ea-grid { grid-template-columns: repeat(2, minmax(280px, 420px)); }
+}
+/* Enterprise Assets catalog — primary assets followed by scenario canvases. */
+.ea-home-primary .ea-grid { display:flex; flex-wrap:wrap; gap:16px; }
+.ea-home-canvases { border-top:1px solid var(--divider); margin-top:16px; padding-top:16px; }
+.ea-home-canvases>h2 { margin:0 0 16px; font-size:16px; line-height:24px; font-weight:600; }
+.ea-home-primary .ea-card { width:clamp(420px,50%,620px); min-height:318px; border-radius:12px; }
+.ea-home-primary .ea-preview { height:190px; flex-shrink:0; background:#fafafa; }
+.ea-home-primary .ea-heading,.ea-home-primary .ea-chip,.ea-home-canvases .ea-heading { fill:#000; }
+.ea-home-primary .ea-link { stroke:#000; }
+.ea-home-primary .ea-node { stroke:#000; }
+.ea-home-canvases .ea-node-soft { fill:#000; stroke:#000; }
+.ea-home-canvases .ea-chip,.ea-home-canvases .ea-line { fill:#ddd; }
+.ea-home-canvases .ea-card { min-height:0; }
+.ea-home-canvases .ea-preview { background:#f6f4ff; }
+.ea-home-canvases .ea-name { font-size:13px; }
+.ea-home-canvases .ea-desc { margin:2px 0 8px; font-size:13px; }
+.ea-scenario-name { margin-top:10px; font-size:13px; line-height:18px; }
+.ea-home-tags { display:flex; gap:4px; margin-bottom:12px; font-size:13px; line-height:18px; }
+.ea-home-tags span { padding:2px 8px; border-radius:20px; background:#f0eaff; color:#7b35d5; }
+.ea-home-tags span+span { background:#fff6e6; color:#d99519; }
+.ea-home-primary .ea-foot,.ea-home-canvases .ea-foot { font-size:13px; gap:8px; flex-wrap:wrap; }
+@media(max-width:800px) { .ea-home-primary .ea-card { width:100%; } }
+/* Full-page enterprise detail — Figma pattern 313:64262. */
+.main.is-enterprise-detail .main-body { padding:0; background:white; }
+.main.is-enterprise-detail #mainContent { min-height:100%; }
+.main.is-enterprise-detail .ea-room { padding:0; background:white; }
+.main.is-enterprise-detail .ea-room-breadcrumb { display:none; }
+.main.is-enterprise-detail .ea-room-article { border:0; border-radius:0; }
+.main.is-enterprise-detail .ea-room-header { background:white; }
+.main.is-enterprise-detail .ea-grid-card { margin:16px 0; }
+.main.is-enterprise-detail .ea-room-content { padding:12px; }
+.main.is-enterprise-detail [data-enterprise-back] { padding:0; background:none; border:0; color:inherit; font:inherit; cursor:pointer; }
+
+.ea-home-primary .ea-card { width:clamp(300px,calc((100% - 32px)/3),620px); }
+.ea-planning-preview { display:block; max-width:100%; object-fit:contain; }
+.ea-planning .ea-icon { background:#f5f5f5; }
+@media(max-width:1100px) { .ea-home-primary .ea-card { width:calc((100% - 16px)/2); } }
+@media(max-width:800px) { .ea-home-primary .ea-card { width:100%; } }

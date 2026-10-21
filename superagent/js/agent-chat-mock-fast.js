@@ -105,6 +105,7 @@
 
   var busy = false;
   var spaceArmed = true;
+  var pendingExternalInput = null;
 
   /* textarea auto-grow: wraps long text and grows up to a cap */
   function autosize() {
@@ -287,7 +288,7 @@
 
     var processCol = makeCollapse('process-collapse');
     processCol.root.classList.add('is-open');
-    var viewport = el('div', 'process-viewport is-generating');
+    var viewport = el('div', 'process-viewport is-generating' + (plan && plan.dynamicProcess ? ' is-dynamic' : ''));
     var items = el('div', 'process-items');
     viewport.appendChild(items);
     processCol.content.appendChild(viewport);
@@ -345,7 +346,7 @@
     var statusTimer = setInterval(function () {
       statusIdx = (statusIdx + 1) % THINKING_STATUS_LABELS.length;
       statusText.textContent = THINKING_STATUS_LABELS[statusIdx];
-    }, 900);
+    }, plan && plan.fastThinking ? 480 : 900);
 
     /* ───── process item builders ───── */
 
@@ -527,7 +528,12 @@
         .replace(/^已调用/, '正在调用').replace(/^已搜索/, '正在搜索')
         .replace(/^已使用/, '正在使用').replace(/^已编辑/, '正在编辑')
         .replace(/^已阅读/, '正在阅读').replace(/^已提取/, '正在提取')
-        .replace(/^已起草/, '正在起草').replace(/^已生成/, '正在生成').replace(/^已评估/, '正在评估').replace(/^已自测/, '正在自测');
+        .replace(/^已起草/, '正在起草').replace(/^已生成/, '正在生成')
+        .replace(/^已评估/, '正在评估').replace(/^已自测/, '正在自测')
+        .replace(/^已建立/, '正在建立').replace(/^已识别/, '正在识别')
+        .replace(/^已确定/, '正在确定').replace(/^已分析/, '正在分析')
+        .replace(/^已拆分/, '正在拆分').replace(/^已规划/, '正在规划')
+        .replace(/^已检查/, '正在检查');
       var ref = addTool({ id: tool.id, icon: tool.icon, label: active, details: [], running: true });
       /* tool.during (Fast flows): run work while the row shows "running" — e.g. files appearing one by one */
       if (tool.during) await tool.during(); else await wait(1600);
@@ -635,7 +641,18 @@
 
     try {
       if (plan) {
-        await plan.process({ W: W, V: V, wait: wait, sleep: sleep });
+        await plan.process({
+          W: W,
+          V: V,
+          wait: wait,
+          sleep: sleep,
+          show: function (node) {
+            answerEl.hidden = false;
+            answerEl.appendChild(node);
+            scrollThreadIfStick();
+          },
+          scroll: scrollThreadIfStick,
+        });
       } else {
       await wait(700);
       await addReason('先理解你的请求「' + userText + '」，再决定要调用哪些工具。');
@@ -756,7 +773,9 @@
       var bodyCtx = { sleep: sleep, speed: BODY_SPEED, scroll: scrollThreadIfStick };
 
       if (plan) {
-        await window.AgentBody.run(Object.assign({ host: answerEl, segments: plan.segments }, bodyCtx));
+        if (!plan.preserveAnswer || (plan.segments && plan.segments.length)) {
+          await window.AgentBody.run(Object.assign({ host: answerEl, segments: plan.segments }, bodyCtx));
+        }
         if (plan.after) {
           afterRes = await plan.after({
             host: answerEl, scroll: scrollThreadIfStick, sleep: sleep,
@@ -792,6 +811,7 @@
       if (turnResize) turnResize.disconnect();
       busy = false;
     }
+    return afterRes;
   }
 
   /* Public: post a plain Agent message (no deep-thinking) — used by Fast flows
@@ -803,8 +823,27 @@
       if (window.FastConversations) window.FastConversations.fresh({ title: 'T1 · 寻源策略', journey: true, archiveTitle: '创建场景' });
       else thread.innerHTML = '';
     },
+    postUser: function (text) {
+      if (!text) return;
+      if (window.FastConversations) window.FastConversations.home();
+      enterChatMode();
+      appendUserBubble(text, []);
+      stickBottom = true;
+      scrollThreadToBottom();
+    },
     fill: function (t) { return streamFill(t); },
     isBusy: function () { return busy; },
+    waitForUserInput: function () {
+      var receiver;
+      var promise = new Promise(function (resolve) {
+        receiver = function (text) { resolve(text); };
+        pendingExternalInput = receiver;
+      });
+      promise.cancel = function () {
+        if (pendingExternalInput === receiver) pendingExternalInput = null;
+      };
+      return promise;
+    },
     /* Agent turn WITH the deep-thinking shell and a custom short script */
     run: function (plan) {
       if (busy) return Promise.resolve();
@@ -882,8 +921,20 @@
   }
 
   function sendMessage() {
-    if (busy || filling) return;
+    if (filling) return;
     var text = (input.value || '').trim();
+    if (busy) {
+      if (!pendingExternalInput || !text) return;
+      enterChatMode();
+      appendUserBubble(text, []);
+      input.value = '';
+      autosize();
+      syncSendState();
+      var receiver = pendingExternalInput;
+      pendingExternalInput = null;
+      receiver(text);
+      return;
+    }
     var FU = window.FastUpload;
     var FJ = window.FastJourney;
     if (FU && FU.busy()) return;
@@ -903,7 +954,8 @@
     var FC = window.FastCompany;
     var planText = text + (text && contextText ? '\n\n' : '') + contextText;
     var diagnosisPlan = window.FastDiagnosis && window.FastDiagnosis.plan(planText);
-    var jPlan = diagnosisPlan || (jOn ? FJ.take()
+    var journeyOnePlan = window.JourneyOnePlan && window.JourneyOnePlan.take(text);
+    var jPlan = diagnosisPlan || journeyOnePlan || (jOn ? FJ.take()
       : (window.FastChange && window.FastChange.match(text) ? window.FastChange.plan()
       : (FC && FC.active() ? FC.take()
       : (FI && FI.active() ? FI.take()
@@ -922,14 +974,17 @@
   input.addEventListener('keydown', function (e) {
     if (e.key === ' ' || e.code === 'Space') {
       if (filling) { e.preventDefault(); return; }
-      if (spaceArmed && !(input.value || '').trim()) {
+      if (spaceArmed && !(input.value || '').trim() && !pendingExternalInput) {
         e.preventDefault();
         var CV2 = window.FastConversations;
+        var routePrompt = window.FastJourneyRoute && window.FastJourneyRoute.prompt
+          ? window.FastJourneyRoute.prompt()
+          : '';
         var sp = (window.FastJourney && window.FastJourney.active() && (!CV2 || CV2.isJourney())) ? window.FastJourney.prompt()
           : (window.FastChange && window.FastChange.available() ? window.FastChange.prompt()
-          : (window.FastCompany && window.FastCompany.active() ? window.FastCompany.prompt()
+          : (routePrompt || (window.FastCompany && window.FastCompany.active() ? window.FastCompany.prompt()
           : (window.FastIntake && window.FastIntake.active() ? window.FastIntake.prompt()
-          : ((CV2 && CV2.prompt()) || SPACE_PROMPT))));
+          : ((CV2 && CV2.prompt()) || SPACE_PROMPT)))));
         spaceArmed = false;
         streamFill(sp);
       }

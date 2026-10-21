@@ -1,0 +1,24 @@
+.main.is-market .main-body { padding: 12px 24px 32px; }
+.main.is-market .main-top { padding: 0 24px; }
+.main.is-market .main-title { font-size: 24px; line-height: 32px; }
+.main.is-market .main-desc { color: #595959; margin-bottom: 12px; }
+.market-tabs { display: flex; gap: 32px; border-bottom: 1px solid var(--divider); margin-bottom: 16px; }
+.market-tabs button { padding: 12px 0; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #595959; font: inherit; font-size: 13px; cursor: pointer; }
+.market-tabs button[aria-selected="true"] { color: var(--file-blue); border-bottom-color: var(--file-blue); }
+.market-card:focus-visible, .market-tabs button:focus-visible, .market-document:focus-visible { outline: 2px solid var(--file-blue); outline-offset: 2px; }
+.market-tag { display: inline-block; border-radius: 20px; background: #f7f7f7; color: var(--text-secondary); font-size: 13px; line-height: 18px; font-weight: 400; padding: 3px 8px; }
+.market-detail h2 { display: flex; align-items: center; gap: 4px; font-size: 16px; line-height: 24px; margin: 16px 0; font-weight: 600; }
+.market-detail h2:first-child { margin-top: 0; }
+.market-document { white-space: pre-wrap; overflow: auto; border: 1px solid #d9d9d9; border-radius: 8px; padding: 12px; font-size: 13px; line-height: 18px; margin-bottom: 16px; color: #262626; }
+.market-overview { height: 246px; }
+.market-crumbs { display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 400; }
+.market-crumbs button { padding: 0; border: 0; background: none; color: var(--text-secondary); font: inherit; cursor: pointer; }
+
+/* Market MCP card — Figma 35:6760. */
+.market-grid .mcp-card { grid-template-columns:32px minmax(0,1fr); gap:14px; padding:16px; border:1px solid #d9d9d9; border-radius:14px; }
+.market-grid .mcp-logo { width:32px; height:32px; border-radius:8px; font-size:13px; font-weight:400; box-shadow:none; }
+.market-grid .mcp-card>span:last-child { min-width:0; }
+.market-grid .mcp-name { font-size:13px; line-height:18px; font-weight:600; letter-spacing:0; }
+.market-grid .mcp-desc { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; height:36px; margin-top:8px; font-size:13px; line-height:18px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; }
+.market-grid .mcp-updated { margin-top:8px; font-size:13px; line-height:18px; color:var(--text-secondary); }
+.market-grid .mcp-pill { height:auto; padding:3px 8px; font-size:13px; line-height:18px; font-weight:400; color:var(--text-secondary); background:#f7f7f7; }

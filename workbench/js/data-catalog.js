@@ -322,7 +322,7 @@ var CATALOG = {
       kind: 'documents',
       name: 'Enterprise Documents',
       desc: 'Policies, operating standards, process guides, and institutional knowledge shared across the enterprise.',
-      count: '128 documents',
+      count: '6 business domains',
       meta: '12 collections · Updated today'
     },
     {
@@ -331,6 +331,14 @@ var CATALOG = {
       desc: 'A connected view of business domains, capabilities, processes, and the scenarios they support.',
       count: '6 business domains',
       meta: '42 processes · Updated 2h ago'
+    },
+    {kind:'planning',name:'Scenario Planning',desc:'Identify high-value AI scenarios, prioritize opportunities, and build a phased delivery roadmap.',count:'3 applications',meta:'10 scenarios · Updated 2h ago'},
+    {
+      kind: 'canvas',
+      name: 'Scenario Definition Canvas',
+      desc: 'Define scenario goals, participants, workflows, and success criteria in a shared canvas.',
+      count: 'Scenario definitions',
+      meta: 'Goals · Roles · Workflows'
     }
   ]
 };

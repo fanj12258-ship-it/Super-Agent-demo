@@ -13,8 +13,8 @@
 (function () {
   'use strict';
   var idx = 0, off = false, started = false;
-  var FOLDER = '企业档案';
-  var BIZ = '业务全景';
+  var FOLDER = 'Enterprise Documents';
+  var BIZ = 'Business Landscape';
   var TAG = 'Base';
   /* light marks — same pale chip as the rest of the chrome, different glyph */
   var MARK =
@@ -641,6 +641,7 @@
     window.FastFiles.markFolder(FOLDER, { icon: MARK, tag: TAG });
     window.FastFiles.markFolder(BIZ, { icon: MARK_BIZ, tag: TAG });
   }
+  markFolders();
   function registerDocs() {
     if (!window.FastDocs) return;
     markFolders();
