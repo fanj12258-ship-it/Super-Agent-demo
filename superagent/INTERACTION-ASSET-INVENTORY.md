@@ -331,9 +331,11 @@
 
 ### Enterprise asset review controls
 
-- Structure and visual pattern: title row with AI edit permission, contextual info tooltip, and version changes switch; Figma `324:72733`, `238:58841`, `238:58944`. Scenario Planning also has a compact sync action.
-- State: AI permission defaults on and is stored separately for each asset title; version changes defaults off. Switches expose `aria-checked` and support native button keyboard activation.
-- Trigger and feedback: switches update permission or reveal the version review panel; sync saves selected planning scenarios to local demo storage and reports the count. Empty selection and storage failure show inline feedback.
+- Structure and visual pattern: shared 42px elevated header with asset name, v1.0.0 pill, timestamp/author/space metadata, history action, and content lock switch. Scenario Planning adds the compact Sync to scenarios action. The following 40px review row contains title and version changes switch only. References: Figma 235:45584, 238:58841, 238:57552, 238:58071, 324:72717, 324:72733.
+- State: content lock defaults off and is tracked independently for each asset kind. Version changes defaults off. Switches expose aria-checked and support native button keyboard activation.
+- Trigger and feedback: lock toggles its state; version changes reveals the review panel; sync saves selected planning scenarios to local demo storage and reports the count. Empty selection and storage failure show inline feedback.
 - Dismissal: turn off version changes to close the review panel; info tooltip closes on pointer leave or blur.
-- Reuse scope and maturity: composable review toolbar for Workbench and scenario-room planning, business landscape, and enterprise profile views. Demo-only: AI permission is UI state and sync writes local storage; neither implies a backend AI lock or remote scenario creation.
-- Implementation: `superagent/js/enterprise-assets.js`, `superagent/css/enterprise-assets.css`, `superagent/assets/enterprise/{info,sync}.svg`.
+- Reuse scope and maturity: composable headers for Workbench and scenario-room planning, business landscape, enterprise documents, and scenario canvas views. Demo-only: locking is UI state and sync writes local storage; neither implies a backend lock or remote scenario creation. Replaces the earlier Allow AI edits controls and download action in these header slots.
+- Implementation: superagent/js/enterprise-assets.js, superagent/css/enterprise-assets.css, superagent/assets/enterprise/{history,info,sync}.svg.
+
+- Scroll containment: enterprise detail headers remain outside `.ea-article-scroll`; only the article body scrolls, with keyboard focus support and scroll position preserved when review controls rerender. The outer FastDocs/Workbench viewport clips overflow to avoid competing vertical scrollbars. Applies to all four enterprise asset detail types.

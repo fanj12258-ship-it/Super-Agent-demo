@@ -2,7 +2,7 @@
 .fd-view.is-enterprise .fd-meta { display:none; }
 .fd-view.is-enterprise .fd-scroll { padding:0; background:#fafafa; }
 .fd-view.is-enterprise .fd-pane { height:100%; min-height:100%; }
-.ea-room { font:13px/18px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#262626; height:100%; min-height:100%; padding:0 12px 12px; display:flex; flex-direction:column; box-sizing:border-box; }
+.ea-room { font:13px/18px Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#262626; height:100%; min-height:100%; padding:32px; display:flex; flex-direction:column; box-sizing:border-box; }
 .ea-room button { font:inherit; cursor:pointer; }
 .ea-room-button { padding:6px 8px; border:0; background:transparent; border-radius:6px; color:inherit; }
 .ea-room-button:hover { background:#f5f5f5; }
@@ -41,7 +41,7 @@
 .ea-room-empty-icon svg { width:100%; height:100%; }
 .ea-room-empty>strong { margin-bottom:6px; color:#333; font-size:14px; line-height:20px; font-weight:600; }
 .ea-room-empty>p { max-width:360px; margin:0; font-size:13px; line-height:20px; }
-.ea-room-content { padding:12px; }
+.ea-room-content { padding:0; }
 .ea-grid-card { border:1px solid #d9d9d9; border-radius:8px; margin:16px 0; overflow:hidden; }
 .ea-grid-card h3 { margin:0; padding:10px 12px; }
 .ea-grid-image { position:relative; aspect-ratio:959/569; overflow:hidden; }
@@ -68,7 +68,7 @@
 .ea-code .is-wrapped .ea-code-line { white-space:pre-wrap; overflow-wrap:anywhere; }
 .ea-company-title { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:0; }
 .ea-company-title>strong { font-size:16px; line-height:24px; }
-.ea-document-body { padding:12px; }
+.ea-document-body { padding:0; }
 .ea-section-nav { display:flex; overflow:auto; gap:8px; margin-bottom:16px; white-space:nowrap; }
 .ea-section-nav button { padding:5px 8px; }
 .ea-section-nav button.is-active { color:#1f82eb; }
@@ -128,7 +128,7 @@
 .ea-revenue-track>i { display:block; height:100%; width:calc(var(--share)*1%); border-radius:6px; background:var(--fill); }
 .ea-revenue-row>strong { text-align:right; font-weight:500; color:#687382; font-variant-numeric:tabular-nums; }
 
-.ea-plan-content { padding:12px; display:flex; flex-direction:column; gap:16px; }
+.ea-plan-content { padding:0; display:flex; flex-direction:column; gap:16px; }
 .ea-plan-application { padding:16px; border:1px solid #d9d9d9; border-radius:8px; box-shadow:0 1px 1px #0f172a0a; }
 .ea-plan-application>header { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
 .ea-plan-choice { display:flex; align-items:flex-start; gap:8px; cursor:pointer; min-width:0; }
@@ -171,3 +171,41 @@
 .ea-info-tip>[role="tooltip"]::after { content:''; position:absolute; top:100%; left:calc(50% - 4px); border:4px solid transparent; border-top-color:#262626; }
 .ea-info-tip:hover>[role="tooltip"],.ea-info-tip:focus>[role="tooltip"] { display:block; }
 @media(max-width:1100px) { .ea-planning-status { flex-wrap:wrap; } .ea-planning-actions { flex-wrap:wrap; } }
+
+/* Four enterprise detail headers share the Figma collapse-header geometry. */
+.ea-room-header { box-sizing:border-box; min-height:42px; padding:9px 12px; gap:4px; flex-wrap:nowrap; flex-shrink:0; }
+.ea-header-summary { display:flex; align-items:center; gap:6px; flex:1; min-width:0; overflow:hidden; }
+.ea-header-name { white-space:nowrap; font-weight:400; flex-shrink:0; }
+.ea-header-summary>.ea-room-muted { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ea-header-summary>.ea-room-pill { background:#00000008; color:#00000073; flex-shrink:0; }
+.ea-room-header-actions { gap:4px; }
+.ea-room-header-actions .ea-control-label { margin-left:0; }
+.ea-room-status { min-height:40px; flex-shrink:0; box-sizing:border-box; }
+.ea-room-tabs,.ea-company-title { flex-shrink:0; }
+@media(max-width:700px) { .ea-room-header { flex-wrap:wrap; } .ea-header-summary { flex-basis:100%; } .ea-room-header-actions { margin-left:auto; } }
+
+/* Only the article body scrolls; flex children keep their natural content height. */
+.fd-view.is-enterprise .fd-scroll { overflow:hidden; }
+.fd-view.is-enterprise .fd-pane { min-height:0; height:100%; }
+.ea-room { min-height:0; overflow:hidden; }
+.ea-room-breadcrumb { flex-shrink:0; }
+.ea-article-scroll { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; }
+.ea-article-scroll:focus-visible { outline:2px solid #a7ccf7; outline-offset:-2px; }
+
+/* Full-width chrome rules; spacing belongs to row content, not the rules. */
+.ea-room { padding:0; }
+.ea-room-header { padding-left:32px; padding-right:32px; }
+.ea-company-title { padding-left:32px; padding-right:32px; }
+.ea-room-tabs { padding-left:32px; padding-right:32px; }
+.ea-room-status { padding-left:32px; padding-right:32px; }
+.ea-document-body,.ea-plan-content,.ea-room-content { padding-left:32px; padding-right:32px; }
+
+/* Interior canvas panels follow Figma 238:57549; outer chrome stays unchanged. */
+.ea-room .ea-visual-content { padding:12px; display:flex; flex-direction:column; gap:16px; }
+.ea-room .ea-visual-content>.ea-grid-card { margin:0; flex-shrink:0; border-radius:8px; }
+.ea-visual-content>.ea-grid-card>h3 { padding:8px 10px; line-height:18px; margin:0; }
+.ea-visual-content .ea-grid-image { width:100%; height:326px; overflow:hidden; }
+.ea-visual-content .ea-flow-svg { width:100%; min-width:0; height:100%; margin:0; }
+.ea-visual-content>.ea-story { margin-bottom:0; }
+.ea-visual-content>h3,.ea-visual-content>p { margin:0; }
+.ea-visual-content .ea-flow-detail { padding:8px 10px; }

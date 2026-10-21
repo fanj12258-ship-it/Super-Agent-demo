@@ -326,16 +326,18 @@
 .ea-home-primary .ea-foot,.ea-home-canvases .ea-foot { font-size:13px; gap:8px; flex-wrap:wrap; }
 
 /* Full-page enterprise detail — Figma pattern 313:64262. */
-.main.is-enterprise-detail .main-body { padding:0; background:white; }
-.main.is-enterprise-detail #mainContent { min-height:100%; }
+.main.is-enterprise-detail .main-body { padding:0; background:white; box-sizing:border-box; }
+.main.is-enterprise-detail #mainContent { height:100%; min-height:0; }
 .main.is-enterprise-detail .ea-room { padding:0; background:white; }
 .main.is-enterprise-detail .ea-room-breadcrumb { display:none; }
 .main.is-enterprise-detail .ea-room-article { border:0; border-radius:0; }
 .main.is-enterprise-detail .ea-room-header { background:white; }
-.main.is-enterprise-detail .ea-grid-card { margin:16px 0; }
-.main.is-enterprise-detail .ea-room-content { padding:12px; }
+
+.main.is-enterprise-detail .ea-room-content:not(.ea-visual-content) { padding:0 32px; }
 .main.is-enterprise-detail [data-enterprise-back] { padding:0; background:none; border:0; color:inherit; font:inherit; cursor:pointer; }
 
 
 .ea-planning-preview { display:block; max-width:100%; object-fit:contain; }
 .ea-planning .ea-icon { background:#f5f5f5; }
+
+.main.is-enterprise-detail .main-body { min-height:0; overflow:hidden; }
