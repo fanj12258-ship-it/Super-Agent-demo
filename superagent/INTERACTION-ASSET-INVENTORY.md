@@ -328,3 +328,12 @@
 - 资产被替换、隐藏或废弃时不直接从清单消失，应更新状态并注明替代项。
 - 若一次改动同时包含“故事编排”和“资产能力”，分别记录，避免把剧情固化成组件规则。
 
+
+### Enterprise asset review controls
+
+- Structure and visual pattern: title row with AI edit permission, contextual info tooltip, and version changes switch; Figma `324:72733`, `238:58841`, `238:58944`. Scenario Planning also has a compact sync action.
+- State: AI permission defaults on and is stored separately for each asset title; version changes defaults off. Switches expose `aria-checked` and support native button keyboard activation.
+- Trigger and feedback: switches update permission or reveal the version review panel; sync saves selected planning scenarios to local demo storage and reports the count. Empty selection and storage failure show inline feedback.
+- Dismissal: turn off version changes to close the review panel; info tooltip closes on pointer leave or blur.
+- Reuse scope and maturity: composable review toolbar for Workbench and scenario-room planning, business landscape, and enterprise profile views. Demo-only: AI permission is UI state and sync writes local storage; neither implies a backend AI lock or remote scenario creation.
+- Implementation: `superagent/js/enterprise-assets.js`, `superagent/css/enterprise-assets.css`, `superagent/assets/enterprise/{info,sync}.svg`.

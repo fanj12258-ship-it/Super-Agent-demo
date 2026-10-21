@@ -254,13 +254,9 @@ function renderEnterpriseAssets(list) {
   return '<div class="ea-grid">' + list.map(function (it) {
     return '<button type="button" class="card ea-card ea-' + it.kind + '" data-enterprise-asset="' + it.kind + '">' +
       '<div class="ea-preview">' + enterpriseAssetPreview(it.kind) + '</div>' +
-      '<div class="ea-body"><div class="ea-title-row"><span class="ea-icon">' +
-      (it.kind === 'planning' ? '<img src="../superagent/assets/enterprise/planning-compass.svg" width="16" height="16" alt="">' : it.kind === 'canvas'
-        ? '<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="2.5" y="3" width="15" height="14" rx="2"/><path d="M2.5 7h15M9 7v10M9 12h8.5"/></svg>'
-        : it.kind === 'landscape'
-        ? '<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="4" r="2"/><circle cx="4" cy="15" r="2"/><circle cx="16" cy="15" r="2"/><path d="m9 5.7-4 7.5m6-7.5 4 7.5M6 15h8"/></svg>'
-        : '<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 2.5h7l3 3V17.5H5z"/><path d="M12 2.5v3h3M8 9h4M8 12h4"/></svg>') +
-      '</span><span class="ea-name">' + escapeHtmlModal(it.name) + '</span><span class="ea-arrow" aria-hidden="true">→</span></div>' +
+      '<div class="ea-body"><div class="ea-title-row">' +
+      (it.kind === 'canvas' ? '<span class="ea-icon"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="2.5" y="3" width="15" height="14" rx="2"/><path d="M2.5 7h15M9 7v10M9 12h8.5"/></svg></span>' : '') +
+      '<span class="ea-name">' + escapeHtmlModal(it.name) + '</span><span class="ea-arrow" aria-hidden="true">→</span></div>' +
       '<p class="ea-desc">' + escapeHtmlModal(it.desc) + '</p>' +
       '<div class="ea-foot"><span>' + escapeHtmlModal(it.count) + '</span><span>' + escapeHtmlModal(it.meta) + '</span></div>' +
       '</div></button>';

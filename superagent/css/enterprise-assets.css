@@ -66,7 +66,7 @@
 .ea-code-line { display:block; white-space:pre; }
 .ea-code-line i { display:inline-block; width:40px; color:#8c8c8c; font-style:normal; text-align:center; border-right:1px solid #e6e6e6; margin-right:12px; user-select:none; }
 .ea-code .is-wrapped .ea-code-line { white-space:pre-wrap; overflow-wrap:anywhere; }
-.ea-company-title { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid #d9d9d9; }
+.ea-company-title { display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:0; }
 .ea-company-title>strong { font-size:16px; line-height:24px; }
 .ea-document-body { padding:12px; }
 .ea-section-nav { display:flex; overflow:auto; gap:8px; margin-bottom:16px; white-space:nowrap; }
@@ -155,3 +155,19 @@
 .ea-room .ea-plan-build { align-self:flex-start; padding:7px 12px; border:1px solid #505050; border-radius:8px; background:#505050; color:white; }
 .ea-plan-result:empty { display:none; }
 @media(max-width:850px) { .ea-plan-scenarios { grid-template-columns:1fr; } .ea-plan-application>header { flex-wrap:wrap; } .ea-plan-application>header>.ea-plan-choice { flex-basis:100%; } }
+
+/* Scenario Planning toolbar — Figma 324:72733. */
+.ea-planning-status { justify-content:space-between; gap:12px; min-height:42px; box-sizing:border-box; }
+.ea-planning-actions { display:flex; align-items:center; gap:12px; }
+.ea-control-label { display:flex; align-items:center; gap:4px; font-weight:600; white-space:nowrap; }
+.ea-room .ea-mini-switch { width:28px; height:16px; padding:2px; border:0; border-radius:24px; background:#d9d9d9; position:relative; flex:none; }
+.ea-mini-switch::after { content:''; display:block; width:12px; height:12px; border-radius:16px; background:white; box-shadow:0 1px 3px #0000001a; transition:transform .15s; }
+.ea-room .ea-mini-switch[aria-checked="true"] { background:#505050; }
+.ea-mini-switch[aria-checked="true"]::after { transform:translateX(12px); }
+.ea-room .ea-sync-button { display:inline-flex; align-items:center; gap:4px; padding:3px 6px; height:24px; border:0; border-radius:4px; background:#505050; color:#fff; font-weight:600; white-space:nowrap; }
+.ea-sync-button img,.ea-info-tip>img { display:block; flex:none; }
+.ea-info-tip { display:inline-flex; position:relative; cursor:help; }
+.ea-info-tip>[role="tooltip"] { display:none; position:absolute; bottom:calc(100% + 10px); left:50%; transform:translateX(-50%); width:184px; padding:8px 12px; border-radius:8px; box-sizing:border-box; background:#262626; color:white; font-weight:400; text-align:center; white-space:normal; z-index:20; }
+.ea-info-tip>[role="tooltip"]::after { content:''; position:absolute; top:100%; left:calc(50% - 4px); border:4px solid transparent; border-top-color:#262626; }
+.ea-info-tip:hover>[role="tooltip"],.ea-info-tip:focus>[role="tooltip"] { display:block; }
+@media(max-width:1100px) { .ea-planning-status { flex-wrap:wrap; } .ea-planning-actions { flex-wrap:wrap; } }
