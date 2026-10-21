@@ -94,7 +94,7 @@
   function taskPlanCard(opts) {
     opts = opts || {};
     var progressive = !!opts.progressive;
-    var tasks = [
+    var tasks = opts.tasks || [
       { title: '用户故事设计', desc: '明确各角色流程与关键异常处理。', agent: '场景需求Agent', status: '自动继续' },
       { title: '业务规则方案设计', desc: '梳理异常判定、容差放行与跨期规则。', agent: '业务规则设计Agent', status: '自动继续' },
       { title: '高保真交互原型设计', desc: '将用户故事转为可操作、可评审的原型。', agent: '场景需求Agent', status: '停下审核', gate: true },
@@ -107,9 +107,9 @@
     box.setAttribute('aria-labelledby', 'ff-task-plan-title');
     box.innerHTML =
       '<div class="ff-plan-head"><div><span class="ff-plan-kicker">PLAN</span>' +
-      '<h3 class="ff-plan-title" id="ff-task-plan-title">任务清单</h3></div>' +
+      '<h3 class="ff-plan-title" id="ff-task-plan-title">' + esc(opts.title || '任务清单') + '</h3></div>' +
       '<span class="ff-plan-state' + (progressive ? ' is-building' : '') + '" data-plan-state>' + (progressive ? '正在规划' : '待确认') + '</span></div>' +
-      '<div class="ff-plan-brief"><span>复用 To-be设计 v2</span><b data-plan-count>' + (progressive ? '0 / ' + tasks.length : tasks.length) + ' 项任务</b></div>' +
+      '<div class="ff-plan-brief"><span>' + esc(opts.brief || '复用 To-be设计 v2') + '</span><b data-plan-count>' + (progressive ? '0 / ' + tasks.length : tasks.length) + ' 项任务</b></div>' +
       '<div class="ff-plan-body"><div class="ff-plan-tasks">' + tasks.map(function (task, index) {
         return '<div class="ff-plan-task"' + (progressive ? ' hidden' : '') + ' data-plan-task="' + index + '">' +
           '<span class="ff-plan-task-num">' + (index + 1) + '</span>' +
@@ -118,16 +118,22 @@
           '<span class="ff-plan-task-meta"><span class="ff-plan-task-agent"><b>A</b>' + esc(task.agent) + '</span>' +
           '<select class="ff-plan-task-mode" aria-label="' + esc(task.title) + '执行方式">' +
           '<option value="auto" selected>自动执行</option><option value="review">我来审核</option></select>' +
-          '<span class="ff-plan-task-status' + (task.gate ? ' is-review' : '') + '">' + esc(task.status) + '</span></span></div>';
+          '<span class="ff-plan-task-status' + (task.gate ? ' is-review' : '') + '">' + esc(task.status || '自动继续') + '</span></span></div>';
       }).join('') + '</div></div>' +
-      '<div class="ff-foot"' + (progressive ? ' hidden' : '') + '><span class="ff-plan-hint">如需调整任务，直接在会话中告诉我你的要求。</span>' +
-      '<button type="button" class="fm-btn is-primary" data-act="confirm">确认开始执行</button></div>';
+      '<div class="ff-foot"' + (progressive ? ' hidden' : '') + '><span class="ff-plan-hint">' + esc(opts.hint || '如需调整任务，直接在会话中告诉我你的要求。') + '</span>' +
+      '<button type="button" class="fm-btn is-primary" data-act="confirm">' + esc(opts.buttonLabel || '确认开始执行') + '</button></div>';
     var picked = new Promise(function (resolve) {
       box.addEventListener('click', function (e) {
         var b = e.target.closest('[data-act]');
         if (!b || box.classList.contains('is-done')) return;
         box.classList.add('is-done');
         b.classList.add('is-picked');
+        var state = box.querySelector('[data-plan-state]');
+        if (state) {
+          state.textContent = opts.doneLabel || '已确认';
+          state.classList.remove('is-building');
+        }
+        b.textContent = opts.confirmedButtonLabel || '已确认';
         resolve(b.getAttribute('data-act'));
       });
     });
@@ -211,6 +217,87 @@
       },
       finish: finish,
     };
+  }
+
+  function deliverableInventory() {
+    var groups = [
+      {
+        title: '方案与设计交付物',
+        items: [
+          { name: '用户故事设计', ver: 'v1', state: 'pending' },
+          { name: '规则方案设计', ver: 'v1', state: 'pending' },
+          { name: '原型设计', ver: 'v1', state: 'confirmed' },
+          { name: '架构方案设计', ver: 'v2', state: 'confirmed' },
+          { name: '本体方案设计', ver: 'v1', state: 'pending', file: 'Ontology plan v0.1.md' },
+          { name: 'Agent方案设计', ver: 'v1', state: 'pending', file: 'Agent plan v0.1.md' },
+          { name: '测试用例设计', ver: 'v1', state: 'pending' },
+        ],
+      },
+      {
+        title: '可运行交付物',
+        items: [
+          { name: '对象集', ver: 'v1', state: 'confirmed', file: 'Ontology stub.json' },
+          { name: 'Skill', ver: 'v1', state: 'confirmed' },
+          { name: 'MCP', ver: 'v1', state: 'confirmed' },
+          { name: '知识库', ver: 'v1', state: 'confirmed' },
+          { name: 'Agent：关账异常审查助手', ver: 'v1', state: 'confirmed', file: 'Agent spec v0.1.md' },
+        ],
+      },
+    ];
+    var confirmed = 0;
+    groups.forEach(function (group) {
+      group.items.forEach(function (item) { if (item.state === 'confirmed') confirmed += 1; });
+    });
+    var box = el('section', 'ff-card ff-deliverables');
+    box.innerHTML =
+      '<div class="ff-del-head"><span class="ff-del-title">交付清单</span>' +
+      '<span class="ff-del-count">' + confirmed + ' 项已确认</span></div>' +
+      groups.map(function (group) {
+        return '<div class="ff-del-group"><div class="ff-del-kicker">' + esc(group.title) + '</div>' +
+          '<div class="ff-del-grid">' + group.items.map(function (item) {
+            var tag = item.file ? 'button' : 'div';
+            var state = item.state === 'confirmed' ? 'is-confirmed' : 'is-pending';
+            var label = item.state === 'confirmed' ? '已确认' : '待确认';
+            return '<' + tag + (item.file ? ' type="button" data-doc="' + esc(item.file) + '"' : '') +
+              ' class="ff-del-row"><span class="ff-del-name">' + esc(item.name) + '</span>' +
+              '<span class="ff-del-ver">' + esc(item.ver) + '</span>' +
+              '<span class="ff-del-state ' + state + '">' + label + '</span></' + tag + '>';
+          }).join('') + '</div></div>';
+      }).join('');
+    box.addEventListener('click', function (e) {
+      var row = e.target.closest('[data-doc]');
+      if (row && window.FastDocs) window.FastDocs.open(row.getAttribute('data-doc'));
+    });
+    return box;
+  }
+
+  function deliverableSummary(opts) {
+    opts = opts || {};
+    var items = opts.items || [];
+    var fallbackIcon = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 1.5h6l3 3v10h-9v-13Z" stroke="currentColor"/><path d="M9.5 1.5v3h3" stroke="currentColor"/></svg>';
+    var box = el('section', 'ff-output-summary');
+    box.innerHTML =
+      '<h3 class="ff-output-title">' + esc(opts.title || '执行总结') + '</h3>' +
+      (opts.body ? '<p class="ff-output-body">' + esc(opts.body) + '</p>' : '') +
+      '<p class="ff-output-lead">' + esc(opts.lead || '本轮任务已完成，以下产出已生成并可直接查看。') + '</p>' +
+      '<div class="ff-output-links">' + items.map(function (item, index) {
+        var icon = window.FastDocs && window.FastDocs.icon
+          ? window.FastDocs.icon(item.iconName || item.name, 16)
+          : fallbackIcon;
+        return '<button type="button" class="ff-output-link" data-output-index="' + index + '">' +
+          '<span class="ff-output-icon" aria-hidden="true">' + (icon || fallbackIcon) + '</span>' +
+          '<span class="ff-output-name">' + esc(item.name) + '</span></button>';
+      }).join('') + '</div>' +
+      '<p class="ff-output-conclusion">' + esc(opts.conclusion || '') + '</p>';
+    box.addEventListener('click', function (e) {
+      var link = e.target.closest('[data-output-index]');
+      if (!link) return;
+      var item = items[Number(link.getAttribute('data-output-index'))];
+      if (!item) return;
+      if (item.open) item.open();
+      else if (item.file && window.FastDocs) window.FastDocs.open(item.file);
+    });
+    return box;
   }
 
   function agentUseCard() {
@@ -323,38 +410,54 @@
   }
 
   function deliverableConfirmation(opts) {
-    var box = el('section', 'ff-review-card ff-review-output');
+    var choice = 'pass';
+    var box = el('section', 'ff-card ff-review-card ff-review-output');
     box.innerHTML =
-      '<div class="ff-review-head"><span class="ff-review-kicker">需要你确认</span>' +
-      '<h4>' + esc(opts.title) + '</h4><p>' + esc(opts.desc) + '</p></div>' +
-      '<div class="ff-review-actions"><button type="button" data-act="view">查看产出</button>' +
-      '<button type="button" class="is-primary" data-act="confirm">确认通过</button></div>' +
-      '<div class="ff-review-custom"><input type="text" placeholder="输入修改意见或补充要求…" aria-label="修改意见或补充要求" />' +
-      '<button type="button" class="ff-review-confirm" data-act="feedback">发送</button></div>';
+      '<div class="ff-head"><span class="ff-t">需要你确认</span><span class="ff-h">已预选确认通过，可直接确认</span></div>' +
+      '<div class="ff-d">' +
+      '<div class="ff-d-top"><span class="ff-d-t">' + esc(opts.title) + '</span></div>' +
+      '<div class="ff-d-why">' + esc(opts.desc) + '</div>' +
+      '<div class="ff-opts">' +
+      '<button type="button" class="ff-opt is-on" data-choice="pass"><span class="ff-radio"></span>' +
+      '<span class="ff-opt-t">方案没问题，确认通过</span><span class="ff-rec">推荐</span></button>' +
+      '<button type="button" class="ff-opt" data-choice="pause"><span class="ff-radio"></span>' +
+      '<span class="ff-opt-t">先暂停一下</span></button></div>' +
+      '<div class="ff-review-custom"><input type="text" placeholder="输入修改意见或补充要求…" aria-label="修改意见或补充要求" /></div></div>' +
+      '<div class="ff-foot"><button type="button" class="fm-btn is-primary" data-act="submit">确认通过</button>' +
+      '<button type="button" class="fm-btn ff-review-view" data-act="view">查看方案</button></div>';
+    var input = box.querySelector('input');
+    var submit = box.querySelector('[data-act="submit"]');
+    function syncSubmit() {
+      var feedback = input.value.trim();
+      submit.textContent = feedback ? '发送修改意见' : (choice === 'pause' ? '先暂停' : '确认通过');
+    }
     var done = new Promise(function (resolve) {
       box.addEventListener('click', function (e) {
+        if (box.classList.contains('is-done')) return;
+        var opt = e.target.closest('[data-choice]');
+        if (opt) {
+          choice = opt.getAttribute('data-choice');
+          box.querySelectorAll('[data-choice]').forEach(function (x) { x.classList.toggle('is-on', x === opt); });
+          syncSubmit();
+          return;
+        }
         var b = e.target.closest('[data-act]');
-        if (!b || box.classList.contains('is-done')) return;
-        var act = b.getAttribute('data-act');
-        if (act === 'view') {
+        if (!b) return;
+        if (b.getAttribute('data-act') === 'view') {
           if (opts.file && window.FastDocs) window.FastDocs.open(opts.file);
-          b.textContent = '已查看';
           return;
         }
-        var input = box.querySelector('input');
         var feedback = input.value.trim();
-        if (act === 'feedback' && !feedback) {
-          input.focus();
-          return;
-        }
+        var result = feedback ? '已提交意见：' + feedback : (choice === 'pause' ? '已暂停' : opts.result);
         box.classList.add('is-done');
+        b.classList.add('is-picked');
         box.querySelectorAll('button, input').forEach(function (x) { x.disabled = true; });
-        b.textContent = act === 'feedback' ? '已发送' : '已确认';
         dismissReviewCard(box);
-        resolve(act === 'feedback' ? '已提交意见：' + feedback : opts.result);
+        resolve(result);
       });
-      box.querySelector('input').addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') box.querySelector('[data-act="feedback"]').click();
+      input.addEventListener('input', syncSubmit);
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') submit.click();
       });
     });
     return {
@@ -615,7 +718,7 @@
         seg(c, thinking.node);
         card.start(0);
         for (var i = 0; i < thoughts.length; i++) {
-          await c.sleep(450);
+          await c.sleep(700);
           thinking.add(thoughts[i]);
           if (i === 2) { card.done(0); card.start(1); }
           if (i === 5) {
@@ -651,6 +754,11 @@
               seg(c, prototypeReview.node);
               c.scroll();
               prototypeDecision = await prototypeReview.done;
+              if (prototypeDecision === '已暂停') {
+                thinking.add('已暂停，当前步骤先停在这里');
+                c.scroll();
+                return;
+              }
               if (prototypeDecision.indexOf('已提交意见：') !== 0) break;
 
               prototypeFeedback = prototypeDecision.slice('已提交意见：'.length);
@@ -707,6 +815,11 @@
               outerInput ? outerInput.then(function (value) { return { source: 'composer', value: value }; }) : new Promise(function () {}),
             ]);
             if (outerInput && outerInput.cancel) outerInput.cancel();
+            if (ontologyOutcome.source === 'card' && ontologyOutcome.value === '已暂停') {
+              thinking.add('已暂停，当前步骤先停在这里');
+              c.scroll();
+              return;
+            }
             if (ontologyOutcome.source === 'composer' || ontologyOutcome.value.indexOf('已提交意见：') === 0) {
               if (ontologyOutcome.source === 'composer') ontologyReview.dismiss();
               var planFeedback = ontologyOutcome.source === 'composer'
@@ -771,6 +884,7 @@
           '这四项选择已经把“哪些可以自动做、哪些必须由人确认、用户在哪里操作、Agent 应该依据什么信息工作”说明清楚了。对业务人员来说，第一版会优先减少重复查找、比对和整理工作，同时保留关键判断的人工确认，不会把重要决策完全交给系统。\n\n' +
           '**Sourcing Strategy Agent v0.1** 已按这些选择完成生成。建议先用一两个真实案例试跑：观察推荐结果是否容易理解、异常信息是否完整、人工确认的位置是否合适。确认体验符合预期后，再逐步扩大使用范围。', gap: 260 }]);
 
+        seg(c, deliverableInventory());
         seg(c, agentUseCard());
         c.scroll();
         return {};
@@ -1011,7 +1125,7 @@
           '正在运行 Agent 核心场景测试',
         ];
         for (var j = 0; j < messages.length; j++) {
-          await c.sleep(520);
+          await c.sleep(700);
           thinking.add(messages[j]);
           if (version === 'v2' && j % 2 === 1) {
             var finishedStep = Math.floor(j / 2);
@@ -1069,7 +1183,16 @@
     await runIntentThenGenerate(chat);
   }
 
-  window.FastFlow = { start: start, previewTaskCard: previewTaskCard };
+  window.FastFlow = {
+    start: start,
+    previewTaskCard: previewTaskCard,
+    taskPlanCard: taskPlanCard,
+    executionTaskCard: executionTaskCard,
+    executionThinkingBlock: executionThinkingBlock,
+    deliverableConfirmation: deliverableConfirmation,
+    deliverableSummary: deliverableSummary,
+    createLongTaskVersion: createLongTaskVersion,
+  };
 
   if (TASK_CARD_PREVIEW_LOCK) {
     window.addEventListener('load', function () {

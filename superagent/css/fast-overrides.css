@@ -357,18 +357,10 @@ textarea.composer-input {
    Overview (scene cards) and in-scene blueprint share the same 15px gutter. */
 .sidebar-panel[data-panel="scene"] .scene-panel-scroll { padding: 0 15px 16px 15px; }
 .sidebar-panel[data-panel="scene"] .fast-bp { padding: 4px 15px 16px; }
-.fast-bp .bp-head { padding-left: 0; padding-right: 0; }
-.fast-bp .bp-diagram { padding: 0; }
-.fast-bp .bpi-card { margin-left: 0; margin-right: 0; }
-
-/* Blueprint card fills the sidebar height; the Progress / focus / legend foot is pinned to the
-   card bottom, so spare height becomes breathing room inside the card instead of a blank gap
-   above the account bar. Taller content still scrolls normally. */
 .sidebar-panel[data-panel="scene"] .fast-bp:not([hidden]) { display: flex; flex-direction: column; }
-.fast-bp .bp-head { flex: none; }
-.fast-bp .bpi-card { flex: 1 0 auto; margin-bottom: 0; }
-.fast-bp .bpi-card .bp-foot { margin-top: auto; }
-.fast-bp .bpi-card #bp-iso { padding-bottom: 8px; } /* keeps the old 8px gap when there is no spare height */
+.fast-bp .bp-head { flex: none; padding-left: 0; padding-right: 0; }
+.fast-bp .bpi-card { flex: 1 1 auto; min-height: 0; margin: 0; overflow: auto; }
+.fast-bp .bp-diagram { padding: 0; }
 
 /* ---- choice card: mini schematic per option + link to the full map ---- */
 .fm-opt-map { display: block; margin-top: 8px; padding: 7px 6px 4px; border-radius: 7px; background: #f4f4f6; border: 1px solid transparent; }
@@ -446,20 +438,51 @@ textarea.composer-input {
 .fmn-dir { flex-shrink: 0; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: #a3a3a8; }
 .fmn-empty { padding: 14px 10px; font-size: 12px; text-align: center; color: #a3a3a8; }
 
-/* ── Main / Side route capsule in the composer (demo control; js/fast-route.js) ── */
+/* ── Unified journey control in the composer (js/fast-route.js) ── */
 .fast-route {
-  display: inline-flex; align-items: center; gap: 2px; margin-left: 6px; padding: 2px;
+  position: relative;
+  display: inline-flex; align-items: center; gap: 2px; padding: 2px;
+  margin-left: 6px;
   height: 24px; box-sizing: border-box; border-radius: 999px; background: var(--bg-seg, #f2f2f4);
 }
 .fast-route button {
-  height: 20px; padding: 0 10px; border: 0; border-radius: 999px; background: transparent;
+  height: 20px; border: 0; border-radius: 999px; background: transparent;
   font: inherit; font-size: 11.5px; font-weight: 500; line-height: 20px; letter-spacing: .01em;
   color: var(--text-secondary, #8c8c8c); cursor: pointer;
   transition: background .16s ease, color .16s ease, box-shadow .16s ease;
 }
+.fast-route button[data-journey="1"],
+.fast-route button[data-journey="2"],
+.fast-route button[data-journey="3"],
+.fast-route button[data-journey="4"] { width: 24px; padding: 0; }
+.fast-route button[data-journey="main"],
+.fast-route button[data-journey="side"] { padding: 0 10px; }
 .fast-route button:hover { color: var(--text-primary, #111); }
 .fast-route button.is-on { background: #fff; color: var(--text-primary, #111); box-shadow: 0 0 0 .5px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.08); }
+.fast-route button:focus-visible { outline: 2px solid var(--file-blue, #0d99ff); outline-offset: 1px; }
+.fast-journey-tip {
+  position: absolute; left: 0; bottom: calc(100% + 8px); z-index: 80;
+  width: min(520px, calc(100vw - 48px)); padding: 10px 12px;
+  border: 1px solid var(--popover-border); border-radius: 10px;
+  background: var(--popover-bg); box-shadow: var(--popover-shadow);
+  color: var(--text-secondary); font-size: 13px; font-weight: 400; line-height: 1.65;
+  text-align: left; white-space: normal;
+  opacity: 0; visibility: hidden; transform: translateY(3px); pointer-events: none;
+  transition: opacity .12s ease, transform .12s ease, visibility .12s;
+}
+.fast-journey-tip strong { color: var(--text-primary); font-weight: 600; }
+.fast-route button[data-journey="1"]:hover ~ .fast-journey-tip {
+  opacity: 1; visibility: visible; transform: translateY(0);
+  transition-delay: 0s;
+}
+.fast-route button[data-journey="1"]:focus-visible ~ .fast-journey-tip {
+  opacity: 1; visibility: visible; transform: translateY(0);
+  transition-delay: 0s;
+}
 .wrap.chat-started .fast-route { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .fast-journey-tip { transition: none; transform: none; }
+}
 
 /* ── Side route: scenario checkbox card (js/fast-company.js) ── */
 .fc-list { display: flex; flex-direction: column; gap: 8px; }

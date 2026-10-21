@@ -58,6 +58,41 @@
 .ff-prompt { padding: 8px 10px; border: 1px solid var(--border, #e8e8e8); border-radius: 8px; background: var(--bg-subtle, #f7f7f8); font: inherit; font-size: 12.5px; line-height: 18px; text-align: left; color: var(--text-primary, #111); cursor: pointer; }
 .ff-prompt:hover { border-color: #c9c9cf; background: #fff; }
 
+/* Deliverable inventory between the conclusion and the generated app */
+.ff-deliverables { padding: 0; overflow: hidden; }
+.ff-del-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 38px; padding: 8px 12px; border-bottom: 1px solid var(--border-soft, #f0f0f0);
+}
+.ff-del-title { color: var(--text-primary, #111); font-size: 12.5px; font-weight: 600; line-height: 18px; }
+.ff-del-count { color: var(--text-secondary, #8c8c8c); font-size: 11px; line-height: 16px; white-space: nowrap; }
+.ff-del-group { padding: 8px 12px 4px; }
+.ff-del-group + .ff-del-group { border-top: 1px solid var(--border-soft, #f0f0f0); }
+.ff-del-kicker {
+  margin-bottom: 6px; color: var(--text-secondary, #8c8c8c);
+  font-size: 11px; font-weight: 600; line-height: 16px;
+}
+.ff-del-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding-bottom: 8px; }
+.ff-del-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px;
+  min-height: 36px; padding: 6px 8px; border: 1px solid var(--border, #ececec);
+  border-radius: 8px; background: var(--bg, #fff); text-align: left;
+}
+button.ff-del-row { width: 100%; cursor: pointer; }
+button.ff-del-row:hover { background: var(--hover, #f5f5f5); }
+.ff-del-name {
+  overflow: hidden; color: var(--text-primary, #111); font-size: 12px; font-weight: 500;
+  line-height: 17px; text-overflow: ellipsis; white-space: nowrap;
+}
+.ff-del-ver { color: var(--text-secondary, #8c8c8c); font-size: 11px; line-height: 16px; }
+.ff-del-state {
+  display: inline-flex; align-items: center; height: 18px; padding: 0 6px;
+  border-radius: 999px; font-size: 11px; font-weight: 500; line-height: 16px; white-space: nowrap;
+}
+.ff-del-state.is-confirmed { background: var(--status-live-bg, #e8f8ef); color: var(--status-live-text, #1f7a45); }
+.ff-del-state.is-pending { background: var(--status-crafting-bg, #fff4e5); color: var(--status-crafting-text, #b76a00); }
+@media (max-width: 640px) { .ff-del-grid { grid-template-columns: 1fr; } }
+
 /* Generated application handoff */
 .ff-app-launch {
   position: relative; overflow: hidden; margin: 10px 0 6px;
@@ -265,6 +300,7 @@
   display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 8px;
   min-height: 32px; border-bottom: 1px solid var(--border-soft, #f0f0f0);
 }
+.ff-exec-row[hidden] { display: none !important; }
 .ff-exec-row:last-child { border-bottom: 0; }
 .ff-exec-num {
   display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px;
@@ -317,7 +353,7 @@
 .ff-exec-think-head svg { transition: transform var(--ao-dt-collapse-ms) var(--ao-dt-ease); }
 .ff-exec-think-head[aria-expanded="false"] svg { transform: rotate(-90deg); }
 .ff-exec-think-body {
-  max-height: 55px; overflow-y: auto; margin-left: 4px; padding: 2px 0 5px 13px;
+  max-height: 79px; overflow-y: auto; margin-left: 4px; padding: 2px 0 5px 13px;
   border-left: 1px solid var(--ao-dt-border); scrollbar-width: thin;
 }
 .ff-exec-think-body[hidden] { display: none !important; }
@@ -436,11 +472,51 @@
   .ff-plan-compare-grid { grid-template-columns: 1fr; }
   .ff-plan-version ol { min-height: auto; }
 }
-.ff-review-output.is-done { box-shadow: inset 3px 0 0 var(--status-live, #22c55e); }
-.ff-review-output.is-done .ff-review-actions button.is-primary {
-  border-color: var(--status-live-bg, #e8f8ef); background: var(--status-live-bg, #e8f8ef);
-  color: var(--status-live-text, #1f7a45); opacity: 1;
+.ff-review-output {
+  padding: 14px; border: .75px solid #e6e6ea; background: var(--bg, #fff);
+  box-shadow: none; max-height: 560px;
 }
+.ff-review-output .ff-d-top { width: 100%; }
+.ff-review-output .ff-d-t { flex: 1; min-width: 0; }
+.ff-doc-link {
+  margin-left: auto; padding: 0; border: 0; background: none;
+  color: #1f6fd1; font: inherit; font-size: 12px; font-weight: 500; line-height: 18px;
+  cursor: pointer; white-space: nowrap;
+}
+.ff-doc-link:hover { text-decoration: underline; }
+.ff-review-output .ff-review-custom { display: block; margin-top: 8px; }
+.ff-review-output .ff-review-custom input { width: 100%; }
+.ff-review-output .ff-review-view { background: transparent; }
+.ff-review-output.is-done { box-shadow: none; }
+
+.ff-output-summary { margin: 8px 0 10px; }
+.ff-output-title {
+  margin: 0; color: var(--text-primary, #111); font-size: 15px; font-weight: 650; line-height: 22px;
+}
+.ff-output-body {
+  margin: 9px 0 0; color: var(--text-primary, #2f2f32); font-size: 13px; line-height: 21px;
+}
+.ff-output-lead,
+.ff-output-conclusion {
+  margin: 9px 0 0; color: var(--text-secondary, #6f6f73); font-size: 12.5px; line-height: 19px;
+}
+.ff-output-links {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-top: 8px;
+}
+.ff-output-link {
+  display: flex; align-items: center; gap: 7px; min-width: 0; padding: 5px 0;
+  border: 0; background: transparent; text-align: left; cursor: pointer;
+}
+.ff-output-icon { display: inline-flex; flex: none; width: 16px; height: 16px; color: var(--text-secondary, #737378); }
+.ff-output-icon svg { width: 16px; height: 16px; }
+.ff-output-name {
+  overflow: hidden; color: var(--link, #1f6fd1); font-size: 12.5px; font-weight: 500;
+  line-height: 18px; text-overflow: ellipsis; white-space: nowrap;
+}
+.ff-output-link:hover .ff-output-name { text-decoration: underline; }
+.ff-output-link:focus-visible { outline: 2px solid var(--focus, #5b9cff); outline-offset: 2px; border-radius: 4px; }
+.ff-output-conclusion { margin-top: 10px; }
+
 .ff-review-conflict {
   border-color: #f3d3a3; box-shadow: inset 3px 0 0 var(--status-crafting, #f59e0b);
 }

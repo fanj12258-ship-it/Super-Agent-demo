@@ -954,7 +954,8 @@
     var FC = window.FastCompany;
     var planText = text + (text && contextText ? '\n\n' : '') + contextText;
     var diagnosisPlan = window.FastDiagnosis && window.FastDiagnosis.plan(planText);
-    var jPlan = diagnosisPlan || (jOn ? FJ.take()
+    var journeyOnePlan = window.JourneyOnePlan && window.JourneyOnePlan.take(text);
+    var jPlan = diagnosisPlan || journeyOnePlan || (jOn ? FJ.take()
       : (window.FastChange && window.FastChange.match(text) ? window.FastChange.plan()
       : (FC && FC.active() ? FC.take()
       : (FI && FI.active() ? FI.take()
@@ -976,11 +977,14 @@
       if (spaceArmed && !(input.value || '').trim() && !pendingExternalInput) {
         e.preventDefault();
         var CV2 = window.FastConversations;
+        var routePrompt = window.FastJourneyRoute && window.FastJourneyRoute.prompt
+          ? window.FastJourneyRoute.prompt()
+          : '';
         var sp = (window.FastJourney && window.FastJourney.active() && (!CV2 || CV2.isJourney())) ? window.FastJourney.prompt()
           : (window.FastChange && window.FastChange.available() ? window.FastChange.prompt()
-          : (window.FastCompany && window.FastCompany.active() ? window.FastCompany.prompt()
+          : (routePrompt || (window.FastCompany && window.FastCompany.active() ? window.FastCompany.prompt()
           : (window.FastIntake && window.FastIntake.active() ? window.FastIntake.prompt()
-          : ((CV2 && CV2.prompt()) || SPACE_PROMPT))));
+          : ((CV2 && CV2.prompt()) || SPACE_PROMPT)))));
         spaceArmed = false;
         streamFill(sp);
       }

@@ -1,0 +1,28 @@
+---
+description: Keep reusable Demo interaction capabilities synchronized with the interaction asset inventory while four storylines evolve.
+globs: "{superagent/**,workbench/**}"
+alwaysApply: false
+---
+
+# Demo interaction asset contract
+
+The four storylines may be redesigned independently. Treat reusable interaction
+capabilities as a shared asset layer, not as story-specific implementations.
+
+Source of truth: `superagent/INTERACTION-ASSET-INVENTORY.md`.
+
+When implementing a change in `superagent/**` or `workbench/**`:
+
+- If the user calls it an asset-level change, update the inventory in the same task.
+- Also update it proactively when a new or changed interaction can serve two or more storylines.
+- Record interaction structure, visual pattern, state, feedback, trigger, dismissal,
+  reuse scope, maturity, and primary implementation files.
+- Do not add story-specific roles, dialogue, fixed mock data, or one-off plot order
+  to the asset inventory; keep those in the relevant storyline document.
+- Mark assets as reusable, composable, demo-only, hidden, placeholder, or needing consolidation.
+- When replacing, hiding, or retiring an asset, preserve the entry and update its status
+  and replacement instead of silently deleting it.
+- Separate story orchestration changes from shared asset changes when both occur together.
+- Reuse an existing asset before creating another interaction pattern with the same semantics.
+
+Do not infer or lock the names or content of the four new storylines from the old UJ-1 / UJ-2 / UJ-3 documents.

@@ -21,46 +21,6 @@
   overflow: hidden;
 }
 
-/* Phase-2 planning frost: keep the map visible underneath, block interaction */
-.bpi-phase2 {
-  position: absolute; inset: 0; z-index: 4;
-  display: flex; align-items: center; justify-content: center;
-  padding: 14px 12px;
-  border-radius: inherit;
-  background: rgba(255, 255, 255, .42);
-  backdrop-filter: blur(7px) saturate(1.15);
-  -webkit-backdrop-filter: blur(7px) saturate(1.15);
-  pointer-events: auto;
-}
-.bpi-phase2-panel {
-  width: 100%; max-width: 100%;
-  padding: 12px 12px 11px;
-  border: 1px solid rgba(255, 255, 255, .72);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, .78);
-  box-shadow: 0 8px 24px rgba(17, 17, 17, .06), 0 1px 2px rgba(17, 17, 17, .04);
-}
-.bpi-phase2-badge {
-  display: inline-flex; align-items: center;
-  height: 18px; padding: 0 7px; margin-bottom: 8px;
-  border-radius: 999px;
-  background: rgba(31, 130, 235, .1);
-  color: #1f6fd1;
-  font-size: 10.5px; font-weight: 600; letter-spacing: .01em; line-height: 1;
-}
-.bpi-phase2-title {
-  font-size: 13px; font-weight: 600; line-height: 18px; color: var(--text-primary, #111);
-}
-.bpi-phase2-lead {
-  margin: 4px 0 8px;
-  font-size: 11.5px; line-height: 16px; color: var(--text-secondary, #8a8a8f);
-}
-.bpi-phase2-list {
-  margin: 0; padding: 0 0 0 16px;
-  font-size: 12px; line-height: 18px; color: var(--text-primary, #111);
-}
-.bpi-phase2-list li + li { margin-top: 4px; }
-.bpi-phase2-list li::marker { color: #1f6fd1; font-weight: 600; }
 .bpi-top {
   display: flex; align-items: center; justify-content: space-between;
   height: 22px; padding: 0 4px 0 8px; font-size: 11px; font-weight: 500; color: var(--text-muted, #a3a3a8);
@@ -280,39 +240,6 @@
 .bpi-v-cap .bpi-s-imported { fill: #1f6fd1; }
 .mdg .cap.imported { fill: #5b92d6; }
 
-/* ───────── progress · next step · legend: its own card under the map (map keeps its natural height) ───────── */
-.bp-foot { margin: 8px 6px 0; padding: 10px 8px 12px; border-top: 1px solid #ececf0; border-radius: 0 0 11px 11px; background: #fff; }
-.bp-prog { display: flex; align-items: baseline; justify-content: space-between; font-size: 11px; color: var(--text-muted, #a3a3a8); }
-.bp-prog b { font-weight: 600; color: var(--text-primary, #111); font-variant-numeric: tabular-nums; }
-.bp-bar { display: flex; height: 3px; margin: 6px 0 10px; border-radius: 2px; background: #ececf0; overflow: hidden; }
-.bp-bar i { display: block; height: 100%; transition: width .5s ease; }
-.bp-bar i.d { background: #22a05a; }
-.bp-bar i.m { background: repeating-linear-gradient(135deg, #c9c9ce 0 2px, #e4e4e8 2px 4px); }
-.bp-prog b em { font-style: normal; font-weight: 400; color: var(--text-muted, #a3a3a8); }
-.bp-focus { display: flex; flex-direction: column; gap: 6px; padding: 8px 9px; border-radius: 8px; background: #f4f4f6; }
-.bp-focus.sand { background: #fcf7e6; }
-.bp-focus.hard { background: rgba(31, 130, 235, .07); }
-.bp-focus.prod { background: rgba(34, 160, 90, .08); }
-.bp-focus-h { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
-.bp-focus-k { flex: none; font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #9a9aa0; }
-.bp-focus-h b { min-width: 0; font-size: 12.5px; font-weight: 600; line-height: 18px; color: #111; }
-.bp-focus.sand .bp-focus-h b { color: #6f5518; }
-.bp-focus.hard .bp-focus-h b { color: #1f5fb8; }
-.bp-focus.prod .bp-focus-h b { color: #1b7f46; }
-.bp-focus-sub { font-size: 11.5px; line-height: 16px; color: #6b6b70; }
-.bp-focus-docs { display: flex; flex-wrap: wrap; gap: 4px; }
-.bp-focus-doc { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #fff; border: 1px solid #e4e4e8; font-size: 10.5px; color: #55555b; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bp-focus-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.bp-focus-hint { font-size: 11px; color: #9a9aa0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bp-next-b { flex: none; height: 22px; padding: 0 8px; border: 1px solid rgba(0, 0, 0, .12); border-radius: 6px; background: #fff; font: inherit; font-size: 11.5px; font-weight: 500; color: #111; cursor: pointer; white-space: nowrap; }
-.bp-next-b:hover { background: #fafafb; }
-.bp-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 9px; font-size: 10.5px; color: var(--text-muted, #a3a3a8); }
-.bp-legend span { display: inline-flex; align-items: center; gap: 4px; }
-.bp-legend .lg { width: 8px; height: 8px; border-radius: 2px; border: 1px solid #c9c9ce; background: #fff; }
-.bp-legend .lg.done { background: #1f82eb; border-color: #1f82eb; }
-.bp-legend .lg.mock { border-style: dashed; border-color: #3d7a5f; background: repeating-linear-gradient(135deg, transparent 0 2px, rgba(45, 106, 79, .35) 2px 3px); }
-.bp-legend .lg.imp { border: 1px dashed #1f82eb; background: rgba(31, 130, 235, .15); }
-
 /* ───────── overview in the centre: bare assembly drawing on the grey floor ───────── */
 .bpi-body { container-type: inline-size; display: flex; align-items: flex-start; justify-content: center; padding: 24px 36px 48px; background: #f4f4f6; }
 .ov-stage { width: min(100%, 1000px); margin: 0 auto; background: transparent; border: 0; box-shadow: none; }
@@ -343,14 +270,6 @@
 .bpi-v-dico { fill: none; stroke: #a9a9b1; stroke-width: .7; stroke-linejoin: round; }
 .bpi-v-dico.dim { stroke: #cfcfd6; }
 .bpi-v-dico.mock { stroke: #7aab90; }
-
-/* Skip — a whisper-light link at the end of the sub line; swaps the guidance for the next suggestion */
-.bp-skip { flex: none; align-self: flex-end; margin: -2px 0 -2px; display: inline-flex; align-items: center; gap: 3px; padding: 0 2px; border: 0; background: none; font: inherit; font-size: 11px; line-height: 16px; color: #a0a0a6; cursor: pointer; transition: color .14s ease; }
-.bp-skip:hover { color: #3a3a3e; }
-.bp-skip svg { transition: transform .14s ease; }
-.bp-skip:hover svg { transform: translateX(1px); }
-.bp-focus.is-alt .bp-focus-h b { animation: bp-sg .26s ease both; }
-@keyframes bp-sg { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 
 /* mapping marks (after switching to 按流程打造): one small dot per document */
 .bpi-map circle { stroke-width: 1.25; }

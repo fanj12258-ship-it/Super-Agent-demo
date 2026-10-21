@@ -32,25 +32,25 @@
   <link rel="stylesheet" href="css/layout-sidebar.css" />
   <link rel="stylesheet" href="css/panels-modals.css" />
   <link rel="stylesheet" href="css/scene-cards.css" />
-  <link rel="stylesheet" href="css/file-tree.css" />
+  <link rel="stylesheet" href="css/file-tree.css?v=20261021a" />
   <link rel="stylesheet" href="css/overview-menu.css" />
   <link rel="stylesheet" href="css/chrome-popovers.css" />
   <link rel="stylesheet" href="css/chat-composer.css" />
   <link rel="stylesheet" href="css/agent-turn.css" />
   <link rel="stylesheet" href="css/agent-body.css" />
   <link rel="stylesheet" href="css/modal-create-scene.css" />
-  <link rel="stylesheet" href="css/fast-overrides.css?v=20261015b" />
+  <link rel="stylesheet" href="css/fast-overrides.css?v=20261021b" />
   <link rel="stylesheet" href="css/fast-blueprint.css" />
   <link rel="stylesheet" href="css/fast-blueprint-iso.css?v=20261015c" />
   <link rel="stylesheet" href="css/fast-scene-card.css" />
   <link rel="stylesheet" href="css/fast-docs.css?v=20261014e" />
-  <link rel="stylesheet" href="css/fast-flow.css" />
+  <link rel="stylesheet" href="css/fast-flow.css?v=20261021g" />
   <link rel="stylesheet" href="css/fast-modules.css" />
   <link rel="stylesheet" href="css/fast-onto-graph.css" />
   <link rel="stylesheet" href="css/fast-conversations.css" />
   <link rel="stylesheet" href="css/fast-switch-dialog.css" />
   <link rel="stylesheet" href="css/fast-formal-files.css" />
-  <link rel="stylesheet" href="css/enterprise-assets.css?v=20261020x" />
+  <link rel="stylesheet" href="css/enterprise-assets.css?v=20261021d" />
 </head>
 <body>
   <svg class="ws-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
@@ -419,9 +419,14 @@
                   <button type="button" class="composer-plus fd-upload" id="fd-upload" aria-label="Upload documents" title="Upload documents">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m21 11.5-8.6 8.6a5.2 5.2 0 0 1-7.4-7.4l8.8-8.8a3.5 3.5 0 0 1 4.9 4.9l-8.8 8.8a1.8 1.8 0 0 1-2.5-2.5l8.1-8.1"/></svg>
                   </button>
-                  <div class="fast-route" id="fast-route" role="radiogroup" aria-label="Space demo route" title="Space 演示路线 · Main：供应商寻源　Side：先了解企业">
-                    <button type="button" role="radio" aria-checked="true" data-route="main" class="is-on">Main</button>
-                    <button type="button" role="radio" aria-checked="false" data-route="side">Side</button>
+                  <div class="fast-route" id="fast-route" role="radiogroup" aria-label="Demo journey">
+                    <button type="button" role="radio" aria-checked="true" data-journey="1" class="is-on" aria-label="Journey 1" aria-describedby="fast-journey-1-tip">1</button>
+                    <button type="button" role="radio" aria-checked="false" data-journey="2" aria-label="Journey 2">2</button>
+                    <button type="button" role="radio" aria-checked="false" data-journey="3" aria-label="Journey 3">3</button>
+                    <button type="button" role="radio" aria-checked="false" data-journey="4" aria-label="Journey 4">4</button>
+                    <button type="button" role="radio" aria-checked="false" data-journey="main" aria-label="Main route">Main</button>
+                    <button type="button" role="radio" aria-checked="false" data-journey="side" aria-label="Side route">Side</button>
+                    <div class="fast-journey-tip" id="fast-journey-1-tip" role="tooltip"><strong>故事线定位：</strong>模拟 FDE 在项目启动或售前诊断初期，进入新建的企业公共空间，从输入企业与业务背景出发，由 Super Agent 命中【企业全景规划与场景推导最佳实践】，连续完成企业档案构建 → 业务现状全景拆解与聚焦痛点确认 → AI 场景规划推导的端到端过程</div>
                   </div>
                   <div class="fast-mode" id="fast-mode" data-mode="fast" hidden>
                     <button type="button" class="fast-mode-chip" id="fast-mode-chip" aria-haspopup="menu" aria-expanded="false" title="Build mode">
@@ -732,7 +737,7 @@
   <script src="js/files-panel.js"></script>
   <script src="js/fast-docs-data.js"></script>
   <script src="js/fast-plan-docs-data.js"></script>
-  <script src="js/fast-files.js?v=20261014l"></script>
+  <script src="js/fast-files.js?v=20261021c"></script>
   <script src="js/fast-scenes.js"></script>
   <script src="js/fast-mode.js?v=20261015b"></script>
   <script src="js/fast-scene-card.js"></script>
@@ -742,9 +747,9 @@
   <script src="js/fast-flowmap.js"></script>
   <script src="js/fast-journey.js"></script>
   <script src="js/fast-intake.js"></script>
-  <script src="js/fast-route.js"></script>
+  <script src="js/fast-route.js?v=20261021f"></script>
   <script src="js/fast-flow-board.js?v=20261014e"></script>
-  <script src="js/fast-company.js?v=20261014n"></script>
+  <script src="js/fast-company.js?v=20261021b"></script>
   <script src="js/scene-card-menu.js"></script>
   <script src="js/cui-icons.js"></script>
   <script src="js/agent-body.js?v=20261014e"></script>
@@ -756,15 +761,16 @@
   <script src="js/fast-switch-dialog.js"></script>
   <script src="js/fast-formal-files.js"></script>
   <script src="js/fast-handoff.js"></script>
-  <script src="js/fast-flow.js?v=20261015b"></script>
+  <script src="js/fast-flow.js?v=20261021h"></script>
+  <script src="js/journey-one.js?v=20261021i"></script>
   <script src="js/fast-upload.js?v=20261015a"></script>
   <script src="js/fast-mention.js?v=20261014g"></script>
   <script src="js/fast-conversations.js"></script>
   <script src="js/fast-summary.js"></script>
   <script src="js/workbench-home.js"></script>
   <script src="js/fast-change.js?v=20261015c"></script>
-  <script src="js/agent-chat-mock-fast.js?v=20261015a"></script>
+  <script src="js/agent-chat-mock-fast.js?v=20261021b"></script>
   <script src="js/scenario-planning-data.js?v=20261020x"></script>
-  <script src="js/enterprise-assets.js?v=20261021a"></script>
+  <script src="js/enterprise-assets.js?v=20261021g"></script>
 </body>
 </html>
