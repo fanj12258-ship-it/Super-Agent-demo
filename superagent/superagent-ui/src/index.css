@@ -468,19 +468,11 @@ body {
   max-height: var(--ao-dt-viewport-max);
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-  scrollbar-gutter: stable;
   overflow-anchor: none;
 }
 
 .process-viewport.is-generating {
   height: var(--ao-dt-viewport-max);
-}
-
-.process-viewport:hover,
-.process-viewport:focus-within {
-  scrollbar-color: rgba(0, 0, 0, 0.16) transparent;
 }
 
 .process-items {
@@ -578,17 +570,6 @@ button.activity-row:focus-visible > .activity-hover-chevron {
   );
   -webkit-mask-image: var(--thought-edge-mask);
   mask-image: var(--thought-edge-mask);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.16) transparent;
-}
-
-.deep-thought-details::-webkit-scrollbar {
-  width: 4px;
-}
-
-.deep-thought-details::-webkit-scrollbar-thumb {
-  background: #00000029;
-  border-radius: 999px;
 }
 
 .stream-enter {

@@ -58,6 +58,10 @@
   --ft-json-fg: #333333;
   --ft-file-fg: #8c8c8c;
 
+  /* Page title — matches `.main-title` / agentos-ui type scale */
+  --title-page-size: 22px;
+  --title-page-lh: 28px;
+
   /* LOCKED 2026-10-10 · Agent turn chrome (AgentOS) */
   --text-primary: #111111;
   --ao-avatar-size: 28px;

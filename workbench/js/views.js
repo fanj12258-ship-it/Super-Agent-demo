@@ -333,7 +333,14 @@ content.addEventListener('keydown', function (e) {
 });
 
 items.forEach(function (el) {
-  el.addEventListener('click', function () {
+  el.addEventListener('click', function (e) {
+    /* AI Ops opens as an external page — do not swap the Workbench view. */
+    if (el.dataset.view === 'aiops' || el.classList.contains('is-external')) {
+      if (el.tagName === 'A') return;
+      e.preventDefault();
+      window.open('aiops/index.html', '_blank', 'noopener,noreferrer');
+      return;
+    }
     activateView(el.dataset.view);
   });
 });

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Ops · AgentOS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/tokens.css" />
+  <link rel="stylesheet" href="../css/overlay-scrollbar.css" />
+  <link rel="stylesheet" href="../css/popovers-notify.css" />
+  <link rel="stylesheet" href="aiops.css" />
+  <link rel="stylesheet" href="analysis-boards.css" />
+</head>
+<body class="aiops-body">
+  <div class="aiops-app">
+    <aside class="aiops-side" aria-label="AI Ops navigation">
+      <!-- Brand: house → Workbench + AIOps wordmark + Beta -->
+      <div class="aiops-brand-bar">
+        <a class="aiops-home-btn" href="../agentos-workbench.html" title="Back to Workbench" aria-label="Back to Workbench">
+          <i data-lucide="house"></i>
+        </a>
+        <div class="aiops-brand-title">
+          <img class="aiops-wordmark" src="assets/aiops-wordmark.png" alt="AIOps" width="54" height="24" />
+          <span class="aiops-beta">1.0 Beta</span>
+        </div>
+      </div>
+
+      <!-- Team + primary CTA + nav — match Workbench `.sb-team` -->
+      <div class="aiops-team">
+        <button class="team-row" id="teamBtn" type="button" data-i18n-aria="切换项目" aria-label="切换项目" aria-haspopup="menu" aria-expanded="false">
+          <span class="team-avatar" id="teamAvatar" style="background:#1F82EB">D</span>
+          <span class="team-name" id="teamName">DJI Innovations</span>
+          <svg class="chev" width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true"><path d="M1.5 3L4 5.5L6.5 3" stroke="#333" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+
+        <div class="aiops-new-wrap">
+          <button class="btn btn-primary" id="btnNew" type="button" aria-haspopup="menu" aria-expanded="false">
+            <i data-lucide="plus" class="btn-ico" aria-hidden="true"></i>
+            <span data-i18n="新建">新建</span>
+          </button>
+          <div class="aiops-dropdown" id="newMenu" role="menu" hidden>
+            <button type="button" role="menuitem" data-new="分析任务">
+              <i data-lucide="square-pen"></i><span data-i18n="分析任务">分析任务</span>
+            </button>
+            <button type="button" role="menuitem" data-new="定时任务">
+              <i data-lucide="clock"></i><span data-i18n="定时任务">定时任务</span>
+            </button>
+            <button type="button" role="menuitem" data-new="自定义看板">
+              <i data-lucide="layout-grid"></i><span data-i18n="自定义看板">自定义看板</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="aiops-menu-scroll">
+          <nav class="aiops-side-nav" id="aiopsNav" aria-label="AI Ops"></nav>
+        </div>
+      </div>
+
+      <div class="aiops-side-foot">
+        <button class="aiops-user" id="userBtn" type="button" data-i18n-aria="账号菜单" aria-label="账号菜单" aria-haspopup="menu" aria-expanded="false">
+          <span class="user-avatar">S</span>
+          <span class="user-name">Siqi Yang</span>
+          <i data-lucide="chevron-down" aria-hidden="true"></i>
+        </button>
+        <!-- notify bell temporarily removed -->
+      </div>
+    </aside>
+
+    <main class="aiops-main">
+      <div class="aiops-scroll" id="pageRoot"></div>
+    </main>
+  </div>
+
+  <!-- Account menu — same chrome as Workbench `#acctMenu` -->
+  <div class="acct-menu" id="acctMenu" role="menu" hidden>
+    <div class="acct-top">
+      <div class="acct-avatar">S</div>
+      <div class="acct-name">Siqi Yang</div>
+      <div class="acct-email">siqi.yang@inspiregroup.com</div>
+    </div>
+    <div class="acct-sep"></div>
+    <div class="acct-sec">
+      <div class="acct-row">
+        <span class="acct-ico"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1.8 12.2L4.6 4l2.8 8.2M2.9 9.6h3.4" stroke="#666" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 5h5.2M9 8h5.2M9 11h5.2" stroke="#666" stroke-width="1.1" stroke-linecap="round"/></svg></span>
+        <span class="acct-grow" data-i18n="Language">Language</span>
+        <div class="lang-seg" role="group" data-i18n-aria="Language" aria-label="Language">
+          <button type="button" data-lang="zh" class="is-on">中</button>
+          <button type="button" data-lang="en">EN</button>
+        </div>
+      </div>
+    </div>
+    <div class="acct-sep"></div>
+    <div class="acct-sec">
+      <button class="acct-item" type="button" role="menuitem">
+        <span class="acct-ico"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.2" r="2.6" stroke="#666" stroke-width="1.1"/><path d="M2.8 13.6c0-2.6 2.3-4.4 5.2-4.4s5.2 1.8 5.2 4.4" stroke="#666" stroke-width="1.1" stroke-linecap="round"/></svg></span>
+        <span data-i18n="Profile">Profile</span>
+      </button>
+      <button class="acct-item" type="button" role="menuitem">
+        <span class="acct-ico"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2.2v7.4M5.4 7.2 8 9.8l2.6-2.6" stroke="#666" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.2 11.8h9.6" stroke="#666" stroke-width="1.1" stroke-linecap="round"/></svg></span>
+        <span class="acct-grow" data-i18n="Version update">Version update</span>
+        <span class="acct-dot" aria-label="New"></span>
+      </button>
+      <div class="acct-sep acct-sep-in"></div>
+      <button class="acct-item" type="button" role="menuitem">
+        <span class="acct-ico"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M9 2.5h3.5a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9M2.5 8h7M7 5.3L9.7 8 7 10.7" stroke="#333" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span data-i18n="Log out">Log out</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="acct-menu team-menu" id="teamMenu" role="menu" hidden>
+    <div class="acct-sec">
+      <button class="acct-item is-current" type="button" role="menuitemradio" data-team="DJI Innovations" data-letter="D" data-color="#1F82EB">
+        <span class="t-ava" style="background:#1F82EB">D</span>
+        <span class="t-name">DJI Innovations</span>
+        <i class="t-check" data-lucide="check" aria-hidden="true"></i>
+      </button>
+      <button class="acct-item" type="button" role="menuitemradio" data-team="Ascentium" data-letter="A" data-color="#7b61ff">
+        <span class="t-ava" style="background:#7b61ff">A</span>
+        <span class="t-name">Ascentium</span>
+        <i class="t-check" data-lucide="check" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+
+  <script src="../js/overlay-scrollbar.js"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="analysis-boards.js"></script>
+  <script src="aiops.js"></script>
+</body>
+</html>

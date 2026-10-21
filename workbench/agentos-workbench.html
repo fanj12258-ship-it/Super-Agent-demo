@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/overlay-scrollbar.css" />
   <link rel="stylesheet" href="css/layout-sidebar.css" />
   <link rel="stylesheet" href="css/popovers-notify.css" />
   <link rel="stylesheet" href="css/modal-create-scene.css" />
@@ -104,10 +105,11 @@
         <span class="ico"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3.6" r="1.55" stroke="currentColor" stroke-width="1.15"/><path d="M2.5 8.2L8 6l5.5 2.2v4.1L8 14.5l-5.5-2.2V8.2Z" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round"/><path d="M2.6 8.3L8 10.5l5.4-2.2M8 10.5v3.9" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round"/></svg></span>
         <span>Market</span>
       </button>
-      <button class="nav-item" type="button" data-view="aiops">
+      <a class="nav-item is-external" href="aiops/index.html" target="_blank" rel="noopener noreferrer" data-view="aiops" title="Open AI Ops in a new tab">
         <span class="ico"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2.5" y="2.5" width="11" height="11" rx="1.2" stroke="currentColor" stroke-width="1.15"/><path d="M2.5 5.8h11M6.2 5.8v7.7" stroke="currentColor" stroke-width="1.15"/></svg></span>
         <span>AI Ops</span>
-      </button>
+        <span class="nav-ext" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3.5 8.5 8.5 3.5M8.5 3.5H4.2M8.5 3.5V7.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </a>
     </nav>
 
     <!-- 底部：用户 / 通知 -->
@@ -259,6 +261,7 @@
     </div>
   </main>
 
+  <script src="js/overlay-scrollbar.js"></script>
   <script src="js/data-catalog.js?v=20261019a"></script>
   <script src="js/data-files.js"></script>
   <script src="js/render-cards.js?v=20261019a"></script>

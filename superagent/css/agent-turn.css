@@ -159,19 +159,11 @@
   max-height: var(--ao-dt-viewport-max);
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-  scrollbar-gutter: stable;
   overflow-anchor: none;
 }
 
 .process-viewport.is-generating {
   height: var(--ao-dt-viewport-max);
-}
-
-.process-viewport:hover,
-.process-viewport:focus-within {
-  scrollbar-color: rgba(0, 0, 0, 0.16) transparent;
 }
 
 .process-items {
@@ -269,17 +261,6 @@ button.activity-row:focus-visible > .activity-hover-chevron {
   );
   -webkit-mask-image: var(--thought-edge-mask);
   mask-image: var(--thought-edge-mask);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.16) transparent;
-}
-
-.deep-thought-details::-webkit-scrollbar {
-  width: 4px;
-}
-
-.deep-thought-details::-webkit-scrollbar-thumb {
-  background: #00000029;
-  border-radius: 999px;
 }
 
 .stream-enter {
@@ -638,12 +619,6 @@ article code {
 }
 .status-chevron img { display: block; }
 
-.process-viewport::-webkit-scrollbar { width: 6px; }
-.process-viewport::-webkit-scrollbar-track { background: transparent; }
-.process-viewport::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; }
-.process-viewport:hover::-webkit-scrollbar-thumb,
-.process-viewport:focus-within::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.16); }
-
 .process-collapse > .collapse-clip > .collapse-content { gap: 8px; }
 .activity-block > .collapse:not(.is-open) { margin-top: -4px; }
 .subagent-item > .collapse:not(.is-open) { margin-top: -6px; }
@@ -680,8 +655,6 @@ article code {
 .activity-composite.tool-summary-items,
 .activity-composite .activity-row.nested,
 .activity-composite .activity-row.detail { padding-left: 0; }
-.activity-composite::-webkit-scrollbar { width: 8px; }
-.activity-composite::-webkit-scrollbar-thumb { background: var(--ao-dt-border); border-radius: 10px; }
 .activity-details > .activity-row.detail { padding-left: 0; }
 
 .subagent-list { gap: 4px; margin-top: 4px; }
@@ -716,7 +689,6 @@ article code {
   min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
   padding: 12px 16px 12px 12px;
   font-family: var(--font-mono);
   font-size: 12px;

@@ -66,9 +66,6 @@
   flex-direction: column;
   gap: 12px;
 }
-.sm-body::-webkit-scrollbar { width: 8px; }
-.sm-body::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 8px; border: 2px solid #fff; }
-
 .sm-card {
   padding: 16px;
   border: 1px solid #ececec;

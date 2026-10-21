@@ -79,7 +79,13 @@
   border: 0;
   background: #fff;
 }
-.main-title { font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 4px; }
+.main-title {
+  font-size: var(--title-page-size, 22px);
+  line-height: var(--title-page-lh, 28px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+}
 .main-desc { margin: 0 0 20px; color: var(--text-secondary); font-size: 13px; line-height: 20px; }
 .res-toolbar {
   display: flex;
