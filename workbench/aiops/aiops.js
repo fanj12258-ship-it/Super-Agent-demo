@@ -17,8 +17,8 @@
     configId: null,
     configPos: null,
     drag: null,
-    /* Demo-only: Figma widget visual skins — border | raised | inset */
-    widgetSkin: 'border'
+    /* Demo-only: Figma widget visual skins — border | raised | inset. Default: 白底灰卡 */
+    widgetSkin: 'inset'
   };
 
   var WIDGET_SKINS = [
@@ -704,11 +704,13 @@
   }
 
   function defaultHomeWidgets() {
+    // 6-col grid. Row 1–4: 成本分析 + 产出物. Row 5–8: 用户行为 + 健康度 + 定时任务.
     return [
-      makeWidget('cost', ['total', 'calls', 'perTurn', 'trendUsage']),
-      makeWidget('health', ['anomalousRate', 'slowRate', 'warningEvents']),
-      makeWidget('schedules'),
-      makeWidget('artifacts')
+      makeWidget('cost', ['total', 'input', 'output', 'calls', 'trendUsage'], 4, 4, 1, 1),
+      makeWidget('schedules', null, 2, 4, 5, 5),
+      makeWidget('artifacts', null, 2, 4, 5, 1),
+      makeWidget('behavior', ['sessions', 'users', 'trendSessions'], 2, 4, 1, 5),
+      makeWidget('health', ['anomalousRate', 'warningEvents', 'slowTrend'], 2, 4, 3, 5)
     ];
   }
 
@@ -2841,8 +2843,14 @@
   try {
     var savedLang = localStorage.getItem('aiops-lang');
     if (savedLang === 'en' || savedLang === 'zh') state.lang = savedLang;
+    // rev 2: product default moved to 白底灰卡; drop the previously saved demo skin once.
+    var skinRev = localStorage.getItem('aiops-widget-skin-rev');
     var savedSkin = localStorage.getItem('aiops-widget-skin');
-    if (savedSkin === 'border' || savedSkin === 'raised' || savedSkin === 'inset') {
+    if (skinRev !== '2') {
+      state.widgetSkin = 'inset';
+      localStorage.setItem('aiops-widget-skin', 'inset');
+      localStorage.setItem('aiops-widget-skin-rev', '2');
+    } else if (savedSkin === 'border' || savedSkin === 'raised' || savedSkin === 'inset') {
       state.widgetSkin = savedSkin;
     }
   } catch (e) {}
