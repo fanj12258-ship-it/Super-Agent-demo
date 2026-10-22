@@ -240,6 +240,7 @@
             },
           ],
           conclusion: '已完成从企业主体识别、业务现状全景拆解到 AI 场景规划与客户汇报材料生成的完整链路。当前结果可用于内部机会判断，也可以直接作为下一轮客户沟通和方案对齐的基础。',
+          ask: '接下来，我先等你与客户交流对齐后，再回来确认最终要推进的场景。对齐完成后直接告诉我结论，或打开 Scenario Planning 勾选场景即可。',
         });
         appendNode(ctx, summary);
         return { journey: '1', completed: true };

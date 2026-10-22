@@ -115,20 +115,67 @@
     return card('fx-mcp', e, id, '<span class="fx-logo" style="background:' + color + '">' + letter + '</span><span class="fx-mcp-b"><span class="fx-mcp-n">' + esc(name) + '</span><span class="fx-mcp-d">' + esc(desc) + '</span><span class="fx-mcp-u">Updated: just now</span><span class="fx-mcp-r">' + pills + '</span></span>');
   }
 
+  /* Optional Journey / Demo ontology pack (canvas + inspector). */
+  var activeOnto = null;
+  function publishOntology(pack) {
+    activeOnto = pack || null;
+    Sandbox.emit();
+  }
+
   /* — Ontology — */
   def('ontology', 'Ontology', {
-    ready: function () { return S.generated; },
+    ready: function () { return S.generated || !!activeOnto; },
     why: '快速出一版后，生成的本体草稿会出现在这里。',
     items: function () {
-      var e = envOf(false), ok = S.mocks.onto === 'verified';
-      return [{ id: 'main', env: e, html: card('fx-on', e, 'main',
-        '<span class="fx-on-h"><span class="fx-on-ava">' + graphAva() + '</span><span class="fx-on-n">Sourcing ontology</span></span>' +
-        '<span class="fx-on-d">供应商、物料、报价、合同、异常 5 个对象，以及它们之间的 5 条关系。</span>' +
-        '<span class="fx-on-m">Generated · ' + (S.phase === 'production' ? 'v1.0' : 'v0.1') + '</span>' +
-        '<span class="fx-on-t">' + pill(e) + (S.phase === 'production' ? '' : mat('onto')) + '<span class="fx-chip">5 objects</span></span>') }];
+      var list = [], e = envOf(false), ok = S.mocks.onto === 'verified';
+      if (activeOnto) {
+        var nObj = Object.keys(activeOnto.objects || {}).length;
+        var nRel = (activeOnto.edges || []).length;
+        list.push({ id: activeOnto.id || 'perf', env: e, html: card('fx-on', e, activeOnto.id || 'perf',
+          '<span class="fx-on-h"><span class="fx-on-ava">' + graphAva() + '</span><span class="fx-on-n">' + esc(activeOnto.name || 'Performance ontology') + '</span></span>' +
+          '<span class="fx-on-d">' + esc(activeOnto.desc || '') + '</span>' +
+          '<span class="fx-on-m">Generated · ' + esc(activeOnto.version || 'v0.1') + '</span>' +
+          '<span class="fx-on-t">' + pill(e) + tag('mock', 'Mock') + '<span class="fx-chip">' + nObj + ' objects · ' + nRel + ' relations</span></span>') });
+      }
+      if (S.generated) {
+        list.push({ id: 'main', env: e, html: card('fx-on', e, 'main',
+          '<span class="fx-on-h"><span class="fx-on-ava">' + graphAva() + '</span><span class="fx-on-n">Sourcing ontology</span></span>' +
+          '<span class="fx-on-d">供应商、物料、报价、合同、异常 5 个对象，以及它们之间的 5 条关系。</span>' +
+          '<span class="fx-on-m">Generated · ' + (S.phase === 'production' ? 'v1.0' : 'v0.1') + '</span>' +
+          '<span class="fx-on-t">' + pill(e) + (S.phase === 'production' ? '' : mat('onto')) + '<span class="fx-chip">5 objects</span></span>') });
+      }
+      return list;
     },
-    crumb: function (id) { return id === 'main' ? 'Sourcing ontology' : id; },
+    crumb: function (id) {
+      if (activeOnto && id === (activeOnto.id || 'perf')) return activeOnto.name || 'Performance ontology';
+      return id === 'main' ? 'Sourcing ontology' : id;
+    },
     detail: function (id) {
+      if (activeOnto && id === (activeOnto.id || 'perf')) {
+        var pack = activeOnto;
+        var mockRows = pack.mockRows || [];
+        return '<div class="fx-title">' + esc(pack.name || 'Performance ontology') + ' ' + pill(envOf(false)) + ' ' + tag('mock', 'Mock') + '</div>' +
+          '<div class="fx-banner sand">画布与调试视图：展示员工绩效档案、部门配额对象节点、关系边、规则及自动生成的 Mock 数据。</div>' +
+          (window.FastOntoGraph ? window.FastOntoGraph.view({
+            objects: pack.objects,
+            edges: pack.edges,
+            actions: pack.actions,
+            icons: pack.icons,
+            hub: pack.hub,
+            positions: pack.positions,
+            sides: pack.sides,
+            compact: pack.compact !== false,
+            zoom: pack.zoom != null ? pack.zoom : 0.9,
+            mock: true,
+            tag: tag('mock', 'Mock'),
+          }) : '') +
+          (mockRows.length
+            ? sec('自动生成的 Mock 数据', table(pack.mockCols || ['对象', '示例'], mockRows.map(function (r) {
+              return r.map(function (c, i) { return i === 0 ? esc(c) : esc(c); });
+            })))
+            : '') +
+          '<p class="fx-hint">' + esc(pack.hint || '由 Demo 构建自动生成（Mock），可在画布点选节点查看属性、关系与规则动作。') + '</p>';
+      }
       if (id === 'main') {
         var ok = S.mocks.onto === 'verified';
         return '<div class="fx-title">Sourcing ontology ' + pill(envOf(false)) + ' ' + mat('onto') + '</div>' + banner() +
@@ -461,6 +508,7 @@
     MODS[key].stack = [];
     if (key === 'ontology' && window.FastOntoGraph) window.FastOntoGraph.reset();
     MODS[key].filter = (o && o.filter) || 'all';
+    if (o && o.drill) MODS[key].stack = [o.drill];
     FD().open(NAMES[key]);
     render(key);
   }
@@ -504,5 +552,5 @@
     updateLauncher();
   }
 
-  window.FastModules = { open: open, render: refreshAll };
+  window.FastModules = { open: open, render: refreshAll, publishOntology: publishOntology };
 })();

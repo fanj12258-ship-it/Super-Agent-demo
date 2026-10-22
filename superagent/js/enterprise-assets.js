@@ -7,6 +7,9 @@
   var names={planning:'Scenario Planning',landscape:'Business Landscape',canvas:'Scenario Definition Canvas',documents:'Enterprise Documents'};
   var displayNames=names;
   var contentVisible={documents:inWorkbench,landscape:inWorkbench,planning:inWorkbench,canvas:true};
+  var planningAppLimit=null; /* null = all apps; number = first N application packs */
+  var planningBizLimit=null; /* null = all business cards; number = first N per application */
+  var planningOverride=null; /* optional { title, scenario, rationale, biz:{ title, scenario, rationale } } for first pack */
   var state={canvasTab:'To-Be Design',docsTab:'Enterprise Profile',source:null,history:false,changes:false,wrap:false};
   var roots={};
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -79,12 +82,47 @@
   function sourceButton(section,index,value){var content=section===0&&index===0?'1976-04-01':value.replace(/<[^>]*>/g,' ').slice(0,200);return button('1 source','data-ea-source="'+esc(content)+'" data-ea-source-field="'+esc(fieldData[section][index][0])+'"','ea-source-link');}
   function documents(){return '<div class="ea-company-title"><strong>Apple Inc.</strong>'+pill('ENT-2026-000137')+'</div><div class="ea-room-tabs" role="tablist" aria-label="Enterprise document views">'+['Enterprise Profile','Agent View'].map(function(t){return button(t,'role="tab" aria-selected="'+(state.docsTab===t)+'" data-ea-docs-tab="'+t+'"',state.docsTab===t?'is-active':'');}).join('')+'</div>'+(state.docsTab==='Agent View'?codeView():'<div class="ea-document-body"><nav class="ea-section-nav" aria-label="Enterprise profile sections">'+button('Company Name','data-ea-section="name" aria-pressed="true"','is-active')+sectionNames.map(function(t,i){return button(t,'data-ea-section="'+i+'" aria-pressed="false"','');}).join('')+'</nav>'+sectionNames.map(function(title,si){return '<section id="ea-profile-'+si+'" class="ea-profile-section"><h3>'+title+'</h3><div class="ea-fields">'+fieldData[si].map(function(row,ri){return '<div class="ea-field'+(row[1].length>100&&row[1].indexOf('<')===-1?' ea-field-wide':'')+'"><strong>'+row[0]+'</strong><div>'+row[1]+sourceButton(si,ri,row[1])+'</div></div>';}).join('')+'</div></section>';}).join('')+'</div>');}
   var planningSelection={};
+  function applyPlanningOverride(apps){
+    if(!planningOverride||!apps.length)return apps;
+    var o=planningOverride;
+    return apps.map(function(app,i){
+      if(i!==0)return app;
+      var next={
+        title:o.title!=null?o.title:app.title,
+        scenario:o.scenario!=null?o.scenario:app.scenario,
+        rationale:o.rationale!=null?o.rationale:app.rationale,
+        badge:o.badge!=null?o.badge:app.badge,
+        scenarios:(app.scenarios||[]).map(function(item,j){
+          if(j!==0||!o.biz)return item;
+          return{
+            id:item.id,
+            title:o.biz.title!=null?o.biz.title:item.title,
+            priority:o.biz.priority!=null?o.biz.priority:item.priority,
+            scenario:o.biz.scenario!=null?o.biz.scenario:item.scenario,
+            rationale:o.biz.rationale!=null?o.biz.rationale:item.rationale,
+            badge:o.biz.badge!=null?o.biz.badge:item.badge
+          };
+        })
+      };
+      return next;
+    });
+  }
+  function planningApps(){
+    var all=window.scenarioPlanningData||[];
+    var sliced=(planningAppLimit==null||planningAppLimit>=all.length)?all:all.slice(0,Math.max(0,planningAppLimit|0));
+    return applyPlanningOverride(sliced);
+  }
+  function planningBiz(app){
+    var all=app.scenarios||[];
+    if(planningBizLimit==null||planningBizLimit>=all.length)return all;
+    return all.slice(0,Math.max(0,planningBizLimit|0));
+  }
   function planning(){
     function selected(id){return planningSelection[id]===true;}
-    function check(id,title,app){return '<label class="ea-plan-choice"><input type="checkbox" '+(app?'data-ea-plan-app="'+id+'"':'data-ea-plan-scenario="'+id+'"')+' '+(selected(id)?'checked':'')+'><span>'+esc(title)+'</span></label>';}
+    function check(id,title,app,badge){return '<label class="ea-plan-choice"><input type="checkbox" '+(app?'data-ea-plan-app="'+id+'"':'data-ea-plan-scenario="'+id+'"')+' '+(selected(id)?'checked':'')+'><span class="ea-plan-choice-text">'+esc(title)+(badge?' <span class="ea-plan-new">'+esc(badge)+'</span>':'')+'</span></label>';}
     function tags(type,priority){return '<div class="ea-plan-tags"><span>'+type+'</span><span class="'+(priority==='Quick Win'?'quick':priority==='Strategic'?'strategic':'expansion')+'">'+priority+'</span></div>';}
     function copy(item){return '<div class="ea-plan-copy"><p>Scenario:</p><p>'+esc(item.scenario)+'</p><p>Rationale:</p><p>'+esc(item.rationale)+'</p></div>';}
-    return status('Scenario Planning')+'<div class="ea-plan-content">'+window.scenarioPlanningData.map(function(app,ai){return '<section class="ea-plan-application"><header>'+check(ai,app.title,true)+tags('Application','Quick Win')+'</header>'+copy(app)+'<div class="ea-plan-scenarios">'+app.scenarios.map(function(item,i){return '<article class="ea-plan-scenario '+(app.scenarios.length===4&&i===3?'is-wide':'')+'"><header>'+check(item.id,item.title,false)+tags('Business',item.priority)+'</header>'+copy(item)+'</article>';}).join('')+'</div></section>';}).join('')+'<p class="ea-plan-result" role="status"></p></div>';
+    return status('Scenario Planning')+'<div class="ea-plan-content">'+planningApps().map(function(app,ai){var biz=planningBiz(app);return '<section class="ea-plan-application"><header>'+check(ai,app.title,true,app.badge)+tags('Application','Quick Win')+'</header>'+copy(app)+'<div class="ea-plan-scenarios">'+biz.map(function(item,i){return '<article class="ea-plan-scenario '+(biz.length===4&&i===3?'is-wide':'')+'"><header>'+check(item.id,item.title,false,item.badge)+tags('Business',item.priority)+'</header>'+copy(item)+'</article>';}).join('')+'</div></section>';}).join('')+'<p class="ea-plan-result" role="status"></p></div>';
   }
   function render(kind){
     var root=roots[kind];
@@ -142,7 +180,7 @@ root.addEventListener('wheel',function(e){var viewport=e.target.closest('.ea-gri
     if(b.hasAttribute('data-ea-section')){var section=root.querySelector('#ea-profile-'+b.dataset.eaSection),scroller=root.querySelector('.ea-article-scroll');if(section&&scroller){scroller.scrollTo({top:scroller.scrollTop+section.getBoundingClientRect().top-scroller.getBoundingClientRect().top-16,behavior:'smooth'});}root.querySelectorAll('[data-ea-section]').forEach(function(x){x.classList.toggle('is-active',x===b);x.setAttribute('aria-pressed',String(x===b));});positionSectionIndicator(b.closest('.ea-section-nav'));}
     if(b.hasAttribute('data-ea-source'))showSource(root,b.dataset.eaSource,b.dataset.eaSourceField);
     if(b.hasAttribute('data-ea-content-lock')){var key=b.dataset.eaContentLock;assetLocks[key]=!assetLocks[key];b.setAttribute('aria-checked',String(assetLocks[key]));}
-    if(b.hasAttribute('data-ea-plan-sync')){var chosen=window.scenarioPlanningData.flatMap(function(app){return app.scenarios.filter(function(item){return planningSelection[item.id]===true;});});var result=root.querySelector('.ea-plan-result');if(!chosen.length){result.textContent='Select at least one scenario to sync.';return;}try{localStorage.setItem('agentos-requirement-scenarios',JSON.stringify(chosen));result.textContent=chosen.length+' requirement scenarios saved locally.';}catch(error){result.textContent='Unable to save scenarios locally. Please try again.';}}
+    if(b.hasAttribute('data-ea-plan-sync')){var chosen=planningApps().flatMap(function(app){return planningBiz(app).filter(function(item){return planningSelection[item.id]===true;});});var result=root.querySelector('.ea-plan-result');if(!chosen.length){result.textContent='Select at least one scenario to sync.';return;}try{localStorage.setItem('agentos-requirement-scenarios',JSON.stringify(chosen));result.textContent=chosen.length+' requirement scenarios saved locally.';}catch(error){result.textContent='Unable to save scenarios locally. Please try again.';}}
     if(b.hasAttribute('data-ea-history')){state.history=!state.history;render(kind);}
     if(b.hasAttribute('data-ea-changes')){state.changes=!state.changes;render(kind);}
     if(b.hasAttribute('data-ea-reviewed')){state.changes=false;render(kind);}
@@ -152,7 +190,9 @@ root.addEventListener('wheel',function(e){var viewport=e.target.closest('.ea-gri
   });return root;}
   if(FD) Object.keys(names).forEach(function(kind){FD.register({name:displayNames[kind],kind:'enterprise',folder:'Enterprise Assets',deliverable:true,updated:'2026-10-13',author:'Enterprise Planning',build:function(){return build(kind);}});});
   function open(kind){if(!names[kind])return;if(window.FastFiles)window.FastFiles.clearUpdated(displayNames[kind]);FD.open(displayNames[kind]);}
-  window.EnterpriseAssets={open:open,setContentVisible:function(kind,visible){if(!names[kind])return;contentVisible[kind]=!!visible;if(visible&&window.FastFiles)window.FastFiles.markUpdated(displayNames[kind]);if(roots[kind])render(kind);},build:function(kind,context){
+  function normalizeLimit(limit){return(limit==null||limit===''||limit<0)?null:Math.max(0,limit|0);}
+  function refreshPlanningIfOpen(){if(roots.planning&&contentVisible.planning)render('planning');}
+  window.EnterpriseAssets={open:open,setContentVisible:function(kind,visible){if(!names[kind])return;contentVisible[kind]=!!visible;if(visible&&window.FastFiles)window.FastFiles.markUpdated(displayNames[kind]);if(roots[kind])render(kind);},setPlanningAppLimit:function(limit,bizLimit){planningAppLimit=normalizeLimit(limit);if(arguments.length>1)planningBizLimit=normalizeLimit(bizLimit);else if(limit==null)planningBizLimit=null;if(limit==null)planningOverride=null;refreshPlanningIfOpen();},setPlanningBizLimit:function(limit){planningBizLimit=normalizeLimit(limit);refreshPlanningIfOpen();},setPlanningOverride:function(data){planningOverride=data||null;refreshPlanningIfOpen();},build:function(kind,context){
     state.canvasTab='To-Be Design';state.docsTab='Enterprise Profile';state.history=false;state.changes=false;
     names.canvas=context?context.title:'Scenario Definition Canvas';
     if(context){

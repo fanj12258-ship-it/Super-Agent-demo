@@ -11,9 +11,15 @@
   var host = document.getElementById('bp-iso');
   var bp = document.getElementById('fast-bp');
   var chatMain = document.getElementById('chat-main');
+  var pageEl = document.querySelector('.page') || chatMain;
   if (!host || !bp) return;
   /* Remove the old phase-2 frost mask so the structure map stays visible. */
   bp.querySelectorAll('.bpi-phase2').forEach(function (n) { n.remove(); });
+  /* Scenario sidebar: static structure only (no status tags / motion) while room layout is being settled. */
+  var STRUCTURE_ONLY = true;
+  bp.classList.toggle('is-structure', STRUCTURE_ONLY);
+  var topLabel = bp.querySelector('.bpi-top span');
+  if (topLabel) topLabel.textContent = 'Blueprint';
 
   var K = 0.36, A = 0.9;
   // one shared <pattern> for "mock" plates (hatched fill) — referenced from CSS as url(#bpi-hatch)
@@ -142,39 +148,53 @@
     target = target || host;
     opt = opt || {};
     var stat = !!opt.stat;
+    var structure = !!opt.structure || (STRUCTURE_ONLY && target === host);
     var big = target !== host;
     var W = fixedW || target.clientWidth; if (!W) return;
     var s = 38, sOut = 48, w = A * s, t = 4, tOut = 5, P = 28;
-    var cx = 6 + A * sOut, lx = cx + w + 14; // column centred on the larger outcome plate
+    /* Structure mode: one continuous stack — Generate Agent is not a special outcome. */
+    var cx = 6 + A * (structure ? s : sOut), lx = cx + w + 14;
     function layout(gap) {
-      var y = 10, lay = [];
+      var y = structure ? 11 : 10, lay = [];
       VST.forEach(function (sg) {
-        var out = sg.id === 'agent', single = sg.items.length === 1;
+        var out = !structure && sg.id === 'agent', single = sg.items.length === 1;
         if (out) y += 16; // breathe before the outcome so the funnel can read
-        var top = y, nd = (!stat && single && VDOCS[sg.id]) ? VDOCS[sg.id].length : 0;
+        var top = y, nd = (!stat && !structure && single && VDOCS[sg.id]) ? VDOCS[sg.id].length : 0;
         var hgt = out ? 56 + (nd ? nd * 13 + 4 : 0) : (single ? 40 + (nd ? nd * 13 + 2 : 0) : 110);
         var ps = out ? sOut : s;
         lay.push({
           sg: sg, top: top, hgt: hgt, out: out, ps: ps, pt: out ? tOut : t,
-          state: stat ? 'done' : vState(sg),
+          state: structure ? 'todo' : (stat ? 'done' : vState(sg)),
           cys: sg.items.map(function (_, k) { return single ? top + (out ? 28 : 20) : top + 34 + k * P; })
         });
-        y += hgt + (single ? 4 : 6) + gap;
+        y += hgt + (single ? (structure ? 2 : 4) : 6) + gap;
       });
-      return { lay: lay, H: Math.round(y + 4 - gap) };
+      return { lay: lay, H: Math.round(y + (structure ? 2 : 4) - gap) };
     }
     var L0 = layout(0);
     if (opt.fillH && opt.fillH > L0.H) L0 = layout(Math.min(40, (opt.fillH - L0.H) / (VST.length - 1))); // spread the stages over the card height
-    var lay = L0.lay, H = L0.H, VH = opt.fillH ? Math.max(opt.fillH, H) : H, off = Math.round((VH - H) / 2);
-    var svg = '<svg class="bpi-v' + (big ? ' is-big' : '') + '" viewBox="0 0 ' + W + ' ' + VH + '"' + (big ? '' : ' width="' + W + '" height="' + H + '"') + '><g transform="translate(0 ' + off + ')">';
-    // outcome band behind Generate Agent (final deliverable of the stack above)
+    var lay = L0.lay, H = L0.H;
+    /* Structure mode: shift the whole right-hand label column so Generate Agent
+       sits on the diamond's right shoulder (cx+w, cy) — keep relative gaps. */
+    var labelShift = 0;
+    if (structure && lay.length) {
+      var lastL = lay[lay.length - 1];
+      var shoulderY = lastL.cys[lastL.cys.length - 1]; // right shoulder of top face
+      var lastTy = lastL.out ? lastL.top + 22 : lastL.top + 15;
+      labelShift = Math.round(shoulderY - lastTy);
+      H = Math.max(H, Math.ceil(shoulderY + 10));
+    }
+    var VH = opt.fillH ? Math.max(opt.fillH, H) : H, off = Math.round((VH - H) / 2);
+    var svg = '<svg class="bpi-v' + (big ? ' is-big' : '') + (structure ? ' is-structure' : '') + '" viewBox="0 0 ' + W + ' ' + VH + '"' + (big ? '' : ' width="' + W + '" height="' + H + '"') + '><g transform="translate(0 ' + off + ')">';
+    // outcome band behind Generate Agent (skipped in structure mode)
     var outL = lay[lay.length - 1];
     if (outL && outL.out) {
       svg += '<rect class="bpi-v-out-band" x="2" y="' + (outL.top - 6) + '" width="' + (W - 4) + '" height="' + (outL.hgt + 8) + '" rx="10"/>';
     }
     // links between stages (behind plates); last hop is a gather funnel into the outcome
     for (var i = 0; i < lay.length - 1; i++) {
-      var a = lay[i], b = lay[i + 1], lit = a.state === 'done', col = lit ? '#8f8f97' : '#c9c9ce';
+      var a = lay[i], b = lay[i + 1], lit = a.state === 'done';
+      var col = structure ? '#8a8a90' : (lit ? '#8f8f97' : '#c9c9ce');
       var y0 = a.cys[a.cys.length - 1] + plateH(a.ps, a.pt) - 1, y1 = b.cys[0] - K * b.ps;
       if (b.out) {
         var gy = Math.round((y0 + y1) / 2), fw = Math.round(w * 1.25);
@@ -182,54 +202,55 @@
         svg += '<path class="bpi-v-funnel' + (lit ? ' on' : '') + '" d="M' + cx + ' ' + y0 + ' V' + gy + '" fill="none" stroke="' + col + '" stroke-width="1"/>' +
           '<path class="bpi-v-gather' + (lit ? ' on' : '') + '" d="M' + (cx - fw) + ' ' + gy + ' H' + (cx + fw) + '" fill="none" stroke="' + col + '" stroke-width="1.35" stroke-linecap="round"/>' +
           '<path class="bpi-v-funnel' + (lit ? ' on' : '') + '" d="M' + cx + ' ' + gy + ' V' + y1 + '" fill="none" stroke="' + col + '" stroke-width="1.35"/>' + tri(cx, y1, col);
-        if (lit) svg += '<circle r="2.2" fill="#22a05a"><animateMotion dur="2s" begin="-' + (i * 0.3 + 0.1).toFixed(1) + 's" repeatCount="indefinite" path="' + dFun + '"/></circle>';
+        if (lit && !structure) svg += '<circle r="2.2" fill="#22a05a"><animateMotion dur="2s" begin="-' + (i * 0.3 + 0.1).toFixed(1) + 's" repeatCount="indefinite" path="' + dFun + '"/></circle>';
       } else {
         var d = 'M' + cx + ' ' + y0 + ' V' + y1;
-        svg += '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width=".75"/>' + tri(cx, y1, col);
-        if (lit) svg += '<circle r="2" fill="#22a05a"><animateMotion dur="1.8s" begin="-' + (i * 0.3 + 0.1).toFixed(1) + 's" repeatCount="indefinite" path="' + d + '"/></circle>';
+        svg += '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="' + (structure ? '1' : '.75') + '"/>' + tri(cx, y1, col);
+        if (lit && !structure) svg += '<circle r="2" fill="#22a05a"><animateMotion dur="1.8s" begin="-' + (i * 0.3 + 0.1).toFixed(1) + 's" repeatCount="indefinite" path="' + d + '"/></circle>';
       }
     }
     // plates — start in the previous state so a change animates (flipped next frame)
     lay.forEach(function (L) {
       for (var k = L.sg.items.length - 1; k >= 0; k--) {
-        svg += plate({ id: L.sg.id, cx: cx, cy: L.cys[k], s: L.ps, t: L.pt, big: L.out, state: big ? L.state : (last[L.sg.id] || L.state), pat: L.sg.items[k] });
+        var plateState = (big || structure) ? L.state : (last[L.sg.id] || L.state);
+        svg += plate({ id: L.sg.id, cx: cx, cy: L.cys[k], s: L.ps, t: L.pt, big: L.out, state: plateState, pat: L.sg.items[k] });
       }
     });
     // labels: title first, status as a trailing tag (no STEP N); done = blue, doing = pulsing
     lay.forEach(function (L) {
       var sg = L.sg, dim = L.state === 'todo', mock = L.state === 'mock', tone = dim ? 'dim' : (mock ? 'mock' : ''), avail = W - lx - 4;
-      var ty = L.out ? L.top + 22 : L.top + 15;
-      if (L.out) svg += '<text class="bpi-v-out-cap" x="' + lx + '" y="' + (L.top + 8) + '">OUTCOME</text>';
-      var word = stat ? '' : vWord(sg, L.state), tw = word ? word.length * 5.6 + 10 : 0;
+      var ty = (L.out ? L.top + 22 : L.top + 15) + labelShift;
+      if (L.out) svg += '<text class="bpi-v-out-cap" x="' + lx + '" y="' + (L.top + 8 + labelShift) + '">OUTCOME</text>';
+      var word = (stat || structure) ? '' : vWord(sg, L.state), tw = word ? word.length * 5.6 + 10 : 0;
       var maxT = Math.max(36, avail - (tw ? tw + 6 : 0)), title = sg.title.length * 6.7 > maxT ? sg.title.slice(0, Math.max(4, Math.floor(maxT / 6.7) - 1)) + '…' : sg.title;
       var tW = title.length * 6.7;
-      svg += '<text class="bpi-v-ttl' + (dim ? ' dim' : '') + (L.out ? ' is-out' : '') + '" x="' + lx + '" y="' + ty + '">' + title + '</text>';
+      svg += '<text class="bpi-v-ttl' + (structure ? '' : (dim ? ' dim' : '')) + (L.out ? ' is-out' : '') + '" x="' + lx + '" y="' + ty + '">' + title + '</text>';
       if (word) {
         var tx = Math.min(lx + tW + 6, Math.max(lx, W - tw - 2));
         svg += '<rect class="bpi-v-tag bpi-s-' + L.state + '" x="' + tx + '" y="' + (ty - 11) + '" width="' + tw + '" height="15" rx="4"/>' +
           '<text class="bpi-v-tag-t bpi-s-' + L.state + '" x="' + (tx + tw / 2) + '" y="' + (ty - 0.5) + '" text-anchor="middle">' + word + '</text>';
       }
-      if (!stat && VSUBDOC[sg.id]) VSUBDOC[sg.id].forEach(function (sub, k) { svg += docIco(lx, L.cys[k] + 4, tone) + '<text class="bpi-v-doc' + (tone ? ' ' + tone : '') + '" x="' + (lx + 11) + '" y="' + (L.cys[k] + 4) + '">' + sub + '</text>' + mapDot(sub, W, L.cys[k] + 4); });
-      else if (sg.subs) sg.subs.forEach(function (sub, k) { svg += '<text class="bpi-v-sub" x="' + lx + '" y="' + (L.cys[k] + 4) + '">' + sub + '</text>'; });
-      if (!stat && VDOCS[sg.id]) VDOCS[sg.id].forEach(function (d, k) {
+      if (!stat && !structure && VSUBDOC[sg.id]) VSUBDOC[sg.id].forEach(function (sub, k) { svg += docIco(lx, L.cys[k] + 4, tone) + '<text class="bpi-v-doc' + (tone ? ' ' + tone : '') + '" x="' + (lx + 11) + '" y="' + (L.cys[k] + 4) + '">' + sub + '</text>' + mapDot(sub, W, L.cys[k] + 4); });
+      else if (sg.subs) sg.subs.forEach(function (sub, k) { svg += '<text class="bpi-v-sub" x="' + lx + '" y="' + (L.cys[k] + 4 + labelShift) + '">' + sub + '</text>'; });
+      if (!stat && !structure && VDOCS[sg.id]) VDOCS[sg.id].forEach(function (d, k) {
         var yy = L.out ? L.top + 38 + k * 13 : L.top + 30 + k * 13;
         svg += docIco(lx, yy, tone) + '<text class="bpi-v-doc' + (tone ? ' ' + tone : '') + '" x="' + (lx + 11) + '" y="' + yy + '">' + d + '</text>' + mapDot(d, W, yy);
       });
     });
     // hit areas last, so hover / click work anywhere in a stage
-    if (!stat) lay.forEach(function (L) {
+    if (!stat && !structure) lay.forEach(function (L) {
       svg += '<rect class="bpi-vhit" data-pid="' + L.sg.id + '" x="0" y="' + (L.top - 2) + '" width="' + W + '" height="' + (L.hgt + 4) + '" rx="8"/>';
     });
     if (!big) lay.forEach(function (L) { if (last[L.sg.id] === undefined) last[L.sg.id] = L.state; });
     target.innerHTML = svg + '</g></svg>';
-    return stat ? target.innerHTML : lay;
+    return (stat || structure) ? target.innerHTML : lay;
   }
   document.addEventListener('fastsandbox', function () { renderSide(); applyMarks(); });
 
   /* ---------- big view (centre): the two horizontal mode diagrams (Fast / Steps) from js/fast-flowmap.js ---------- */
   var ov = null, bigBody = null;
   function ensureOverlay() {
-    if (ov || !chatMain) return;
+    if (ov || !pageEl) return;
     ov = document.createElement('div');
     ov.className = 'bpi-overlay';
     ov.setAttribute('aria-hidden', 'true');
@@ -238,7 +259,8 @@
       '<span class="bpi-ov-hint">Esc to close</span>' +
       '<button type="button" class="bpi-btn" id="bpi-ov-close" aria-label="Close">✕</button></div>' +
       '<div class="bpi-body" id="bpi-body"></div>';
-    chatMain.appendChild(ov);
+    /* Mount on .page so gray fills behind the composer; input floats above and clips the bottom. */
+    pageEl.appendChild(ov);
     bigBody = ov.querySelector('#bpi-body');
     ov.querySelector('#bpi-ov-close').addEventListener('click', close);
   }
@@ -253,6 +275,7 @@
     var tt = document.getElementById('bp-title');
     ov.querySelector('#bpi-ov-title').textContent = 'Blueprint · ' + (tt ? tt.textContent : '');
     isOpen = true;
+    if (pageEl) pageEl.classList.add('is-bp-open');
     ov.classList.add('is-open'); ov.setAttribute('aria-hidden', 'false');
     renderBig();
     var card = o && o.mode && bigBody && bigBody.querySelector('.mode-card[data-mode="' + o.mode + '"]');
@@ -261,6 +284,7 @@
   }
   function close() {
     isOpen = false;
+    if (pageEl) pageEl.classList.remove('is-bp-open');
     if (ov) { ov.classList.remove('is-open'); ov.setAttribute('aria-hidden', 'true'); }
   }
 
@@ -268,6 +292,10 @@
   /* sidebar redraw: plates are drawn in their previous state, then flipped next frame so a change animates.
      Every redraw path must go through here — a bare renderVert() would leave the plates stuck on the old state. */
   function renderSide() {
+    if (STRUCTURE_ONLY) {
+      renderVert(host, null, { structure: true });
+      return;
+    }
     var lay = renderVert() || [];
     var changed = [];
     lay.forEach(function (L) {

@@ -40,19 +40,19 @@
   <link rel="stylesheet" href="css/agent-turn.css" />
   <link rel="stylesheet" href="css/agent-body.css" />
   <link rel="stylesheet" href="css/modal-create-scene.css" />
-  <link rel="stylesheet" href="css/fast-overrides.css?v=20261021b" />
-  <link rel="stylesheet" href="css/fast-blueprint.css" />
-  <link rel="stylesheet" href="css/fast-blueprint-iso.css?v=20261021e" />
+  <link rel="stylesheet" href="css/fast-overrides.css?v=20261022b" />
+  <link rel="stylesheet" href="css/fast-blueprint.css?v=20261022f" />
+  <link rel="stylesheet" href="css/fast-blueprint-iso.css?v=20261022d" />
   <link rel="stylesheet" href="css/fast-scene-card.css" />
   <link rel="stylesheet" href="css/fast-docs.css?v=20261021bw" />
-  <link rel="stylesheet" href="css/fast-flow.css?v=20261021g" />
+  <link rel="stylesheet" href="css/fast-flow.css?v=20261022d" />
   <link rel="stylesheet" href="css/fast-modules.css" />
   <link rel="stylesheet" href="css/fast-onto-graph.css" />
   <link rel="stylesheet" href="css/fast-conversations.css" />
   <link rel="stylesheet" href="css/fast-switch-dialog.css" />
   <link rel="stylesheet" href="css/fast-formal-files.css" />
   <link rel="stylesheet" href="css/returning.css" />
-  <link rel="stylesheet" href="css/enterprise-assets.css?v=20261022a" />
+  <link rel="stylesheet" href="css/enterprise-assets.css?v=20261022c" />
   <link rel="stylesheet" href="css/line-tabs.css?v=20261021bt" />
 </head>
 <body>
@@ -252,6 +252,15 @@
                   <span class="bp-chip bp-chip-mode" id="bp-mode">Fast</span>
                 </div>
               </div>
+              <section class="bp-desc" id="bp-desc" aria-labelledby="bp-desc-toggle">
+                <button type="button" class="bp-desc-toggle" id="bp-desc-toggle" aria-expanded="true" aria-controls="bp-desc-body">
+                  <span>Scenario description &amp; goals</span>
+                  <svg class="bp-desc-chev" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 7.5 6 4.5 9 7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="bp-desc-body" id="bp-desc-body">
+                  <p id="bp-desc-text">For supplier sourcing strategy: discover candidates, apply admission criteria, and draft a ranked shortlist with evidence. Upgrade “manual screening → spreadsheet compare → email follow-up” into an Agent-led flow: hard-gate filters, quote comparison, risk flags, and human confirmation before outreach.</p>
+                </div>
+              </section>
               <div class="bpi-card">
                 <div class="bpi-top"><span>Scenarios Blueprint</span><button type="button" class="bpi-btn" id="bp-expand" title="Expand in main area" aria-label="Expand blueprint">⤢</button></div>
                 <div id="bp-iso" aria-hidden="true"></div>
@@ -721,13 +730,13 @@
   <script src="js/files-panel.js"></script>
   <script src="js/fast-docs-data.js"></script>
   <script src="js/fast-plan-docs-data.js"></script>
-  <script src="js/fast-files.js?v=20261021c"></script>
+  <script src="js/fast-files.js?v=20261022a"></script>
   <script src="js/fast-scenes.js"></script>
   <script src="js/fast-mode.js"></script>
   <script src="js/fast-scene-card.js"></script>
   <script src="js/fast-scene-create.js?v=20261014g"></script>
-  <script src="js/fast-blueprint.js"></script>
-  <script src="js/fast-blueprint-iso.js"></script>
+  <script src="js/fast-blueprint.js?v=20261022a"></script>
+  <script src="js/fast-blueprint-iso.js?v=20261022h"></script>
   <script src="js/fast-flowmap.js"></script>
   <script src="js/fast-journey.js"></script>
   <script src="js/fast-intake.js"></script>
@@ -739,22 +748,23 @@
   <script src="js/fast-docs.js?v=20261020"></script>
   <script src="js/fast-agent-panel.js"></script>
   <script src="js/fast-diagnosis.js"></script>
-  <script src="js/fast-onto-graph.js"></script>
-  <script src="js/fast-modules.js"></script>
+  <script src="js/fast-onto-graph.js?v=20261022c"></script>
+  <script src="js/fast-modules.js?v=20261022d"></script>
   <script src="js/fast-switch-dialog.js"></script>
   <script src="js/fast-formal-files.js"></script>
   <script src="js/fast-handoff.js"></script>
-  <script src="js/fast-flow.js?v=20261021i"></script>
-  <script src="js/journey-one.js?v=20261021j"></script>
+  <script src="js/fast-flow.js?v=20261022a"></script>
+  <script src="js/journey-one.js?v=20261021k"></script>
+  <script src="js/journey-two.js?v=20261023a"></script>
   <script src="js/fast-upload.js"></script>
   <script src="js/fast-mention.js?v=20261014g"></script>
   <script src="js/fast-conversations.js"></script>
   <script src="js/fast-summary.js"></script>
   <script src="js/workbench-home.js"></script>
   <script src="js/fast-change.js"></script>
-  <script src="js/agent-chat-mock-fast.js?v=20261021b"></script>
+  <script src="js/agent-chat-mock-fast.js?v=20261022a"></script>
   <script src="js/returning.js?v=20261020"></script>
   <script src="js/scenario-planning-data.js?v=20261020x"></script>
-  <script src="js/enterprise-assets.js?v=20261022a"></script>
+  <script src="js/enterprise-assets.js?v=20261022e"></script>
 </body>
 </html>

@@ -38,7 +38,7 @@
   window.FastScenes = {
     show: show,
     hide: hide,
-    reset: function () { ['a1', 'store'].forEach(hide); },
-    set: function (on) { ['a1', 'store'].forEach(function (id) { on ? show(id, { kids: true }) : hide(id); }); },
+    reset: function () { ['a1', 'store', 'j2'].forEach(hide); },
+    set: function (on) { ['a1', 'store', 'j2'].forEach(function (id) { on ? show(id, { kids: true }) : hide(id); }); },
   };
 })();

@@ -17,7 +17,7 @@ export async function loadPages() {
       title: 'AgentOS Chat · Fast POC',
       extraHead: '',
       composerRoute: fastRoute,
-      scriptRoute: '  <script src="js/fast-route.js?v=20261021f"></script>\n',
+      scriptRoute: '  <script src="js/fast-route.js?v=20261022g"></script>\n',
       scriptEnd: '',
     },
     {

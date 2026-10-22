@@ -135,6 +135,21 @@
 .ea-plan-application>header { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
 .ea-plan-choice { display:flex; align-items:flex-start; gap:8px; cursor:pointer; min-width:0; }
 .ea-plan-application>header>.ea-plan-choice { flex:1; font-size:16px; line-height:24px; font-weight:600; }
+.ea-plan-choice-text { display:inline; }
+.ea-plan-new {
+  display:inline-flex; align-items:center; margin-left:5px; padding:0 4px;
+  border-radius:3px; font-size:9px; font-weight:600; line-height:14px; letter-spacing:.04em;
+  vertical-align:middle; background:#e5484d; color:#fff; text-transform:uppercase;
+  box-shadow:0 0 0 0 rgba(229,72,77,.45);
+  animation:ea-plan-new-breathe 2.4s ease-in-out infinite;
+}
+@keyframes ea-plan-new-breathe {
+  0%, 100% { box-shadow:0 0 0 0 rgba(229,72,77,.0); opacity:.92; transform:scale(1); }
+  50% { box-shadow:0 0 8px 1px rgba(229,72,77,.55); opacity:1; transform:scale(1.04); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ea-plan-new { animation:none; box-shadow:0 0 6px rgba(229,72,77,.35); }
+}
 .ea-plan-choice input { appearance:none; flex:none; width:16px; height:16px; margin:1px 0; border:1px solid #d9d9d9; border-radius:4px; background:white; cursor:pointer; }
 .ea-plan-application>header input { margin-top:4px; }
 .ea-plan-choice input:checked { background:#505050 url('../assets/enterprise/planning-check.svg') center/10px 8px no-repeat; border-color:#505050; }

@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log in to AgentOS</title>
+  <style>
+    :root {
+      --agentos-base-blue-50: rgb(233 242 253);
+      --agentos-base-blue-500: rgb(31 130 235);
+      --agentos-neutral-text-color-text: rgb(0 0 0 / 0.88);
+      --agentos-neutral-text-color-text-secondary: rgb(0 0 0 / 0.65);
+      --agentos-neutral-text-color-text-tertiary: rgb(0 0 0 / 0.45);
+      --agentos-neutral-text-color-text-quaternary: rgb(0 0 0 / 0.25);
+      --agentos-neutral-text-color-text-light-solid: rgb(255 255 255);
+      --agentos-neutral-bg-color-bg-base: rgb(255 255 255);
+      --agentos-neutral-border-color-border: rgb(217 217 217);
+      --agentos-neutral-icon-color-icon: var(--agentos-neutral-text-color-text-secondary);
+      --agentos-brand-primary-color-primary: var(--agentos-base-blue-500);
+      --agentos-brand-primary-color-primary-hover: rgb(22 104 220);
+      --agentos-brand-primary-color-primary-bg: var(--agentos-base-blue-50);
+      --agentos-brand-link-color-link: var(--agentos-login-accent);
+      --agentos-font-family-en: "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+      --agentos-font-size-sm: 0.75rem;
+      --agentos-font-size-base: 0.875rem;
+      --agentos-font-size-lg: 1rem;
+      --agentos-font-size-xl: 1.25rem;
+      --agentos-font-size-title: 1.375rem;
+      --agentos-font-weight-normal: 400;
+      --agentos-font-weight-medium: 500;
+      --agentos-font-weight-bold: 700;
+      --agentos-font-leading-20: 1.25rem;
+      --agentos-font-leading-22: 1.375rem;
+      --agentos-font-leading-32: 2rem;
+      --agentos-radius-rounded-xs2: 0.125rem;
+      --agentos-radius-rounded-md6: 0.375rem;
+      --agentos-radius-rounded-lg8: 0.375rem;
+      --agentos-spacing-margin-xs8: 0.5rem;
+      --agentos-spacing-margin-sm12: 0.75rem;
+      --agentos-spacing-margin16: 1rem;
+      --agentos-spacing-margin-lg24: 1.5rem;
+      --agentos-spacing-margin-xl32: 2rem;
+      --agentos-spacing-padding-xs8: 0.5rem;
+      --agentos-spacing-padding-sm12: 0.75rem;
+      --agentos-spacing-gap-xs8: 0.5rem;
+      --agentos-spacing-gap16: 1rem;
+      --agentos-control-height-control-height-md32: 2.125rem;
+      --agentos-icon-size-icon-size-md16: 1rem;
+      /* Measured from the login reference. Contract primary is 31 130 235; the screen uses a brighter blue. */
+      --agentos-login-accent: rgb(19 119 255);
+      --agentos-login-caption: rgb(47 74 102);
+      --agentos-login-footer: rgb(168 168 168);
+      --agentos-login-ink: rgb(17 17 17);
+      --agentos-login-tab: rgb(38 38 38);
+      --agentos-login-icon: rgb(186 194 206);
+      --agentos-login-muted: rgb(120 120 120);
+      --agentos-login-accent-hover: rgb(10 108 245);
+      --agentos-login-accent-active: rgb(0 96 230);
+      --agentos-login-wash: linear-gradient(180deg, rgb(241 250 255) 0%, rgb(234 244 255) 48%, rgb(228 239 255) 100%);
+      --agentos-login-orb-a: radial-gradient(circle, rgb(132 196 255) 0%, rgb(168 214 255) 42%, rgb(168 214 255 / 0) 72%);
+      --agentos-login-orb-b: radial-gradient(circle, rgb(186 214 255) 0%, rgb(198 222 255) 46%, rgb(198 222 255 / 0) 72%);
+      --agentos-login-mark: radial-gradient(circle at 34% 28%, rgb(255 255 255) 0%, rgb(190 238 255) 16%, rgb(92 196 255) 38%, rgb(36 132 255) 64%, rgb(55 96 245) 86%, rgb(130 150 255) 100%);
+      --agentos-login-mark-shadow: 0 0 0.55rem rgb(130 196 255 / 0.55), inset -0.12rem -0.18rem 0.28rem rgb(30 60 180 / 0.22), inset 0.1rem 0.08rem 0.2rem rgb(255 255 255 / 0.95);
+      --agentos-login-form: 17.85rem;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html {
+      font-size: calc(100vw * 16 / 1280);
+    }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+    }
+
+    body {
+      font-family: var(--agentos-font-family-en);
+      color: var(--agentos-neutral-text-color-text);
+      background: var(--agentos-neutral-bg-color-bg-base);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    button, input { font: inherit; }
+
+    .login {
+      display: grid;
+      grid-template-columns: 35.9375% 1fr;
+      min-height: 100%;
+    }
+
+    .brand {
+      position: relative;
+      overflow: hidden;
+      min-height: 100vh;
+      color: var(--agentos-login-caption);
+      background: var(--agentos-login-wash);
+    }
+
+    .brand::before,
+    .brand::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .brand::before {
+      width: 22rem;
+      height: 22rem;
+      left: -4.2rem;
+      bottom: -5.2rem;
+      background: var(--agentos-login-orb-a);
+    }
+
+    .brand::after {
+      width: 14rem;
+      height: 14rem;
+      right: -3.5rem;
+      bottom: -6.5rem;
+      background: var(--agentos-login-orb-b);
+    }
+
+    .brand-top,
+    .brand-caption {
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-top {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 3.35rem 0 0 2.65rem;
+    }
+
+    .logo-mark {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      flex: none;
+      /* agentos-token-exception: glossy mark artwork, not a brand token */
+      background: var(--agentos-login-mark);
+      box-shadow: var(--agentos-login-mark-shadow);
+    }
+
+    .logo-name {
+      margin: 0;
+      font-size: var(--agentos-font-size-xl);
+      font-weight: var(--agentos-font-weight-bold);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      color: var(--agentos-login-ink);
+    }
+
+    .brand-caption {
+      position: absolute;
+      left: 2.5rem;
+      bottom: 2.75rem;
+      max-width: 14.5rem;
+      margin: 0;
+      font-size: 0.8125rem;
+      font-weight: var(--agentos-font-weight-normal);
+      line-height: 1.35rem;
+      letter-spacing: -0.01em;
+      color: var(--agentos-login-caption);
+    }
+
+    .panel {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      min-height: 100vh;
+      padding-top: 19.15rem;
+      background: var(--agentos-neutral-bg-color-bg-base);
+    }
+
+    .form {
+      width: var(--agentos-login-form);
+    }
+
+    .form-title {
+      margin: 0 0 2.15rem;
+      text-align: center;
+      font-size: var(--agentos-font-size-title);
+      font-weight: var(--agentos-font-weight-bold);
+      line-height: 1.75rem;
+      letter-spacing: -0.03em;
+      color: var(--agentos-login-ink);
+    }
+
+    .tabs {
+      display: flex;
+      align-items: flex-end;
+      gap: 2.05rem;
+      margin: 0 0 1.05rem;
+      padding: 0;
+      border: 0;
+    }
+
+    .tab {
+      position: relative;
+      margin: 0;
+      padding: 0 0 0.45rem;
+      border: 0;
+      background: none;
+      cursor: pointer;
+      font-size: var(--agentos-font-size-base);
+      font-weight: var(--agentos-font-weight-normal);
+      line-height: var(--agentos-font-leading-22);
+      color: var(--agentos-neutral-text-color-text-quaternary);
+    }
+
+    .tab[aria-selected="true"] {
+      color: var(--agentos-login-tab);
+      font-weight: var(--agentos-font-weight-medium);
+    }
+
+    .tab[aria-selected="true"]::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 0.125rem;
+      border-radius: var(--agentos-radius-rounded-xs2);
+      background: var(--agentos-login-accent);
+    }
+
+    .fields {
+      display: flex;
+      flex-direction: column;
+      gap: var(--agentos-spacing-gap16);
+    }
+
+    .field {
+      position: relative;
+      display: flex;
+      align-items: center;
+      height: var(--agentos-control-height-control-height-md32);
+      border-radius: var(--agentos-radius-rounded-lg8);
+      background: var(--agentos-brand-primary-color-primary-bg);
+    }
+
+    .field input {
+      width: 100%;
+      height: 100%;
+      padding: 0 var(--agentos-spacing-padding-sm12);
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: var(--agentos-neutral-text-color-text);
+      font-size: var(--agentos-font-size-base);
+      line-height: var(--agentos-font-leading-22);
+    }
+
+    .field input::placeholder {
+      color: var(--agentos-neutral-text-color-text-quaternary);
+    }
+
+    .field:focus-within {
+      box-shadow: 0 0 0 0.0625rem var(--agentos-login-accent);
+    }
+
+    .reveal {
+      position: absolute;
+      right: 0.15rem;
+      display: grid;
+      place-items: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--agentos-login-icon);
+      cursor: pointer;
+    }
+
+    .reveal svg {
+      width: var(--agentos-icon-size-icon-size-md16);
+      height: var(--agentos-icon-size-icon-size-md16);
+    }
+
+    .agree {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.4rem;
+      margin: 0;
+      font-size: 0.6875rem;
+      line-height: 0.78rem;
+      color: var(--agentos-login-muted);
+    }
+
+    .agree input {
+      appearance: none;
+      width: 0.8rem;
+      height: 0.8rem;
+      margin: 0.05rem 0 0;
+      flex: none;
+      border: 0.0625rem solid var(--agentos-neutral-border-color-border);
+      border-radius: var(--agentos-radius-rounded-xs2);
+      background: var(--agentos-neutral-bg-color-bg-base);
+    }
+
+    .agree input:checked {
+      background: var(--agentos-login-accent);
+      border-color: var(--agentos-login-accent);
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3.5 8.2 6.4 11l6.1-6.2' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+      background-size: 0.7rem;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    .agree a {
+      color: var(--agentos-brand-link-color-link);
+      text-decoration: none;
+    }
+
+    .agree a:hover {
+      text-decoration: underline;
+    }
+
+    .submit {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: var(--agentos-control-height-control-height-md32);
+      margin-top: 0;
+      border: 0;
+      border-radius: var(--agentos-radius-rounded-lg8);
+      background: var(--agentos-login-accent);
+      color: var(--agentos-neutral-text-color-text-light-solid);
+      font-size: var(--agentos-font-size-base);
+      font-weight: var(--agentos-font-weight-medium);
+      letter-spacing: -0.01em;
+      cursor: pointer;
+    }
+
+    .submit:hover {
+      background: var(--agentos-login-accent-hover);
+    }
+
+    .submit:active {
+      background: var(--agentos-login-accent-active);
+    }
+
+    .switch {
+      margin: 1.15rem 0 0;
+      text-align: center;
+      font-size: var(--agentos-font-size-sm);
+      line-height: var(--agentos-font-leading-20);
+      color: var(--agentos-login-footer);
+    }
+
+    .switch a {
+      color: var(--agentos-brand-link-color-link);
+      text-decoration: none;
+    }
+
+    .switch a:hover {
+      text-decoration: underline;
+    }
+
+    .note {
+      margin: 0.75rem 0 0;
+      text-align: center;
+      font-size: var(--agentos-font-size-sm);
+      color: var(--agentos-login-accent);
+    }
+
+    @media (max-width: 860px) {
+      html { font-size: 16px; }
+      .login { grid-template-columns: 1fr; }
+      .brand { min-height: auto; }
+      .brand::before { left: -8rem; bottom: -11rem; width: 16rem; height: 16rem; }
+      .brand::after { right: -8rem; bottom: -10rem; }
+      .brand-top { padding: 1.75rem 1.5rem 0; }
+      .brand-caption {
+        position: static;
+        max-width: 18rem;
+        padding: 1.15rem 1.5rem 1.5rem;
+        color: var(--agentos-login-tab);
+      }
+      .panel { min-height: auto; padding: 2.25rem 1.25rem 3rem; }
+      .form { width: min(22rem, 100%); }
+      .form-title { margin-bottom: 1.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="login">
+    <section class="brand" aria-label="AgentOS">
+      <div class="brand-top">
+        <span class="logo-mark" aria-hidden="true"></span>
+        <p class="logo-name">AgentOS</p>
+      </div>
+      <p class="brand-caption">An AI-native operating platform for enterprise-wide digital transformation.</p>
+    </section>
+
+    <section class="panel">
+      <form class="form" id="login-form" novalidate>
+        <h1 class="form-title">Log in to AgentOS</h1>
+
+        <div class="tabs" role="tablist" aria-label="Sign-in method">
+          <button class="tab" id="tab-phone" type="button" role="tab" aria-selected="true" aria-controls="account-field">Phone</button>
+          <button class="tab" id="tab-email" type="button" role="tab" aria-selected="false" aria-controls="account-field">Email</button>
+        </div>
+
+        <div class="fields">
+          <label class="field" id="account-field">
+            <input id="account" name="account" type="tel" inputmode="numeric" autocomplete="username" value="13404305912" aria-label="Phone">
+          </label>
+          <label class="field">
+            <input id="password" name="password" type="password" autocomplete="current-password" value="123456" aria-label="Password">
+            <button class="reveal" id="reveal" type="button" aria-label="Show password" aria-pressed="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </label>
+        </div>
+
+        <label class="agree">
+          <input id="agree" type="checkbox">
+          <span>I have read and agree to <a href="#terms">Terms of Service</a> and <a href="#privacy">Privacy<br>Policy</a></span>
+        </label>
+
+        <button class="submit" type="submit">Log in</button>
+        <p class="switch">Dont have an account yet? <a href="#register" id="register">Register now</a></p>
+        <p class="note" id="note" hidden></p>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const phoneTab = document.getElementById("tab-phone");
+    const emailTab = document.getElementById("tab-email");
+    const account = document.getElementById("account");
+    const password = document.getElementById("password");
+    const reveal = document.getElementById("reveal");
+    const form = document.getElementById("login-form");
+    const note = document.getElementById("note");
+    const register = document.getElementById("register");
+    let phoneValue = "13404305912";
+    let emailValue = "";
+
+    function selectMethod(method) {
+      const phone = method === "phone";
+      phoneTab.setAttribute("aria-selected", phone ? "true" : "false");
+      emailTab.setAttribute("aria-selected", phone ? "false" : "true");
+      if (phone) {
+        emailValue = account.value;
+        account.type = "tel";
+        account.inputMode = "numeric";
+        account.setAttribute("aria-label", "Phone");
+        account.value = phoneValue;
+        account.placeholder = "";
+      } else {
+        phoneValue = account.value;
+        account.type = "email";
+        account.inputMode = "email";
+        account.setAttribute("aria-label", "Email");
+        account.value = emailValue;
+        account.placeholder = "name@company.com";
+      }
+    }
+
+    phoneTab.addEventListener("click", () => selectMethod("phone"));
+    emailTab.addEventListener("click", () => selectMethod("email"));
+
+    reveal.addEventListener("click", () => {
+      const show = password.type === "password";
+      password.type = show ? "text" : "password";
+      reveal.setAttribute("aria-pressed", show ? "true" : "false");
+      reveal.setAttribute("aria-label", show ? "Hide password" : "Show password");
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!document.getElementById("agree").checked) {
+        note.hidden = false;
+        note.textContent = "Please agree to the Terms of Service and Privacy Policy.";
+        return;
+      }
+      if (!account.value.trim() || !password.value) {
+        note.hidden = false;
+        note.textContent = "Enter your account and password.";
+        return;
+      }
+      note.hidden = false;
+      note.textContent = "Signed in to the AgentOS preview.";
+    });
+
+    register.addEventListener("click", (event) => {
+      event.preventDefault();
+      note.hidden = false;
+      note.textContent = "Registration opens in the full AgentOS account flow.";
+    });
+  </script>
+</body>
+</html>

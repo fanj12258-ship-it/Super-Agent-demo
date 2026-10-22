@@ -71,7 +71,17 @@
 | 聊天中创建多场景 | 勾选多个业务机会 → 批量生成场景卡 | 可组合 | `js/fast-company.js`、`js/fast-scene-create.js` |
 | A2 / A3 进入打造 | 当前仅提示未接入 | 占位 | `js/fast-scene-create.js` |
 
-### 4.2 Blueprint / 结构资产
+### 4.2 进入场景后的左栏结构（敲定中）
+
+进入某一场景房间时，左栏 Scenarios 区展示该场景的打造结构（蓝图）。结构仍在敲定；已确认的第一步：
+
+| 资产 | 能力 | 状态 | 主要实现 |
+|---|---|---|---|
+| 场景房间标题块（`.bp-head`） | 场景名 + Business / Crafting / Fast 等标签 | **保留** | `css/fast-blueprint.css`、`workshop/shell.html` `.bp-head` |
+| 场景描述与目标（`.bp-desc`） | 标题块下方可折叠英文说明；进入场景时由 `FastBlueprint.show(title, desc)` / `setDesc` 写入 | **已接入** | `css/fast-blueprint.css`、`js/fast-blueprint.js`、`js/journey-two.js` |
+| Blueprint 静态结构卡（`.bpi-card` + `is-structure`） | 灰底与场景描述一致（`#f3f3f5`）；Requirements → Generate Agent 顺排不断开；无 outcome 框、无状态标签、无流动画；描边/标题用黑色；卡片高度贴合结构 | **已接入**（结构敲定阶段） | `css/fast-blueprint.css`、`js/fast-blueprint-iso.js`（`STRUCTURE_ONLY`） |
+
+### 4.3 Blueprint / 结构资产
 
 | 资产 | 能力 | 状态 | 主要实现 |
 |---|---|---|---|
@@ -81,7 +91,7 @@
 | 展开结构图 | Overlay、关闭、Esc、节点联动 | 可直接复用 | `js/fast-blueprint-iso.js` |
 | 缺口表达 | 未建、Mock、需校对、需再创作 | 可组合 | `js/fast-formal-files.js` |
 
-### 4.3 Files 资产
+### 4.4 Files 资产
 
 | 资产 | 能力 | 状态 | 主要实现 |
 |---|---|---|---|
@@ -113,8 +123,8 @@
 |---|---|---|---|
 | Composer 发送 | Enter / Send，进入 busy，逐段输出 | 可直接复用 | `js/agent-chat-mock-fast.js` |
 | Space 演示填充 | 空输入按 Space，逐字填入当前 Journey 提供的首句；未提供时回落到现有脚本优先链 | 仅演示；文案归各故事线 | `js/fast-route.js`、`js/agent-chat-mock-fast.js` |
-| Journey 1 / 2 / 3 / 4 / Main / Side 选择器 | 单一互斥路线选择；默认 Journey 1；Journey 1 预置 Files 目录但左栏仍默认 Scenarios；Main 与 Side 保留原有路线；选择后派发 `fastjourneychange` | 可组合；Journey 1-4 内容待设计 | `workshop/fragments/fast-route.html`、`js/fast-route.js`、`css/fast-overrides.css` |
-| Journey 定位提示 | 无额外图标；13px；hover Journey 按钮后立即显示路线说明，移出立即关闭；键盘聚焦立即显示 | 可直接复用；文案归各故事线 | `workshop/fragments/fast-route.html`、`css/fast-overrides.css` |
+| Journey 1 / 2 / 3 / 4 / Main / Side 选择器 | 单一互斥路线选择；默认 Journey 1；Journey 1 预置 Files 目录但左栏仍默认 Scenarios；Main 与 Side 保留原有路线；选择后派发 `fastjourneychange` | 可组合；Journey 2 已接首句 + 场景确认 | `workshop/fragments/fast-route.html`、`js/fast-route.js`、`js/journey-two.js`、`css/fast-overrides.css` |
+| Journey 定位提示 | 无额外图标；13px；hover Journey 按钮后立即显示路线说明，移出立即关闭；键盘聚焦立即显示；Journey 1 / 2 已挂文案 | 可直接复用；文案归各故事线 | `workshop/fragments/fast-route.html`、`css/fast-overrides.css` |
 | 附件上传 | 选择、附件条、取消、完成 | 可直接复用 | `js/fast-upload.js` |
 | 模型选择 | Popover、子菜单、Esc / 外点 | 可直接复用 | `js/composer-model-picker.js` |
 | Token 用量 | 小型 Popover | 可直接复用 | `js/composer-token-usage.js` |
@@ -144,10 +154,11 @@
 |---|---|---|
 | 单选 / 多选决策卡 | 选择、选中态、确认、查看方案 | 需求确认、方案选择、范围裁剪 |
 | 创建场景预览卡 | 创建场景 / 再聊聊 | 从自由对话进入业务场景 |
+| 场景确认格式 | 对话内复用侧栏场景结构：Application + 下挂 Business；标签 / 优先级 / 描述；确认创建或再调整 | 直接建场景后的父子结构确认（Journey 2） |
 | 多场景勾选卡 | 勾选多个机会并批量创建 | 企业诊断、机会发现 |
 | 长任务执行卡 | 可注入任务列表；逐项切换等待、执行、完成、审核与停止状态；下方可组合三行窗口，在单个步骤约 3 秒内高频滚动多条细粒度思考动作 | 文档生成、批量分析、结构更新 |
 | 交付物人工审核卡 | 查看右栏方案、确认通过、暂停或提交修改意见；主操作与透明底“查看方案”并排展示；审核期间执行卡同步等待 | 阶段性交付审核、人在环卡点 |
-| 产出物执行总结 | 以正文形式总结任务范围、推进过程与最终结论，不使用卡片外框；产出物逐行以“小图标 + 蓝色链接名称”列出并可打开右栏对应内容 | 多任务完成总结、交付物导航 |
+| 产出物执行总结 | 以正文形式总结任务范围、推进过程与最终结论，不使用卡片外框；产出物逐行以“小图标 + 蓝色链接名称”列出；可追加一组更轻量的相关入口 chip；末尾可追加下一步询问 | 多任务完成总结、交付物导航、模块入口、等待外部确认 |
 | 深度思考 → 结构化结论 → Plan 任务卡 | 按分析维度展示可感知的思考过程；正文收敛结论；复用任务卡注入任务、Agent 标签、说明与 CTA | 售前诊断、规划类任务、执行前确认 |
 | 模式 / 做法选择卡 | 两种做法、说明、结构图预览 | 演示不同工作策略 |
 | 版本卡 | v1 / v2、查看差异、采用版本 | 迭代、反改、方案比较 |
@@ -160,6 +171,8 @@
 
 - `js/fast-flow.js`
 - `js/journey-one.js`
+- `js/journey-two.js`
+- `js/fast-scene-card.js`
 - `js/fast-intake.js`
 - `js/fast-company.js`
 - `js/fast-change.js`

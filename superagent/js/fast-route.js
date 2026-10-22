@@ -12,12 +12,13 @@
   var selection = '1';
   var input = document.getElementById('composer-input');
   var JOURNEY_ONE_PROMPT = '我们正在接触DJI大疆创新。他们是消费电子与无人机龙头，目前重点看全球渠道销售运营板块，特别是新品首发与紧俏品分货业务，面临头部渠道压货、真实动销口径不清、人工分货例外多且防黄牛难闭环等问题。帮我做一份全景规划，看看切入哪些AI场景合适，并给我一份可以拿去跟客户汇报对齐的材料。';
-  var JOURNEY_ONE_FOLDERS = [
+  var JOURNEY_TWO_PROMPT = '直接帮我新建一个‘研发绩效核算与自评答疑助手’的业务场景，用来核对研发人员季度绩效指标配额、解答考核规则并辅助写绩效自评。';
+  var ENTERPRISE_FOLDERS = [
     { name: 'Enterprise Documents', asset: 'documents' },
     { name: 'Business Landscape', asset: 'landscape' },
     { name: 'Scenario Planning', asset: 'planning' }
   ];
-  var JOURNEY_ONE_PLAN_MARK =
+  var PLAN_FOLDER_MARK =
     '<span class="dossier-mark is-plan" aria-hidden="true">' +
     '<svg viewBox="0 0 16 16" fill="none">' +
     '<rect x=".6" y=".6" width="14.8" height="14.8" rx="4" fill="#f4f8fd" stroke="#d7e4f2"/>' +
@@ -32,19 +33,30 @@
     return next === 'main' || next === 'side' || /^[1-4]$/.test(next) ? next : '1';
   }
 
-  function ensureJourneyOneAssets() {
+  function usesEnterpriseFolders(journey) {
+    return journey === '1' || journey === '2';
+  }
+
+  function ensureEnterpriseFolders() {
     if (!window.FastFiles) return;
     window.FastFiles.markFolder('Scenario Planning', {
-      icon: JOURNEY_ONE_PLAN_MARK,
+      icon: PLAN_FOLDER_MARK,
       tag: 'Base'
     });
-    JOURNEY_ONE_FOLDERS.forEach(function (folder) {
+    ENTERPRISE_FOLDERS.forEach(function (folder) {
       window.FastFiles.addFolder('deliverable', folder.name, {
         open: true,
         animate: false,
         collapsible: false,
         openAsset: folder.asset
       });
+    });
+  }
+
+  function clearEnterpriseFolders() {
+    if (!window.FastFiles) return;
+    ENTERPRISE_FOLDERS.forEach(function (folder) {
+      window.FastFiles.removeEmptyFolder('deliverable', folder.name);
     });
   }
 
@@ -59,14 +71,36 @@
     root.setAttribute('data-journey', selection);
     root.setAttribute('data-route', selection === 'side' ? 'side' : 'main');
     if (window.FastFiles) {
-      if (selection === '1') {
-        ensureJourneyOneAssets();
+      if (usesEnterpriseFolders(selection)) {
+        ensureEnterpriseFolders();
         window.FastFiles.showTab(false);
       } else {
-        JOURNEY_ONE_FOLDERS.forEach(function (folder) {
-          window.FastFiles.removeEmptyFolder('deliverable', folder.name);
-        });
+        clearEnterpriseFolders();
         window.FastFiles.showTab(false);
+      }
+    }
+    if (window.EnterpriseAssets && window.EnterpriseAssets.setPlanningAppLimit) {
+      /* Journey 2: first Application + first Business only, with J2 copy; others show all. */
+      if (selection === '2') {
+        window.EnterpriseAssets.setPlanningAppLimit(1, 1);
+        if (window.EnterpriseAssets.setPlanningOverride) {
+          window.EnterpriseAssets.setPlanningOverride({
+            title: 'R&D Performance Intelligence Management',
+            badge: 'New',
+            scenario: 'Application scenario for R&D performance accounting, policy Q&A, and self-review assistance.',
+            biz: {
+              title: 'Quarterly Performance Quota & Self-Review Q&A',
+              badge: 'New',
+              priority: 'Quick Win',
+              scenario:
+                'Each quarter, R&D managers and engineers spend hours reconciling indicator quotas, interpreting assessment rules, and rewriting self-reviews. Policies are scattered across HR docs and team notes, so answers stay inconsistent and drafts often miss required evidence. This business scenario checks quota allocation against the current policy, answers rule questions with cited criteria, and helps draft a structured self-review ready for submission.',
+              rationale:
+                'Quick Win with clear near-term POC value: cuts repetitive policy lookup and draft rewriting in every review cycle. Data readiness is moderate (assessment policy + quota tables), so a single-agent assistant can ship without waiting for full enterprise planning. Directly matches the demo ask—quota check, rule Q&A, and self-review support in one runnable flow.',
+            },
+          });
+        }
+      } else {
+        window.EnterpriseAssets.setPlanningAppLimit(null);
       }
     }
     window.dispatchEvent(new CustomEvent('fastjourneychange', {
@@ -114,8 +148,12 @@
   window.FastJourneyRoute = {
     get: function () { return selection; },
     set: setSelection,
-    ensureAssets: ensureJourneyOneAssets,
-    prompt: function () { return selection === '1' ? JOURNEY_ONE_PROMPT : ''; }
+    ensureAssets: ensureEnterpriseFolders,
+    prompt: function () {
+      if (selection === '1') return JOURNEY_ONE_PROMPT;
+      if (selection === '2') return JOURNEY_TWO_PROMPT;
+      return '';
+    }
   };
   window.FastDemoRoute = window.FastJourneyRoute;
 })();

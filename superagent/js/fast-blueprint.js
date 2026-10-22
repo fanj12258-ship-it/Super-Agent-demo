@@ -14,9 +14,14 @@
   var tab = document.querySelector('.sidebar-tab[data-tab="scene"]');
   var titleEl = document.getElementById('bp-title');
   var modeEl = document.getElementById('bp-mode');
+  var descRoot = document.getElementById('bp-desc');
+  var descText = document.getElementById('bp-desc-text');
+  var descToggle = document.getElementById('bp-desc-toggle');
   var menu = document.getElementById('overviewMenu');
   var pageTitle = document.getElementById('center-head-title');
   var T1 = 'T1 Sourcing strategy (v2.1 new step)';
+  var T1_DESC =
+    'For supplier sourcing strategy: discover candidates, apply admission criteria, and draft a ranked shortlist with evidence. Upgrade “manual screening → spreadsheet compare → email follow-up” into an Agent-led flow: hard-gate filters, quote comparison, risk flags, and human confirmation before outreach.';
 
   var S = 'width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
   var ICON = {
@@ -31,11 +36,25 @@
 
   var DEFAULT_TEXT = { todo: 'Not built', doing: 'In progress', done: 'Ready', optional: 'Optional', mock: 'Mock', imported: 'Imported' };
 
-  function show(title) {
+  function setDesc(text) {
+    if (!descText) return;
+    var next = (text && String(text).trim()) || T1_DESC;
+    descText.textContent = next;
+    if (descRoot) descRoot.hidden = !next;
+  }
+  function show(title, desc) {
     if (titleEl && title) titleEl.textContent = title;
+    if (desc !== undefined) setDesc(desc);
+    else if (!descText || !descText.textContent.trim()) setDesc(T1_DESC);
     if (list) list.hidden = true;
     bp.hidden = false;
     if (window.FastBlueprintIso) window.FastBlueprintIso.render();
+  }
+  if (descToggle && descRoot) {
+    descToggle.addEventListener('click', function () {
+      var collapsed = descRoot.classList.toggle('is-collapsed');
+      descToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    });
   }
   function hide() {
     bp.hidden = true;
@@ -99,5 +118,5 @@
     shorten();
   }
 
-  window.FastBlueprint = { show: show, hide: hide, set: set };
+  window.FastBlueprint = { show: show, hide: hide, set: set, setDesc: setDesc };
 })();

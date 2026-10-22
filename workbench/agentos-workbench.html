@@ -9,9 +9,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/tokens.css" />
   <link rel="stylesheet" href="css/overlay-scrollbar.css" />
-  <link rel="stylesheet" href="css/layout-sidebar.css" />
+  <link rel="stylesheet" href="css/layout-sidebar.css?v=20261022b" />
   <link rel="stylesheet" href="css/popovers-notify.css" />
-  <link rel="stylesheet" href="css/modal-create-scene.css" />
+  <link rel="stylesheet" href="css/modal-create-scene.css?v=20261022d" />
   <link rel="stylesheet" href="css/main-layout.css?v=20261019a" />
   <link rel="stylesheet" href="css/cards-agent.css" />
   <link rel="stylesheet" href="css/cards-scenario.css" />
@@ -119,10 +119,10 @@
 
     <!-- 底部：新旧版回录入口 / 用户 / 通知 -->
     <div class="sb-foot">
-      <a class="sb-legacy" href="backups/agentos-workbench.LOCKED-2026-10-10.html" title="Open the locked classic UI for side-by-side review">
+      <button type="button" class="sb-legacy" id="btnLegacySwitch" title="Open the locked classic UI for side-by-side review">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M8.5 3.5 5 7l3.5 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 7h6.2M3 2.8v8.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
         Back to classic
-      </a>
+      </button>
       <div class="sb-head">
         <button class="sb-user" id="userBtn" type="button" aria-label="账号菜单" aria-haspopup="menu" aria-expanded="false">
           <span class="avatar">K</span>
@@ -232,6 +232,46 @@
     </div>
   </div>
 
+  <!-- Switch to classic UI confirm -->
+  <div class="sm" id="legacy-switch-modal" hidden aria-hidden="true">
+    <div class="sm-backdrop" data-legacy-close></div>
+    <div class="sm-dialog sm-dialog-confirm" role="dialog" aria-modal="true" aria-labelledby="legacy-switch-title">
+      <button type="button" class="sm-close sm-confirm-close" data-legacy-close aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </button>
+      <div class="sm-confirm-body">
+        <div class="sm-confirm-mark" aria-hidden="true">
+          <svg class="sm-confirm-art" viewBox="0 0 120 72" fill="none">
+            <rect class="sm-confirm-art-bg" x="4" y="8" width="112" height="56" rx="14"/>
+            <rect class="sm-confirm-art-card is-new" x="18" y="18" width="40" height="36" rx="8"/>
+            <rect class="sm-confirm-art-card is-old" x="62" y="18" width="40" height="36" rx="8"/>
+            <path class="sm-confirm-art-line" d="M26 28h24M26 34h16M26 40h20" stroke-linecap="round"/>
+            <path class="sm-confirm-art-line is-muted" d="M70 28h24M70 34h14M70 40h18" stroke-linecap="round"/>
+            <circle class="sm-confirm-art-dot" cx="60" cy="36" r="9"/>
+            <path class="sm-confirm-art-arrow" d="M56.5 36h7M61 32.5 64.5 36 61 39.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p class="sm-confirm-kicker">Version switch</p>
+        <h2 class="sm-confirm-title" id="legacy-switch-title">Back to classic</h2>
+        <div class="sm-confirm-note">
+          <span class="sm-confirm-note-ico" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.25" stroke="currentColor" stroke-width="1.25"/><path d="M7 4v4.2M7 10.1h.01" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </span>
+          <div class="sm-confirm-note-copy">
+            <p>Your current new-version data will be kept, but it will not carry over to the classic version.</p>
+            <p>In classic, you will see the data from the last time you switched.</p>
+          </div>
+        </div>
+      </div>
+      <div class="sm-foot sm-foot-confirm">
+        <div class="sm-actions">
+          <button type="button" class="sm-btn sm-btn-ghost" data-legacy-close>Cancel</button>
+          <button type="button" class="sm-btn sm-btn-primary" id="legacy-switch-confirm">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Import agent modal -->
   <div class="sm" id="import-agent-modal" hidden aria-hidden="true">
     <div class="sm-backdrop" data-import-close></div>
@@ -287,6 +327,7 @@
   <script src="js/views.js?v=20261021ah"></script>
   <script src="js/popovers-notify.js"></script>
   <script src="js/create-scene-modal.js"></script>
+  <script src="js/legacy-switch.js?v=20261022a"></script>
   <script src="js/import-agent-modal.js"></script>
   <script src="js/workshop-entry.js?v=20261020k"></script>
   <script src="js/space-invite.js?v=20261021u"></script>

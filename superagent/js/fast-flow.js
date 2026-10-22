@@ -273,6 +273,7 @@
   function deliverableSummary(opts) {
     opts = opts || {};
     var items = opts.items || [];
+    var entries = opts.entries || [];
     var fallbackIcon = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 1.5h6l3 3v10h-9v-13Z" stroke="currentColor"/><path d="M9.5 1.5v3h3" stroke="currentColor"/></svg>';
     var box = el('section', 'ff-output-summary');
     box.innerHTML =
@@ -287,14 +288,30 @@
           '<span class="ff-output-icon" aria-hidden="true">' + (icon || fallbackIcon) + '</span>' +
           '<span class="ff-output-name">' + esc(item.name) + '</span></button>';
       }).join('') + '</div>' +
-      '<p class="ff-output-conclusion">' + esc(opts.conclusion || '') + '</p>';
+      (entries.length
+        ? '<div class="ff-output-entries" role="group" aria-label="' + esc(opts.entriesLabel || '相关入口') + '">' +
+          (opts.entriesLabel ? '<span class="ff-output-entries-label">' + esc(opts.entriesLabel) + '</span>' : '') +
+          entries.map(function (entry, index) {
+            return '<button type="button" class="ff-output-entry" data-entry-index="' + index + '">' +
+              '<span class="ff-output-entry-dot" aria-hidden="true"></span>' +
+              '<span class="ff-output-entry-name">' + esc(entry.name) + '</span></button>';
+          }).join('') + '</div>'
+        : '') +
+      '<p class="ff-output-conclusion">' + esc(opts.conclusion || '') + '</p>' +
+      (opts.ask ? '<p class="ff-output-ask">' + esc(opts.ask) + '</p>' : '');
     box.addEventListener('click', function (e) {
       var link = e.target.closest('[data-output-index]');
-      if (!link) return;
-      var item = items[Number(link.getAttribute('data-output-index'))];
-      if (!item) return;
-      if (item.open) item.open();
-      else if (item.file && window.FastDocs) window.FastDocs.open(item.file);
+      if (link) {
+        var item = items[Number(link.getAttribute('data-output-index'))];
+        if (!item) return;
+        if (item.open) item.open();
+        else if (item.file && window.FastDocs) window.FastDocs.open(item.file);
+        return;
+      }
+      var entryBtn = e.target.closest('[data-entry-index]');
+      if (!entryBtn) return;
+      var entry = entries[Number(entryBtn.getAttribute('data-entry-index'))];
+      if (entry && entry.open) entry.open();
     });
     return box;
   }

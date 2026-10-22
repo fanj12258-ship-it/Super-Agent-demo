@@ -115,7 +115,11 @@
     var g = groups[kind];
     var parts = String(path).split('/');
     var name = parts.pop();
-    var folder = parts.length ? ensureFolder(g, parts.join('/')) : null;
+    var folderPath = parts.length ? parts.join('/') : '';
+    /* Long task versions stay collapsed by default — expand only when the user opens it. */
+    var folder = folderPath
+      ? ensureFolder(g, folderPath, folderPath === 'Long task' ? { open: false } : null)
+      : null;
     var type = FTI ? FTI.typeOf(name) : 'file';
     var doc = window.FastDocs && window.FastDocs.find(name);
     var glyph = (doc && doc.kind === 'flow' && window.FastFlowBoard) ? window.FastFlowBoard.fileIcon() : (FTI ? FTI.svg(type) : '');

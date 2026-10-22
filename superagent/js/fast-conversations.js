@@ -211,6 +211,25 @@
     skip(); render();
   }
 
+  /* reuse the current tab in place (no new T1 tab): rename + clear thread */
+  function resetCurrent(title) {
+    init();
+    if (!cur) cur = mk({ title: title || DEFAULT }); 
+    else {
+      cur.title = title || DEFAULT;
+      cur.auto = false;
+      cur.n = 0;
+      cur.preview = '';
+      cur.frag = null;
+      cur.started = false;
+      cur.draft = '';
+    }
+    if (journeyId == null) journeyId = cur.id;
+    thread.innerHTML = '';
+    skip();
+    render();
+  }
+
   /* learn titles / previews from what lands in the thread */
   var obs = new MutationObserver(function (list) {
     init();
@@ -398,6 +417,7 @@
     seed: seed,
     open: openKey,
     fresh: fresh,
+    resetCurrent: resetCurrent,
     home: home,
     rename: function (t) { init(); cur.title = t; cur.auto = false; render(); },
     isJourney: function () { init(); return !journeyId || cur.id === journeyId; },

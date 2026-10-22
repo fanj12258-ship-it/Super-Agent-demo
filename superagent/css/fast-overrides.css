@@ -332,6 +332,10 @@ textarea.composer-input {
 
 /* ── Plain choice buttons under body text (no card) ── */
 .fm-btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 4px; }
+.fm-btns.j2-tweak-confirm { margin-top: 18px; }
+/* Journey 2 impact table: keep each cell on one line */
+#chat-thread .chat-md-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+#chat-thread .chat-md-table td { white-space: nowrap; }
 .fm-btn {
   height: 30px;
   padding: 0 14px;
@@ -471,11 +475,10 @@ textarea.composer-input {
   transition: opacity .12s ease, transform .12s ease, visibility .12s;
 }
 .fast-journey-tip strong { color: var(--text-primary); font-weight: 600; }
-.fast-route button[data-journey="1"]:hover ~ .fast-journey-tip {
-  opacity: 1; visibility: visible; transform: translateY(0);
-  transition-delay: 0s;
-}
-.fast-route button[data-journey="1"]:focus-visible ~ .fast-journey-tip {
+.fast-route button[data-journey="1"]:hover ~ #fast-journey-1-tip,
+.fast-route button[data-journey="1"]:focus-visible ~ #fast-journey-1-tip,
+.fast-route button[data-journey="2"]:hover ~ #fast-journey-2-tip,
+.fast-route button[data-journey="2"]:focus-visible ~ #fast-journey-2-tip {
   opacity: 1; visibility: visible; transform: translateY(0);
   transition-delay: 0s;
 }

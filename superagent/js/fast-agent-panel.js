@@ -16,6 +16,8 @@
     { q: 'Haoyu 的压铸件出了气孔问题，要不要找替代？', k: 'haoyu' },
     { q: '对比 Jinli 和 Haoyu 的交期、评分和风险', k: 'cmp' },
   ];
+  var DEFAULT_PROMPTS = PROMPTS.slice();
+  var spacePromptIndex = 0;
 
   var ANSWERS = {
     pcb: {
@@ -156,15 +158,61 @@
       ask(b.textContent, b.getAttribute('data-k'));
     });
     input.addEventListener('input', function () { sendBtn.disabled = busy || !input.value.trim(); });
+    function matchKey(v) {
+      var hit = PROMPTS.filter(function (p) { return p.q === v; })[0];
+      if (hit) return hit.k;
+      if (/pcb/i.test(v)) return 'pcb';
+      if (/haoyu|气孔|压铸/i.test(v)) return 'haoyu';
+      if (/jinli|对比/i.test(v)) return 'cmp';
+      if (/S档|名额|小团队/i.test(v)) return 'j2-s-band';
+      if (/润色|自评/i.test(v)) return 'j2-self-review';
+      return 'other';
+    }
     function send() {
       var v = input.value.trim(); if (!v || busy) return;
       input.value = '';
-      var hit = PROMPTS.filter(function (p) { return /pcb/i.test(v) ? p.k === 'pcb' : /haoyu|气孔|压铸/i.test(v) ? p.k === 'haoyu' : /jinli|对比/i.test(v) ? p.k === 'cmp' : false; })[0];
-      ask(v, hit ? hit.k : 'other');
+      ask(v, matchKey(v));
+    }
+    function fillSpacePrompt() {
+      if (!PROMPTS.length) return;
+      var next = PROMPTS[spacePromptIndex % PROMPTS.length];
+      spacePromptIndex += 1;
+      input.value = next.q;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
     }
     sendBtn.addEventListener('click', send);
-    input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); send(); } });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); send(); return; }
+      if ((e.key === ' ' || e.code === 'Space') && !input.value.trim() && !e.isComposing) {
+        e.preventDefault();
+        fillSpacePrompt();
+      }
+    });
     return box;
+  }
+
+  function paintEmptyPrompts() {
+    if (!thread) return;
+    var empty = thread.querySelector('.fa-empty');
+    if (!empty) return;
+    var host = empty.querySelector('.fa-prompts');
+    if (!host) return;
+    host.innerHTML = PROMPTS.map(function (p) {
+      return '<button type="button" class="fa-prompt" data-k="' + p.k + '">' + esc(p.q) + '</button>';
+    }).join('');
+  }
+
+  function setTrialPrompts(list, answers) {
+    PROMPTS = (list && list.length) ? list.slice() : DEFAULT_PROMPTS.slice();
+    spacePromptIndex = 0;
+    if (answers) {
+      Object.keys(answers).forEach(function (key) {
+        ANSWERS[key] = answers[key];
+      });
+    }
+    paintEmptyPrompts();
   }
 
   function mkSpec() {
@@ -244,7 +292,9 @@
   }
 
   window.FastAgentPanel = {
-    open: open, prompts: PROMPTS,
+    open: open,
+    get prompts() { return PROMPTS; },
+    setTrialPrompts: setTrialPrompts,
     repair: function (key, note) { repairNotes[key] = '\n\n**诊断修复**\n\n' + note; },
     preview: function (text, key) {
       open('try');

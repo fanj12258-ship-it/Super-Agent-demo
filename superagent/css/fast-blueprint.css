@@ -4,6 +4,104 @@
 .fast-bp[hidden] { display: none; }
 
 .bp-head { padding: 4px 6px 12px; }
+
+/* Scenario description & goals — under title/tags; blueprint structure still hidden while TBD. */
+.bp-desc {
+  margin: 0 0 12px;
+  padding: 10px 12px 12px;
+  border-radius: 10px;
+  background: #f3f3f5;
+}
+.bp-desc-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 18px;
+  color: #3a3a3e;
+  text-align: left;
+}
+.bp-desc-chev { flex: none; color: #8a8a8f; transition: transform .18s ease; }
+.bp-desc.is-collapsed .bp-desc-chev { transform: rotate(180deg); }
+.bp-desc-body { margin-top: 8px; }
+.bp-desc.is-collapsed .bp-desc-body { display: none; }
+.bp-desc-body p {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: #5a5a60;
+}
+
+/* Scenario room: show Blueprint as a static structure map (no live progress chrome). */
+.fast-bp .bp-diagram { display: none; }
+.fast-bp.is-structure .bpi-card {
+  margin: 0 0 8px;
+  padding: 8px 8px 6px;
+  border: 0;
+  border-radius: 10px;
+  background: #f3f3f5; /* match .bp-desc */
+}
+.fast-bp.is-structure .bpi-top {
+  height: 22px;
+  padding: 0 2px 0 4px;
+  margin-bottom: 2px;
+  color: #3a3a3e;
+}
+.fast-bp.is-structure .bp-foot { display: none; }
+.fast-bp.is-structure #bp-iso {
+  line-height: 0;
+  padding: 0 0 2px;
+}
+.fast-bp.is-structure #bp-iso svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.fast-bp.is-structure .bpi-v-tag,
+.fast-bp.is-structure .bpi-v-tag-t,
+.fast-bp.is-structure .bpi-v-out-band,
+.fast-bp.is-structure .bpi-v-out-cap { display: none; }
+.fast-bp.is-structure .bpi-v-ttl {
+  fill: #3a3a3e;
+  font-weight: 600;
+}
+.fast-bp.is-structure .bpi-v-sub { fill: #6b6b70; }
+.fast-bp.is-structure .bpi-plate {
+  --pf: #fff;
+  --ps: #9a9aa0;          /* a touch darker than default #d2d2d7 */
+  --pl: rgba(0, 0, 0, .03);
+  --pr: rgba(0, 0, 0, .06);
+  --pg: #8a8a90;
+  cursor: default;
+}
+.fast-bp.is-structure .bpi-plate.st-todo .bpi-top-f { stroke-dasharray: none; }
+.fast-bp.is-structure .bpi-plate,
+.fast-bp.is-structure .bpi-plate .bpi-lift,
+.fast-bp.is-structure .bpi-plate .bpi-top-f,
+.fast-bp.is-structure .bpi-plate .bpi-sl,
+.fast-bp.is-structure .bpi-plate .bpi-sr,
+.fast-bp.is-structure .bpi-plate .bpi-s,
+.fast-bp.is-structure .bpi-plate .bpi-f,
+.fast-bp.is-structure .bpi-plate .bpi-ground {
+  transition: none !important;
+  animation: none !important;
+}
+.fast-bp.is-structure .bpi-plate.st-doing .bpi-lift,
+.fast-bp.is-structure .bpi-plate.is-hl .bpi-lift,
+.fast-bp.is-structure .bpi-plate.is-pin .bpi-lift { transform: none; }
+.fast-bp.is-structure .bpi-plate.st-doing .bpi-top-f { stroke-dasharray: none; }
+.fast-bp.is-structure .bpi-vhit { pointer-events: none; cursor: default; }
 .bp-back {
   display: inline-flex; align-items: center;
   margin: 0 0 6px -4px; padding: 2px 4px;
