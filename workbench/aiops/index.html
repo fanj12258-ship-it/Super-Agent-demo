@@ -30,7 +30,7 @@
       <!-- Team + primary CTA + nav — match Workbench `.sb-team` -->
       <div class="aiops-team">
         <button class="team-row" id="teamBtn" type="button" data-i18n-aria="切换项目" aria-label="切换项目" aria-haspopup="menu" aria-expanded="false">
-          <span class="team-avatar" id="teamAvatar" style="background:#1F82EB">D</span>
+          <span class="team-avatar" id="teamAvatar" style="background:#14ae5c">D</span>
           <span class="team-name" id="teamName">DJI Innovations</span>
           <svg class="chev" width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden="true"><path d="M1.5 3L4 5.5L6.5 3" stroke="#333" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
@@ -68,9 +68,7 @@
       </div>
     </aside>
 
-    <main class="aiops-main">
-      <div class="aiops-scroll" id="pageRoot"></div>
-    </main>
+    <div class="aiops-scroll" id="pageRoot" role="main"></div>
   </div>
 
   <!-- Account menu — same chrome as Workbench `#acctMenu` -->
@@ -110,17 +108,20 @@
     </div>
   </div>
 
+  <div id="widgetGallery" class="wg-gallery" hidden></div>
+  <div id="widgetConfigHost" class="wg-config-host" hidden></div>
+
   <div class="acct-menu team-menu" id="teamMenu" role="menu" hidden>
     <div class="acct-sec">
-      <button class="acct-item is-current" type="button" role="menuitemradio" data-team="DJI Innovations" data-letter="D" data-color="#1F82EB">
-        <span class="t-ava" style="background:#1F82EB">D</span>
+      <button class="acct-item is-current" type="button" role="menuitemradio" data-team="DJI Innovations" data-letter="D" data-color="#14ae5c">
+        <span class="t-ava" style="background:#14ae5c">D</span>
         <span class="t-name">DJI Innovations</span>
-        <i class="t-check" data-lucide="check" aria-hidden="true"></i>
+        <svg class="t-check" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.3L5 8.8l4.5-5" stroke="#333" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
       <button class="acct-item" type="button" role="menuitemradio" data-team="Ascentium" data-letter="A" data-color="#7b61ff">
         <span class="t-ava" style="background:#7b61ff">A</span>
         <span class="t-name">Ascentium</span>
-        <i class="t-check" data-lucide="check" aria-hidden="true"></i>
+        <svg class="t-check" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.3L5 8.8l4.5-5" stroke="#333" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
   </div>
