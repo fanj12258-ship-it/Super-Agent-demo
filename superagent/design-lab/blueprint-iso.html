@@ -414,7 +414,7 @@
     </div>
     <div class="col">
       <h2>B · 平台图(留给场景详情 / Agent 概览)</h2>
-      <p class="cap">更接近 Palantir 第二张图:需求和知识是输入,设计文档是核心板,Agent 与扩展是输出,之间用纤维线连接。</p>
+      <p class="cap">需求和知识是输入,设计文档是核心板。本体在左上;Skill 接在通往 Agent 的路径上,Agent 抬高,并与设计文档同大。</p>
       <div class="frame"><div class="f-head" data-head></div><div class="f-body" id="isoB"></div></div>
     </div>
   </div>
@@ -434,7 +434,7 @@
       <h3>想和你深聊的几点</h3>
       <ul>
         <li><b>A 还是 B?</b> A 进度感强、一眼看出建到哪;B 更优雅、更像 Palantir,但 5 个节点压成 3 段,「需求 / 知识」要并排。</li>
-        <li><b>本体、Skill 放哪?</b> A 里是同一块板上的两个小格;B 里和 Agent 并排放在顶部。</li>
+        <li><b>本体、Skill 放哪?</b> A 里是同一块板上的两个小格;B 里本体单独在左上,Skill 在通往 Agent 的路径上,Agent 抬高并与设计文档同大。</li>
         <li><b>状态文字保不保留?</b> 现在是每块板配一行「待传合同」这类文字,去掉会更纯粹但信息少。</li>
         <li><b>点击行为:</b> 点板块后是跳到 Files 里的对应交付物,还是在中间对话里滚到相关消息?</li>
         <li><b>配色:</b> Palantir 是灰 + 薄荷绿,我们现在是灰 + 蓝(施工)+ 绿(完成)。要不要换成更克制的单色?</li>
@@ -445,7 +445,7 @@
       <ul>
         <li>纯 SVG + CSS,不引库;状态切换已经抽成同一个数据结构,和 <code>FastBlueprint.set(node,state,text)</code> 能直接对上。</li>
         <li>窄屏:按容器宽度重新计算板的大小,标注列固定约 112px;宽度 &lt; 280 时 A 需要把标注折到板下方。</li>
-        <li>高度:A 约 450px,需要在侧栏内滚动;B 约 380px,更容易一屏放下。</li>
+        <li>高度:A 约 450px,需要在侧栏内滚动;B 把 Agent 抬到 Skill 之上后大约 650px,侧栏里需要滚动。</li>
         <li>无障碍:SVG 内文字可读,另需一份隐藏的列表语义给读屏软件。</li>
         <li>这份讨论稿是独立文件,<b>不影响</b> <code>superagent.html</code> 和 <code>superagent-fast.html</code>。</li>
       </ul>
@@ -476,7 +476,7 @@
     agent: ['Agent', '寻源 Agent'], ext: ['本体 · Skill', '可选扩展'], doc: ['设计文档', 'Agent 设计'],
     know: ['业务知识', '准入标准 · 历史合同'], req: ['需求与目标', '品类 · 触发 · 硬性条件 · 评估']
   ,
-    onto: ['Ontology', ''], tools: ['Skills · MCP', '']
+    onto: ['Ontology', ''], skill: ['Skill', ''], tools: ['Skills · MCP', '']
   };
   var STEPS = [
     { n: '① 进入 T1',   s: { req: ['doing', 'To confirm'] } },
@@ -531,6 +531,9 @@
       var ls = [[-20, 64], [-8, 54], [4, 64], [16, 46], [28, 30]];
       ls.forEach(function (l) { g += '<rect class="s" x="-32" y="' + l[0] + '" width="' + l[1] + '" height="5" rx="2"/>'; });
       g += '<circle class="acc d" cx="30" cy="-32" r="3.5"/>';
+    } else if (kind === 'skill') {
+      g += '<rect class="s" x="-22" y="-34" width="44" height="68" rx="6"/>';
+      g += '<rect class="f" x="-14" y="-22" width="28" height="10" rx="2.5"/><rect class="f" x="-14" y="-6" width="28" height="10" rx="2.5"/><rect class="f" x="-14" y="10" width="28" height="10" rx="2.5"/>';
     } else if (kind === 'ext') {
       g += '<g class="half ' + st('onto').s + '"><rect class="s" x="-46" y="-30" width="42" height="60" rx="6"/>' +
         '<path class="s" d="M-34 -14L-22 6M-22 6L-34 18M-22 6L-10 -10"/>' +
@@ -651,59 +654,56 @@
     var W = el.clientWidth || 312, c = W / 2;
     var sB = Math.min((W - 40) / 2 / A, 118), sS = Math.min((W - 24) / 4 / A, 74), t = 8, tS = 6;
     var gap = Math.min(sS * A + 4, W / 4 - 2);
-    var cyTop = 30 + K * sS, cyMid = cyTop + K * sS + tS + 96 + K * sB, cyBot = cyMid + K * sB + t + 96 + K * sS;
+    var ontoCx = c - gap, skillCx = c + gap;
+    var sAgent = sB;
+    var agentCx = Math.max(A * sAgent + 10, Math.min(W - 10 - A * sAgent, skillCx));
+    var cyAgent = 20 + K * sAgent;
+    var cyTop = cyAgent + K * sAgent + t + 96 + K * sS;
+    var cyMid = cyTop + K * sS + tS + 96 + K * sB;
+    var cyBot = cyMid + K * sB + t + 96 + K * sS;
     var H = cyBot + K * sS + tS + 44;
     var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">';
-    var tops = [{ id: 'ext', cx: c - gap, pat: 'ext' }, { id: 'agent', cx: c + gap, pat: 'agent' }];
     var bots = [{ id: 'req', cx: c - gap, pat: 'req' }, { id: 'know', cx: c + gap, pat: 'know' }];
-    var ks = [-0.6, -0.3, 0, 0.3, 0.6].map(function (k) { return k * sS * A; });
-    // 纤维:输入 -> 核心(下板顶面);核心 -> 输出
-    bots.forEach(function (b) {
-      var on = stOf(b.id).s === 'done', hot = false;
-      svg += fibers(c, cyMid, sB, t, b.cx, cyBot, sS, [], false, false); // 占位,保持签名一致
-      // 手工:从核心板底面 到 底部小板顶面
-      ks.forEach(function (d) {
-        var x = b.cx + d, offM = Math.abs(x - c) / (A * sB), offB = Math.abs(x - b.cx) / (A * sS);
-        if (offM > .98 || offB > .98) return;
-        var y1 = cyMid + K * sB * (1 - offM) + t, y2 = cyBot - K * sS * (1 - offB);
-        if (y2 - y1 < 4) return;
-        svg += '<line class="fiber ' + (on ? 'on' : '') + '" x1="' + x + '" y1="' + y1 + '" x2="' + x + '" y2="' + y2 + '"/>';
+    function link(cxU, cyU, sU, tU, cxL, cyL, sL, hot, on) {
+      var wU = A * sU, wL = A * sL;
+      var x0 = Math.max(cxU - wU * 0.92, cxL - wL * 0.92);
+      var x1 = Math.min(cxU + wU * 0.92, cxL + wL * 0.92);
+      if (x1 - x0 < 8) return;
+      var n = 5;
+      for (var i = 0; i < n; i++) {
+        var x = x0 + (x1 - x0) * (i + 0.5) / n;
+        var offU = Math.abs(x - cxU) / wU, offL = Math.abs(x - cxL) / wL;
+        if (offU > 0.98 || offL > 0.98) continue;
+        var y1 = cyU + K * sU * (1 - offU) + tU, y2 = cyL - K * sL * (1 - offL);
+        if (y2 - y1 < 4) continue;
+        svg += '<line class="fiber ' + (hot ? 'hot' : on ? 'on' : '') + '" x1="' + x + '" y1="' + y1 + '" x2="' + x + '" y2="' + y2 + '"/>';
         if (on) {
-          var dur = (1.5 + (Math.abs(d) % 5) * .15).toFixed(2), beg = ((Math.abs(d) * .41) % 1.5).toFixed(2);
-          svg += '<circle r="1.7" fill="#22a05a" cx="' + x + '" cy="' + y2 + '"><animate attributeName="cy" from="' + y2 + '" to="' + y1 + '" dur="' + dur + 's" begin="' + beg + 's" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" dur="' + dur + 's" begin="' + beg + 's" repeatCount="indefinite"/></circle>';
-        }
-      });
-    });
-    var docOn = stOf('doc').s === 'done';
-    tops.forEach(function (tp) {
-      var hot = stOf(tp.id).s === 'doing';
-      ks.forEach(function (d) {
-        var x = tp.cx + d, offT = Math.abs(x - tp.cx) / (A * sS), offM = Math.abs(x - c) / (A * sB);
-        if (offT > .98 || offM > .98) return;
-        var y1 = cyTop + K * sS * (1 - offT) + tS, y2 = cyMid - K * sB * (1 - offM);
-        if (y2 - y1 < 4) return;
-        svg += '<line class="fiber ' + (hot ? 'hot' : docOn ? 'on' : '') + '" x1="' + x + '" y1="' + y1 + '" x2="' + x + '" y2="' + y2 + '"/>';
-        if (docOn) {
-          var dur = (1.5 + (Math.abs(d) % 5) * .15).toFixed(2), beg = ((Math.abs(d) * .41) % 1.5).toFixed(2);
+          var dur = (1.5 + (i % 5) * 0.15).toFixed(2), beg = ((i * 0.41) % 1.5).toFixed(2);
           svg += '<circle r="1.7" fill="' + (hot ? '#1f82eb' : '#22a05a') + '" cx="' + x + '" cy="' + y2 + '"><animate attributeName="cy" from="' + y2 + '" to="' + y1 + '" dur="' + dur + 's" begin="' + beg + 's" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" dur="' + dur + 's" begin="' + beg + 's" repeatCount="indefinite"/></circle>';
         }
-      });
-    });
-    // 板
+      }
+    }
+    var docOn = stOf('doc').s === 'done';
+    bots.forEach(function (b) { link(c, cyMid, sB, t, b.cx, cyBot, sS, false, stOf(b.id).s === 'done'); });
+    link(ontoCx, cyTop, sS, tS, c, cyMid, sB, stOf('onto').s === 'doing', docOn);
+    link(skillCx, cyTop, sS, tS, c, cyMid, sB, stOf('skill').s === 'doing', docOn);
+    link(agentCx, cyAgent, sAgent, t, skillCx, cyTop, sS, stOf('agent').s === 'doing', docOn || stOf('skill').s === 'done');
     bots.forEach(function (b) { var o = stOf(b.id); svg += plate({ id: b.id, cx: b.cx, cy: cyBot, s: sS, t: tS, state: o.s, pat: b.pat }); });
     var od = stOf('doc'); svg += plate({ id: 'doc', cx: c, cy: cyMid, s: sB, t: t, state: od.s, pat: 'graph' });
-    tops.forEach(function (tp) { var o = stOf(tp.id); svg += plate({ id: tp.id, cx: tp.cx, cy: cyTop, s: sS, t: tS, state: o.s, pat: tp.pat }); });
+    var oo = stOf('onto'); svg += plate({ id: 'onto', cx: ontoCx, cy: cyTop, s: sS, t: tS, state: oo.s, pat: 'onto' });
+    var os = stOf('skill'); svg += plate({ id: 'skill', cx: skillCx, cy: cyTop, s: sS, t: tS, state: os.s, pat: 'skill' });
+    var oa = stOf('agent'); svg += plate({ id: 'agent', cx: agentCx, cy: cyAgent, s: sAgent, t: t, state: oa.s, pat: 'agent' });
 
-    // 标签(白底小胶囊,压住穿过的线)
     function tag(id, cx, y, label) {
-      var o = stOf(id), sub = (id === 'ext' ? subExt() : o.t), full = (o.s === 'done' ? '✓ ' : o.s === 'doing' ? '● ' : '') + sub;
+      var o = stOf(id), full = (o.s === 'done' ? '✓ ' : o.s === 'doing' ? '● ' : '') + o.t;
       var wd = Math.max(label.length * 12 + 10, 60) + 6, ww = Math.max(wd, full.length * 6.4 + 14);
       return '<g class="tag" data-lab="' + id + '"><rect x="' + (cx - ww / 2) + '" y="' + y + '" width="' + ww + '" height="34" rx="8"/>' +
         '<text x="' + cx + '" y="' + (y + 14) + '" text-anchor="middle">' + label + '</text>' +
         '<text class="sub ' + o.s + '" x="' + cx + '" y="' + (y + 27) + '" text-anchor="middle">' + full + '</text></g>';
     }
-    svg += tag('ext', c - gap, cyTop + K * sS + tS + 6, '本体 · Skill');
-    svg += tag('agent', c + gap, cyTop + K * sS + tS + 6, 'Agent');
+    svg += tag('onto', ontoCx, cyTop + K * sS + tS + 6, '本体');
+    svg += tag('skill', skillCx, cyTop + K * sS + tS + 6, 'Skill');
+    svg += tag('agent', agentCx, cyAgent + K * sAgent + t + 6, 'Agent');
     svg += tag('doc', c, cyMid + K * sB + t + 6, '设计文档');
     svg += tag('req', c - gap, cyBot + K * sS + tS + 6, '需求与目标');
     svg += tag('know', c + gap, cyBot + K * sS + tS + 6, '业务知识');

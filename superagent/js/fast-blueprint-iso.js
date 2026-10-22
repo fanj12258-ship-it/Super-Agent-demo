@@ -137,20 +137,27 @@
     return FALL[state] || t || state;
   }
   function tri(x, y0, c) { return '<polygon points="' + (x - 3.5) + ',' + (y0 - 6) + ' ' + x + ',' + y0 + ' ' + (x + 3.5) + ',' + (y0 - 6) + '" fill="' + c + '"/>'; }
+  function plateH(ps, pt) { return K * ps + pt; }
   function renderVert(target, fixedW, opt) {
     target = target || host;
     opt = opt || {};
     var stat = !!opt.stat;
     var big = target !== host;
     var W = fixedW || target.clientWidth; if (!W) return;
-    var s = 38, w = A * s, h = K * s, t = 4, P = 28, cx = 6 + w, lx = cx + w + 14;
+    var s = 38, sOut = 48, w = A * s, t = 4, tOut = 5, P = 28;
+    var cx = 6 + A * sOut, lx = cx + w + 14; // column centred on the larger outcome plate
     function layout(gap) {
       var y = 10, lay = [];
       VST.forEach(function (sg) {
-        var single = sg.items.length === 1, top = y, nd = (!stat && single && VDOCS[sg.id]) ? VDOCS[sg.id].length : 0, hgt = single ? 40 + (nd ? nd * 13 + 2 : 0) : 110;
+        var out = sg.id === 'agent', single = sg.items.length === 1;
+        if (out) y += 16; // breathe before the outcome so the funnel can read
+        var top = y, nd = (!stat && single && VDOCS[sg.id]) ? VDOCS[sg.id].length : 0;
+        var hgt = out ? 56 + (nd ? nd * 13 + 4 : 0) : (single ? 40 + (nd ? nd * 13 + 2 : 0) : 110);
+        var ps = out ? sOut : s;
         lay.push({
-          sg: sg, top: top, hgt: hgt, state: stat ? 'done' : vState(sg),
-          cys: sg.items.map(function (_, k) { return single ? top + 20 : top + 34 + k * P; })
+          sg: sg, top: top, hgt: hgt, out: out, ps: ps, pt: out ? tOut : t,
+          state: stat ? 'done' : vState(sg),
+          cys: sg.items.map(function (_, k) { return single ? top + (out ? 28 : 20) : top + 34 + k * P; })
         });
         y += hgt + (single ? 4 : 6) + gap;
       });
@@ -160,26 +167,43 @@
     if (opt.fillH && opt.fillH > L0.H) L0 = layout(Math.min(40, (opt.fillH - L0.H) / (VST.length - 1))); // spread the stages over the card height
     var lay = L0.lay, H = L0.H, VH = opt.fillH ? Math.max(opt.fillH, H) : H, off = Math.round((VH - H) / 2);
     var svg = '<svg class="bpi-v' + (big ? ' is-big' : '') + '" viewBox="0 0 ' + W + ' ' + VH + '"' + (big ? '' : ' width="' + W + '" height="' + H + '"') + '><g transform="translate(0 ' + off + ')">';
-    // links between stages (behind plates)
+    // outcome band behind Generate Agent (final deliverable of the stack above)
+    var outL = lay[lay.length - 1];
+    if (outL && outL.out) {
+      svg += '<rect class="bpi-v-out-band" x="2" y="' + (outL.top - 6) + '" width="' + (W - 4) + '" height="' + (outL.hgt + 8) + '" rx="10"/>';
+    }
+    // links between stages (behind plates); last hop is a gather funnel into the outcome
     for (var i = 0; i < lay.length - 1; i++) {
       var a = lay[i], b = lay[i + 1], lit = a.state === 'done', col = lit ? '#8f8f97' : '#c9c9ce';
-      var y0 = a.cys[a.cys.length - 1] + h + t - 1, y1 = b.cys[0] - h, d = 'M' + cx + ' ' + y0 + ' V' + y1;
-      svg += '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width=".75"/>' + tri(cx, y1, col);
-      if (lit) svg += '<circle r="2" fill="#22a05a"><animateMotion dur="1.8s" begin="-' + (i * 0.3 + 0.1).toFixed(1) + 's" repeatCount="indefinite" path="' + d + '"/></circle>';
+      var y0 = a.cys[a.cys.length - 1] + plateH(a.ps, a.pt) - 1, y1 = b.cys[0] - K * b.ps;
+      if (b.out) {
+        var gy = Math.round((y0 + y1) / 2), fw = Math.round(w * 1.25);
+        var dFun = 'M' + cx + ' ' + y0 + ' V' + gy + ' V' + y1;
+        svg += '<path class="bpi-v-funnel' + (lit ? ' on' : '') + '" d="M' + cx + ' ' + y0 + ' V' + gy + '" fill="none" stroke="' + col + '" stroke-width="1"/>' +
+          '<path class="bpi-v-gather' + (lit ? ' on' : '') + '" d="M' + (cx - fw) + ' ' + gy + ' H' + (cx + fw) + '" fill="none" stroke="' + col + '" stroke-width="1.35" stroke-linecap="round"/>' +
+          '<path class="bpi-v-funnel' + (lit ? ' on' : '') + '" d="M' + cx + ' ' + gy + ' V' + y1 + '" fill="none" stroke="' + col + '" stroke-width="1.35"/>' + tri(cx, y1, col);
+        if (lit) svg += '<circle r="2.2" fill="#22a05a"><animateMotion dur="2s" begin="-' + (i * 0.3 + 0.1).toFixed(1) + 's" repeatCount="indefinite" path="' + dFun + '"/></circle>';
+      } else {
+        var d = 'M' + cx + ' ' + y0 + ' V' + y1;
+        svg += '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width=".75"/>' + tri(cx, y1, col);
+        if (lit) svg += '<circle r="2" fill="#22a05a"><animateMotion dur="1.8s" begin="-' + (i * 0.3 + 0.1).toFixed(1) + 's" repeatCount="indefinite" path="' + d + '"/></circle>';
+      }
     }
     // plates — start in the previous state so a change animates (flipped next frame)
     lay.forEach(function (L) {
       for (var k = L.sg.items.length - 1; k >= 0; k--) {
-        svg += plate({ id: L.sg.id, cx: cx, cy: L.cys[k], s: s, t: t, state: big ? L.state : (last[L.sg.id] || L.state), pat: L.sg.items[k] });
+        svg += plate({ id: L.sg.id, cx: cx, cy: L.cys[k], s: L.ps, t: L.pt, big: L.out, state: big ? L.state : (last[L.sg.id] || L.state), pat: L.sg.items[k] });
       }
     });
     // labels: title first, status as a trailing tag (no STEP N); done = blue, doing = pulsing
     lay.forEach(function (L) {
-      var sg = L.sg, dim = L.state === 'todo', mock = L.state === 'mock', tone = dim ? 'dim' : (mock ? 'mock' : ''), ty = L.top + 15, avail = W - lx - 4;
+      var sg = L.sg, dim = L.state === 'todo', mock = L.state === 'mock', tone = dim ? 'dim' : (mock ? 'mock' : ''), avail = W - lx - 4;
+      var ty = L.out ? L.top + 22 : L.top + 15;
+      if (L.out) svg += '<text class="bpi-v-out-cap" x="' + lx + '" y="' + (L.top + 8) + '">OUTCOME</text>';
       var word = stat ? '' : vWord(sg, L.state), tw = word ? word.length * 5.6 + 10 : 0;
       var maxT = Math.max(36, avail - (tw ? tw + 6 : 0)), title = sg.title.length * 6.7 > maxT ? sg.title.slice(0, Math.max(4, Math.floor(maxT / 6.7) - 1)) + '…' : sg.title;
       var tW = title.length * 6.7;
-      svg += '<text class="bpi-v-ttl' + (dim ? ' dim' : '') + '" x="' + lx + '" y="' + ty + '">' + title + '</text>';
+      svg += '<text class="bpi-v-ttl' + (dim ? ' dim' : '') + (L.out ? ' is-out' : '') + '" x="' + lx + '" y="' + ty + '">' + title + '</text>';
       if (word) {
         var tx = Math.min(lx + tW + 6, Math.max(lx, W - tw - 2));
         svg += '<rect class="bpi-v-tag bpi-s-' + L.state + '" x="' + tx + '" y="' + (ty - 11) + '" width="' + tw + '" height="15" rx="4"/>' +
@@ -187,7 +211,10 @@
       }
       if (!stat && VSUBDOC[sg.id]) VSUBDOC[sg.id].forEach(function (sub, k) { svg += docIco(lx, L.cys[k] + 4, tone) + '<text class="bpi-v-doc' + (tone ? ' ' + tone : '') + '" x="' + (lx + 11) + '" y="' + (L.cys[k] + 4) + '">' + sub + '</text>' + mapDot(sub, W, L.cys[k] + 4); });
       else if (sg.subs) sg.subs.forEach(function (sub, k) { svg += '<text class="bpi-v-sub" x="' + lx + '" y="' + (L.cys[k] + 4) + '">' + sub + '</text>'; });
-      if (!stat && VDOCS[sg.id]) VDOCS[sg.id].forEach(function (d, k) { var yy = L.top + 30 + k * 13; svg += docIco(lx, yy, tone) + '<text class="bpi-v-doc' + (tone ? ' ' + tone : '') + '" x="' + (lx + 11) + '" y="' + yy + '">' + d + '</text>' + mapDot(d, W, yy); });
+      if (!stat && VDOCS[sg.id]) VDOCS[sg.id].forEach(function (d, k) {
+        var yy = L.out ? L.top + 38 + k * 13 : L.top + 30 + k * 13;
+        svg += docIco(lx, yy, tone) + '<text class="bpi-v-doc' + (tone ? ' ' + tone : '') + '" x="' + (lx + 11) + '" y="' + yy + '">' + d + '</text>' + mapDot(d, W, yy);
+      });
     });
     // hit areas last, so hover / click work anywhere in a stage
     if (!stat) lay.forEach(function (L) {

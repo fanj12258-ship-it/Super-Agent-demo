@@ -1,0 +1,2842 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>打造计划 · 树（抽取自 workbench-open）</title>
+  <style>
+    /* ── demo 页面布局 ── */
+    :root {
+      --text-primary: #18181B;
+      --text-secondary: #52525B;
+      --text-tertiary: #A1A1AA;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 40px 32px;
+      min-height: 100vh;
+      background: #f4f4f5;
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif;
+      color: var(--text-primary);
+    }
+
+    /* ── 并排对比布局 ── */
+    .plan-demo {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 320px));
+      gap: 32px;
+      justify-content: center;
+      align-items: stretch;
+    }
+    .plan-demo__col {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+    }
+    .plan-demo__label {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0.02em;
+    }
+    .plan-demo__label span {
+      display: inline-block;
+      margin-right: 6px;
+      padding: 2px 7px;
+      border-radius: 8px;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #52525B;
+      background: rgba(15, 23, 42, 0.06);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    /* ══ 组件：打造计划树（抽取自 workbench-open 左侧目录）══ */
+    .plan-tree-root {
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .sidebar-srp-plan {
+      padding: 12px 10px;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* 场景头部 + 描述区块（抽取自 workbench-open 左侧 SRP 卡） */
+    .srp-plan-head { margin-bottom: 12px; }
+    .srp-plan-head__row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 0;
+    }
+    .srp-plan-head__title {
+      flex: 0 1 auto;
+      min-width: 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.4;
+      letter-spacing: -0.005em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .srp-plan-head__actions {
+      flex-shrink: 0;
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .srp-plan-audit-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0;
+      border: none;
+      border-radius: 8px;
+      background: none;
+      color: #1F82EB;
+      font-size: 12px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      line-height: 1.2;
+      white-space: nowrap;
+      transition: color 0.14s ease;
+    }
+    .srp-plan-audit-btn:hover {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .srp-plan-audit-btn svg { flex-shrink: 0; opacity: 0.9; }
+    .srp-plan-prio {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      height: 20px;
+      padding: 0 5px 0 8px;
+      border-radius: 8px;
+      background: rgba(220, 38, 38, 0.08);
+      color: #dc2626;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid rgba(220, 38, 38, 0.22);
+      cursor: pointer;
+      font-family: inherit;
+      line-height: 1;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .srp-plan-prio:hover { background: rgba(220, 38, 38, 0.14); }
+    .srp-plan-prio__lbl { line-height: 1; }
+    .srp-plan-prio svg { opacity: 0.7; }
+    .srp-plan-status {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    .srp-plan-status__dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 2.5px rgba(34, 197, 94, 0.18);
+    }
+    .srp-plan-section {
+      margin: 0 0 12px;
+      padding: 0;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+    }
+    .srp-plan-section.is-collapsible .srp-plan-section__title {
+      width: 100%;
+      margin: 0 0 6px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      transition: color 0.15s ease;
+    }
+    .srp-plan-section.is-collapsible .srp-plan-section__title:hover {
+      color: #1f6feb;
+    }
+    .srp-plan-section__chev {
+      flex-shrink: 0;
+      color: var(--text-tertiary);
+      transition: transform 0.2s ease;
+    }
+    .srp-plan-section.is-collapsible:not(.is-collapsed) .srp-plan-section__chev {
+      transform: rotate(180deg);
+    }
+    .srp-plan-section.is-collapsible .srp-plan-section__body {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.55;
+      color: var(--text-secondary);
+      word-break: break-word;
+    }
+    .srp-plan-section.is-collapsible.is-collapsed .srp-plan-section__body {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      overflow: hidden;
+    }
+
+    .srp-plan-card {
+      margin: 0;
+      padding: 10px 12px 12px;
+      border-radius: 8px;
+      background: rgba(248, 250, 252, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      min-height: 200px;
+    }
+    /* 状态 1：占位（树未生成）— 撑满与状态 2 同高 */
+    .srp-plan-card.srp-plan-card--empty {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+    .srp-plan-card .srp-plan-card__empty {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+    .srp-plan-card__empty {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      gap: 6px;
+      padding: 6px 0 4px;
+      color: var(--text-tertiary);
+    }
+    .srp-plan-card__empty svg {
+      color: rgba(148, 163, 184, 0.7);
+      flex-shrink: 0;
+    }
+    .srp-plan-card__empty-text {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--text-tertiary);
+    }
+    .srp-plan-card.srp-plan-card--tree {
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 10px 10px 10px;
+      border-radius: 8px;
+      background: #fff;
+      border-color: rgba(15, 23, 42, 0.08);
+      --plan-onto: #a78bfa;
+      --plan-onto-rgb: 167 139 250;
+      --plan-onto-dark: #7c3aed;
+      --plan-agent: #34d399;
+      --plan-agent-rgb: 52 211 153;
+      --plan-agent-dark: #059669;
+    }
+    .srp-plan-card__head {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      color: var(--text-tertiary);
+    }
+    .srp-plan-card--tree .srp-plan-card__head {
+      padding-bottom: 6px;
+      border-bottom: 1px dashed rgba(148, 163, 184, 0.28);
+    }
+    .srp-plan-card__head svg { opacity: 0.7; }
+    .srp-plan-card__title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+    /* 状态 2 字号层级 */
+    .srp-plan-card--tree .srp-plan-card__title,
+    .srp-plan-card--tree .sdp-plan-section__title {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .srp-plan-card--tree .sdp-plan-tree__node {
+      font-size: 13px;
+    }
+    .srp-plan-card--tree .sdp-plan-tree__node-name {
+      font-weight: 400;
+    }
+    .srp-plan-card--tree .sdp-plan-tree__leaf {
+      font-size: 12px;
+    }
+    .srp-plan-card--tree .sdp-plan-tree__leaf-dot {
+      display: none;
+    }
+    .srp-plan-card--tree .srp-plan-card__head-tail {
+      margin-left: auto;
+      font-size: 10.5px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    /* 树节点 */
+    .sdp-plan-tree {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .sdp-plan-tree__branch { margin: 0; padding: 0; }
+    .sdp-plan-tree__node {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      padding: 5px 6px;
+      border-radius: 8px;
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      color: var(--text-primary);
+      font-size: 12px;
+      text-align: left;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .sdp-plan-tree__node:hover {
+      background: rgba(15, 23, 42, 0.04);
+    }
+    .sdp-plan-tree__chev {
+      color: var(--text-tertiary);
+      transition: transform 0.18s ease;
+      flex-shrink: 0;
+    }
+    .sdp-plan-tree__branch:not(.is-open) .sdp-plan-tree__chev { transform: rotate(-90deg); }
+    .sdp-plan-tree__node-icon { font-size: 13px; flex-shrink: 0; }
+    .sdp-plan-tree__node-name {
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sdp-plan-tree__node-count {
+      margin-left: auto;
+      padding: 1px 6px;
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.06);
+      color: var(--text-secondary);
+      font-size: 10px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .sdp-plan-tree__leaves {
+      list-style: none;
+      margin: 0;
+      padding: 2px 0 4px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      overflow: hidden;
+      max-height: 800px;
+      transition: max-height 0.25s ease, opacity 0.18s ease;
+    }
+    .sdp-plan-tree__branch:not(.is-open) .sdp-plan-tree__leaves {
+      max-height: 0;
+      opacity: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+    .sdp-plan-tree__leaf {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 6px 4px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 11.5px;
+      line-height: 1.35;
+      position: relative;
+      transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    }
+    .sdp-plan-tree__leaf::before {
+      content: "";
+      position: absolute;
+      left: -8px;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: rgba(148, 163, 184, 0.28);
+    }
+    .sdp-plan-tree__leaf:hover {
+      transform: translateX(1px);
+    }
+    .sdp-plan-tree__leaf:focus-visible {
+      outline: 2px solid rgba(15, 23, 42, 0.18);
+      outline-offset: 1px;
+    }
+    .sdp-plan-tree__leaf.is-pulsed {
+      animation: sdpPlanPulse 1.1s ease;
+    }
+    @keyframes sdpPlanPulse {
+      0%, 100% { box-shadow: none; }
+      50% { box-shadow: 0 0 0 3px rgb(var(--pulse-rgb, 15 23 42) / 0.18); }
+    }
+    .sdp-plan-tree__leaf-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ef4444;
+      flex-shrink: 0;
+    }
+    .sdp-plan-tree__leaf.is-done .sdp-plan-tree__leaf-dot { background: #22c55e; }
+    .sdp-plan-tree__leaf.is-done .sdp-plan-tree__leaf-name {
+      color: var(--text-secondary);
+      text-decoration: line-through;
+      text-decoration-color: rgba(0,0,0,0.2);
+    }
+    .sdp-plan-tree__leaf-name {
+      flex: 1 1 auto;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sdp-plan-tree__leaf-tag {
+      flex-shrink: 0;
+      padding: 1px 6px;
+      border-radius: 8px;
+      font-size: 9.5px;
+      font-weight: 600;
+      background: rgba(239, 68, 68, 0.12);
+      color: #b91c1c;
+      border: 1px solid rgba(239, 68, 68, 0.28);
+    }
+    .sdp-plan-tree__leaf.is-done .sdp-plan-tree__leaf-tag {
+      background: rgba(34, 197, 94, 0.12);
+      color: #15803d;
+      border-color: rgba(34, 197, 94, 0.28);
+    }
+
+    /* 三大区域 */
+    .sdp-plan-section {
+      border-radius: 8px;
+      margin-bottom: 7px;
+      overflow: visible;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+    .sdp-plan-section:last-child { margin-bottom: 0; }
+    .sdp-plan-section__head {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 8px 5px 10px;
+      background: rgba(248, 250, 252, 0.85);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+      min-height: 30px;
+    }
+    .sdp-plan-section__icon { font-size: 13px; flex-shrink: 0; line-height: 1; }
+    .sdp-plan-section__title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-primary);
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: 0.01em;
+    }
+    .sdp-plan-section__status {
+      flex-shrink: 0;
+      padding: 1px 7px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 1.35;
+      white-space: nowrap;
+    }
+    .sdp-plan-section__status.is-progress {
+      color: #b45309;
+      background: rgba(245, 158, 11, 0.14);
+      border: 1px solid rgba(217, 119, 6, 0.28);
+    }
+    .sdp-plan-section__status.is-done {
+      color: #15803d;
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.28);
+    }
+    .sdp-plan-section__trigger {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 8px;
+      border: 1px solid;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      line-height: 1.2;
+      transition: filter 0.14s ease, box-shadow 0.14s ease, transform 0.12s ease;
+      white-space: nowrap;
+    }
+    .sdp-plan-section__trigger:hover { filter: brightness(1.07); transform: translateY(-1px); }
+    .sdp-plan-section__trigger:disabled { opacity: 0.55; cursor: default; transform: none; filter: none; }
+    .sdp-plan-section__body { padding: 5px 6px 6px; }
+    .sdp-plan-section__body .sdp-plan-tree { gap: 1px; }
+
+    /* ── 状态 2 · 本体色系 #a78bfa ── */
+    .srp-plan-card--tree .sdp-plan-section--ontology {
+      border-radius: 8px;
+      border-color: rgb(var(--plan-onto-rgb) / 0.22);
+      background: #fff;
+    }
+    .srp-plan-card--tree .sdp-plan-section--ontology .sdp-plan-section__head {
+      background: #fff;
+      border-bottom-color: rgb(var(--plan-onto-rgb) / 0.14);
+    }
+    .srp-plan-card--tree .sdp-plan-section--ontology .sdp-plan-section__title {
+      color: var(--plan-onto-dark);
+    }
+    .srp-plan-card--tree .sdp-plan-section__trigger {
+      padding: 0;
+      border: none;
+      border-radius: 8px;
+      background: none;
+      color: #1F82EB;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .srp-plan-card--tree .sdp-plan-section__trigger:hover {
+      filter: none;
+      transform: none;
+      box-shadow: none;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .srp-plan-card--tree .sdp-plan-section__trigger:disabled {
+      color: var(--text-tertiary);
+      text-decoration: none;
+      opacity: 1;
+    }
+    .srp-plan-card--tree .sdp-plan-tree__node:hover,
+    .srp-plan-card--tree .sdp-plan-tree__leaf:hover {
+      background: rgba(15, 23, 42, 0.05);
+      color: var(--text-primary);
+    }
+    .srp-plan-card--tree .sdp-plan-section--ontology .sdp-plan-tree__node-count {
+      background: rgb(var(--plan-onto-rgb) / 0.14);
+      color: var(--plan-onto-dark);
+    }
+    .srp-plan-card--tree .sdp-plan-section--ontology .sdp-plan-tree__leaf::before {
+      background: rgb(var(--plan-onto-rgb) / 0.28);
+    }
+    .srp-plan-card--tree .sdp-plan-tree__leaf:focus-visible,
+    .srp-plan-card--tree .sdp-plan-tree__node:focus-visible {
+      outline-color: rgba(15, 23, 42, 0.18);
+    }
+    .srp-plan-card--tree .sdp-plan-tree__leaf.is-pulsed {
+      background: rgba(15, 23, 42, 0.06);
+      color: var(--text-primary);
+      --pulse-rgb: 15 23 42;
+    }
+    .srp-plan-card--tree .sdp-plan-tree__leaf-tag {
+      padding: 0;
+      border: none;
+      border-radius: 8px;
+      background: none;
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 1.35;
+    }
+    .srp-plan-card--tree .sdp-plan-tree__leaf:not(.is-done) .sdp-plan-tree__leaf-tag {
+      color: #d97706;
+    }
+
+    /* ── 状态 2 · 智能体系色 #34d399 ── */
+    .srp-plan-card--tree .sdp-plan-section--agent {
+      border-radius: 8px;
+      border-color: rgb(var(--plan-agent-rgb) / 0.22);
+      background: #fff;
+    }
+    .srp-plan-card--tree .sdp-plan-section--agent .sdp-plan-section__head {
+      background: #fff;
+      border-bottom-color: rgb(var(--plan-agent-rgb) / 0.14);
+    }
+    .srp-plan-card--tree .sdp-plan-section--agent .sdp-plan-section__title {
+      color: var(--plan-agent-dark);
+    }
+    .srp-plan-card--tree .sdp-plan-section--agent .sdp-plan-tree__node-count {
+      background: rgb(var(--plan-agent-rgb) / 0.14);
+      color: var(--plan-agent-dark);
+    }
+    .srp-plan-card--tree .sdp-plan-section--agent .sdp-plan-tree__leaf::before {
+      background: rgb(var(--plan-agent-rgb) / 0.28);
+    }
+  </style>
+  <style>
+    /*
+      AgentOS UI refresh.
+      The semantic --agentos-* contract below is the active visual layer; the
+      extracted component styles above remain as a behavior/reference snapshot.
+    */
+    :root {
+      --agentos-neutral-text-color-text: rgba(0 0 0 / 0.88);
+      --agentos-neutral-text-color-text-secondary: rgba(0 0 0 / 0.65);
+      --agentos-neutral-text-color-text-tertiary: rgba(0 0 0 / 0.45);
+      --agentos-neutral-text-color-text-quaternary: rgba(0 0 0 / 0.25);
+      --agentos-neutral-text-color-text-light-solid: rgb(255 255 255);
+      --agentos-neutral-bg-color-bg-layout: rgb(247 248 250);
+      --agentos-neutral-bg-color-bg-base: rgb(255 255 255);
+      --agentos-neutral-bg-color-bg-container: var(--agentos-neutral-bg-color-bg-base);
+      --agentos-neutral-bg-color-bg-elevated: rgb(250 250 250);
+      --agentos-neutral-border-color-border: rgb(217 217 217);
+      --agentos-neutral-border-color-border-secondary: rgb(240 240 240);
+      --agentos-neutral-fill-color-fill-secondary: rgba(0 0 0 / 0.06);
+      --agentos-neutral-fill-color-fill-tertiary: rgba(0 0 0 / 0.03);
+      --agentos-brand-primary-color-primary: rgb(31 130 235);
+      --agentos-brand-primary-color-primary-hover: rgb(24 114 212);
+      --agentos-brand-primary-color-primary-bg: rgb(233 242 253);
+      --agentos-brand-error-color-error: rgb(235 31 42);
+      --agentos-brand-error-color-error-bg: rgb(253 233 234);
+      --agentos-brand-success-color-success: rgb(95 203 59);
+      --agentos-brand-success-color-success-bg: rgb(243 252 235);
+      --agentos-brand-warning-color-warning: rgb(235 162 31);
+      --agentos-brand-warning-color-warning-bg: rgb(253 248 233);
+      --agentos-font-family-cn: "PingFang SC";
+      --agentos-font-family-en: "SF Pro";
+      --agentos-font-size-xs: 10px;
+      --agentos-font-size-sm: 12px;
+      --agentos-font-size-md: 13px;
+      --agentos-font-size-base: 14px;
+      --agentos-font-size-xl: 20px;
+      --agentos-font-weight-normal: 400;
+      --agentos-font-weight-medium: 500;
+      --agentos-font-weight-semibold: 600;
+      --agentos-font-leading-14: 14px;
+      --agentos-font-leading-18: 18px;
+      --agentos-font-leading-20: 20px;
+      --agentos-font-leading-28: 28px;
+      --agentos-font-tracking-tight: -0.4px;
+      --agentos-font-tracking-normal: 0;
+      --agentos-radius-rounded-sm4: 4px;
+      --agentos-radius-rounded-md6: 6px;
+      --agentos-radius-rounded-lg8: 8px;
+      --agentos-radius-rounded-xl12: 12px;
+      --agentos-radius-rounded2-xl16: 16px;
+      --agentos-radius-rounded-full999: 999px;
+      --agentos-spacing-margin-xxs4: 4px;
+      --agentos-spacing-margin-xs8: 8px;
+      --agentos-spacing-margin-sm12: 12px;
+      --agentos-spacing-margin16: 16px;
+      --agentos-spacing-margin-md20: 20px;
+      --agentos-spacing-margin-lg24: 24px;
+      --agentos-spacing-margin-xl32: 32px;
+      --agentos-spacing-padding-xxs4: 4px;
+      --agentos-spacing-padding-xs8: 8px;
+      --agentos-spacing-padding-sm12: 12px;
+      --agentos-spacing-padding16: 16px;
+      --agentos-spacing-padding-lg24: 24px;
+      --agentos-spacing-padding-xl32: 32px;
+      --agentos-spacing-padding6: 6px;
+      --agentos-spacing-gap-xxs4: 4px;
+      --agentos-spacing-gap-xs8: 8px;
+      --agentos-spacing-gap-sm12: 12px;
+      --agentos-spacing-gap16: 16px;
+      --agentos-control-height-control-height-sm24: 24px;
+      --agentos-control-height-control-height-md32: 32px;
+      --agentos-icon-size-icon-size-sm12: 12px;
+      --agentos-icon-size-icon-size-md16: 16px;
+      --agentos-focus-ring: 0 0 0 3px rgba(31 130 235 / 0.16);
+      --agentos-shadow-card: 0 1px 2px rgba(0 0 0 / 0.03);
+      --agentos-shadow-card-hover: 0 10px 28px rgba(0 0 0 / 0.07);
+      --agentos-architecture-grid: rgba(0 0 0 / 0.035);
+      --agentos-architecture-line: rgba(0 0 0 / 0.12);
+      --agentos-architecture-line-soft: rgba(0 0 0 / 0.065);
+      --agentos-architecture-blue-soft: rgba(31 130 235 / 0.09);
+      --agentos-architecture-mint: rgb(39 180 139);
+      --agentos-architecture-mint-soft: rgba(39 180 139 / 0.10);
+      --agentos-shadow-architecture: 0 8px 24px rgba(36 44 51 / 0.07), 0 1px 3px rgba(36 44 51 / 0.04);
+      --agentos-ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: var(--agentos-spacing-margin-xl32);
+      background: var(--agentos-neutral-bg-color-bg-layout);
+      color: var(--agentos-neutral-text-color-text);
+      font-family: Inter, var(--agentos-font-family-cn), var(--agentos-font-family-en), -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: var(--agentos-font-size-sm);
+      line-height: var(--agentos-font-leading-18);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { font: inherit; }
+    button:focus-visible,
+    [tabindex="0"]:focus-visible {
+      outline: none;
+      box-shadow: var(--agentos-focus-ring);
+    }
+
+    .page-hd {
+      max-width: 960px;
+      margin: 0 auto var(--agentos-spacing-margin-lg24);
+      text-align: left;
+    }
+    .page-hd__eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xxs4);
+      margin-bottom: var(--agentos-spacing-margin-xs8);
+      color: var(--agentos-brand-primary-color-primary);
+      font-size: var(--agentos-font-size-sm);
+      font-weight: var(--agentos-font-weight-semibold);
+      line-height: var(--agentos-font-leading-18);
+    }
+    .page-hd h1 {
+      margin: 0 0 var(--agentos-spacing-margin-xxs4);
+      font-size: var(--agentos-font-size-xl);
+      font-weight: var(--agentos-font-weight-semibold);
+      line-height: var(--agentos-font-leading-28);
+      letter-spacing: var(--agentos-font-tracking-tight);
+    }
+    .page-hd p {
+      margin: 0;
+      color: var(--agentos-neutral-text-color-text-tertiary);
+      font-size: var(--agentos-font-size-md);
+      line-height: var(--agentos-font-leading-20);
+    }
+
+    .plan-demo {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 472px));
+      gap: var(--agentos-spacing-gap16);
+      max-width: 960px;
+      margin: 0 auto;
+      align-items: stretch;
+    }
+    .plan-demo__col {
+      display: flex;
+      min-width: 0;
+      min-height: 0;
+      flex-direction: column;
+      gap: var(--agentos-spacing-gap-xs8);
+    }
+    .plan-demo__label {
+      display: flex;
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xs8);
+      margin: 0;
+      color: var(--agentos-neutral-text-color-text-tertiary);
+      font-size: var(--agentos-font-size-sm);
+      font-weight: var(--agentos-font-weight-normal);
+      line-height: var(--agentos-font-leading-18);
+      letter-spacing: var(--agentos-font-tracking-normal);
+    }
+    .plan-demo__label span {
+      display: inline-flex;
+      align-items: center;
+      height: var(--agentos-control-height-control-height-sm24);
+      margin: 0;
+      padding: 0 var(--agentos-spacing-padding-xs8);
+      border: 1px solid var(--agentos-neutral-border-color-border-secondary);
+      border-radius: var(--agentos-radius-rounded-full999);
+      background: var(--agentos-neutral-bg-color-bg-container);
+      color: var(--agentos-neutral-text-color-text-secondary);
+      font-size: var(--agentos-font-size-xs);
+      font-weight: var(--agentos-font-weight-medium);
+    }
+
+    .plan-tree-root {
+      display: flex;
+      width: 100%;
+      flex: 1;
+      min-height: 0;
+    }
+    .sidebar-srp-plan {
+      display: flex;
+      width: 100%;
+      min-height: 0;
+      flex: 1;
+      flex-direction: column;
+      padding: var(--agentos-spacing-padding16);
+      border: 1px solid var(--agentos-neutral-border-color-border-secondary);
+      border-radius: var(--agentos-radius-rounded-xl12);
+      background: var(--agentos-neutral-bg-color-bg-container);
+      box-shadow: var(--agentos-shadow-card);
+    }
+
+    .srp-plan-head {
+      margin-bottom: var(--agentos-spacing-margin-sm12);
+    }
+    .srp-plan-head__row {
+      display: flex;
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xs8);
+      min-height: var(--agentos-control-height-control-height-sm24);
+    }
+    .srp-plan-head__title {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--agentos-neutral-text-color-text);
+      font-size: var(--agentos-font-size-base);
+      font-weight: var(--agentos-font-weight-semibold);
+      line-height: var(--agentos-font-leading-20);
+      letter-spacing: var(--agentos-font-tracking-normal);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .srp-plan-head__actions {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xs8);
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .srp-plan-status {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xxs4);
+      flex-shrink: 0;
+      color: var(--agentos-brand-warning-color-warning);
+      font-size: var(--agentos-font-size-xs);
+      font-weight: var(--agentos-font-weight-medium);
+      line-height: var(--agentos-font-leading-14);
+    }
+    .srp-plan-status__dot {
+      width: 6px;
+      height: 6px;
+      border-radius: var(--agentos-radius-rounded-full999);
+      background: var(--agentos-brand-warning-color-warning);
+      box-shadow: none;
+    }
+    .srp-plan-audit-btn,
+    .sdp-plan-section__trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xxs4);
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--agentos-brand-primary-color-primary);
+      font-size: var(--agentos-font-size-sm);
+      font-weight: var(--agentos-font-weight-normal);
+      line-height: var(--agentos-font-leading-18);
+      cursor: pointer;
+    }
+    .srp-plan-audit-btn:hover,
+    .sdp-plan-section__trigger:hover {
+      color: var(--agentos-brand-primary-color-primary-hover);
+      text-decoration: none;
+    }
+    .srp-plan-prio {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xxs4);
+      height: var(--agentos-control-height-control-height-sm24);
+      padding: 0 var(--agentos-spacing-padding-xs8);
+      border: 1px solid var(--agentos-brand-error-color-error-bg);
+      border-radius: var(--agentos-radius-rounded-md6);
+      background: var(--agentos-brand-error-color-error-bg);
+      color: var(--agentos-brand-error-color-error);
+      font-size: var(--agentos-font-size-xs);
+      font-weight: var(--agentos-font-weight-semibold);
+      cursor: pointer;
+    }
+    .srp-plan-prio:hover { background: var(--agentos-brand-error-color-error-bg); }
+
+    .srp-plan-section {
+      margin: 0 0 var(--agentos-spacing-margin-sm12);
+      padding: 0 0 var(--agentos-spacing-padding-sm12);
+      border: 0;
+      border-bottom: 1px solid var(--agentos-neutral-border-color-border-secondary);
+      border-radius: 0;
+      background: transparent;
+    }
+    .srp-plan-section.is-collapsible .srp-plan-section__title {
+      display: inline-flex;
+      align-items: center;
+      width: auto;
+      gap: var(--agentos-spacing-gap-xxs4);
+      margin: 0 0 var(--agentos-spacing-margin-xxs4);
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--agentos-neutral-text-color-text-secondary);
+      font-size: var(--agentos-font-size-sm);
+      font-weight: var(--agentos-font-weight-medium);
+      line-height: var(--agentos-font-leading-18);
+      cursor: pointer;
+    }
+    .srp-plan-section.is-collapsible .srp-plan-section__title:hover {
+      color: var(--agentos-neutral-text-color-text);
+    }
+    .srp-plan-section__chev {
+      color: var(--agentos-neutral-text-color-text-quaternary);
+      transition: transform 0.14s ease;
+    }
+    .srp-plan-section.is-collapsible:not(.is-collapsed) .srp-plan-section__chev {
+      transform: rotate(180deg);
+    }
+    .srp-plan-section.is-collapsible .srp-plan-section__body {
+      margin: 0;
+      color: var(--agentos-neutral-text-color-text-tertiary);
+      font-size: var(--agentos-font-size-sm);
+      line-height: var(--agentos-font-leading-18);
+    }
+
+    .srp-plan-card,
+    .srp-plan-card.srp-plan-card--tree {
+      display: flex;
+      min-height: 432px;
+      flex: 1;
+      flex-direction: column;
+      overflow: auto;
+      margin: 0;
+      padding: var(--agentos-spacing-padding-sm12);
+      border: 1px solid var(--agentos-neutral-border-color-border-secondary);
+      border-radius: var(--agentos-radius-rounded-lg8);
+      background: var(--agentos-neutral-bg-color-bg-elevated);
+    }
+    .srp-plan-card.srp-plan-card--tree {
+      background: var(--agentos-neutral-bg-color-bg-container);
+    }
+    .srp-plan-card__head,
+    .srp-plan-card--tree .srp-plan-card__head {
+      display: flex;
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xs8);
+      min-height: var(--agentos-control-height-control-height-sm24);
+      margin-bottom: var(--agentos-spacing-margin-xs8);
+      padding-bottom: var(--agentos-spacing-padding-xs8);
+      border-bottom: 1px solid var(--agentos-neutral-border-color-border-secondary);
+      color: var(--agentos-neutral-text-color-text-tertiary);
+    }
+    .srp-plan-card__head svg { opacity: 1; }
+    .srp-plan-card__title,
+    .srp-plan-card--tree .srp-plan-card__title {
+      color: var(--agentos-neutral-text-color-text-secondary);
+      font-size: var(--agentos-font-size-sm);
+      font-weight: var(--agentos-font-weight-semibold);
+      line-height: var(--agentos-font-leading-18);
+    }
+    .srp-plan-card__head-tail {
+      margin-left: auto;
+      color: var(--agentos-neutral-text-color-text-quaternary);
+      font-size: var(--agentos-font-size-xs);
+      font-weight: var(--agentos-font-weight-normal);
+      letter-spacing: var(--agentos-font-tracking-normal);
+    }
+    .srp-plan-card__empty {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--agentos-spacing-gap-xs8);
+      padding: var(--agentos-spacing-padding-lg24);
+      color: var(--agentos-neutral-text-color-text-quaternary);
+      text-align: center;
+    }
+    .srp-plan-card__empty svg { color: var(--agentos-neutral-text-color-text-quaternary); }
+    .srp-plan-card__empty-text {
+      margin: 0;
+      color: var(--agentos-neutral-text-color-text-tertiary);
+      font-size: var(--agentos-font-size-sm);
+      line-height: var(--agentos-font-leading-18);
+    }
+    .srp-plan-card.is-blueprint {
+      min-height: 0;
+      padding: 4px 2px 8px;
+      overflow: visible;
+      background: var(--agentos-neutral-bg-color-bg-container);
+    }
+    .plan-blueprint__top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 24px;
+      padding: 0 4px 0 8px;
+    }
+    .plan-blueprint__title {
+      color: var(--agentos-neutral-text-color-text-secondary);
+      font-size: 12.5px;
+      font-weight: var(--agentos-font-weight-semibold);
+      line-height: 18px;
+    }
+    .plan-blueprint__expand {
+      display: inline-flex;
+      width: 22px;
+      height: 22px;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border: 0;
+      border-radius: var(--agentos-radius-rounded-md6);
+      background: transparent;
+      color: var(--agentos-neutral-text-color-text-tertiary);
+      opacity: 0;
+      cursor: pointer;
+      transition: opacity 0.14s ease, background 0.14s ease, color 0.14s ease;
+    }
+    .srp-plan-card.is-blueprint:hover .plan-blueprint__expand,
+    .srp-plan-card.is-blueprint:focus-within .plan-blueprint__expand {
+      opacity: 1;
+    }
+    .plan-blueprint__expand:hover {
+      background: var(--agentos-neutral-fill-color-fill-secondary);
+      color: var(--agentos-neutral-text-color-text);
+    }
+    .plan-blueprint svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+      font-family: inherit;
+    }
+    .pb-plate { --pb-face: var(--agentos-brand-primary-color-primary-bg); --pb-stroke: var(--agentos-brand-primary-color-primary); --pb-left: var(--agentos-architecture-blue-soft); --pb-right: var(--agentos-architecture-blue-soft); --pb-ink: var(--agentos-brand-primary-color-primary); }
+    .pb-plate .pb-top { fill: var(--pb-face); stroke: var(--pb-stroke); stroke-width: 0.72; stroke-linejoin: round; }
+    .pb-plate .pb-left { fill: var(--pb-left); stroke: var(--pb-stroke); stroke-width: 0.72; stroke-linejoin: round; }
+    .pb-plate .pb-right { fill: var(--pb-right); stroke: var(--pb-stroke); stroke-width: 0.72; stroke-linejoin: round; }
+    .pb-plate .pb-s { fill: none; stroke: var(--pb-ink); stroke-width: 0.7; stroke-linecap: round; }
+    .pb-plate .pb-f { fill: var(--pb-ink); fill-opacity: 0.14; stroke: var(--pb-ink); stroke-width: 0.7; }
+    .pb-plate .pb-d { fill: var(--pb-ink); stroke: none; }
+    .pb-plate .pb-pat * { vector-effect: non-scaling-stroke; }
+    .pb-title { font-size: 12px; font-weight: 600; fill: var(--agentos-neutral-text-color-text); }
+    .pb-sub { font-size: 11px; fill: var(--agentos-neutral-text-color-text-tertiary); }
+    .pb-link { fill: none; stroke: var(--agentos-brand-primary-color-primary); stroke-opacity: 0.28; stroke-width: 0.75; }
+
+    .sdp-plan-section,
+    .srp-plan-card--tree .sdp-plan-section--ontology,
+    .srp-plan-card--tree .sdp-plan-section--agent {
+      margin: 0 0 var(--agentos-spacing-margin-xs8);
+      overflow: hidden;
+      border: 1px solid var(--agentos-neutral-border-color-border-secondary);
+      border-radius: var(--agentos-radius-rounded-lg8);
+      background: var(--agentos-neutral-bg-color-bg-container);
+    }
+    .sdp-plan-section:last-child { margin-bottom: 0; }
+    .sdp-plan-section__head,
+    .srp-plan-card--tree .sdp-plan-section--ontology .sdp-plan-section__head,
+    .srp-plan-card--tree .sdp-plan-section--agent .sdp-plan-section__head {
+      display: flex;
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xs8);
+      min-height: var(--agentos-control-height-control-height-md32);
+      padding: var(--agentos-spacing-padding-xxs4) var(--agentos-spacing-padding-xs8);
+      border-bottom: 1px solid var(--agentos-neutral-border-color-border-secondary);
+      background: var(--agentos-neutral-bg-color-bg-elevated);
+    }
+    .sdp-plan-section__icon {
+      display: inline-flex;
+      width: var(--agentos-icon-size-icon-size-md16);
+      height: var(--agentos-icon-size-icon-size-md16);
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--agentos-neutral-text-color-text-secondary);
+    }
+    .sdp-plan-section__icon svg {
+      width: var(--agentos-icon-size-icon-size-md16);
+      height: var(--agentos-icon-size-icon-size-md16);
+    }
+    .sdp-plan-section__title,
+    .srp-plan-card--tree .sdp-plan-section__title,
+    .srp-plan-card--tree .sdp-plan-section--ontology .sdp-plan-section__title,
+    .srp-plan-card--tree .sdp-plan-section--agent .sdp-plan-section__title {
+      flex: 1;
+      color: var(--agentos-neutral-text-color-text);
+      font-size: var(--agentos-font-size-sm);
+      font-weight: var(--agentos-font-weight-medium);
+      line-height: var(--agentos-font-leading-18);
+      letter-spacing: var(--agentos-font-tracking-normal);
+    }
+    .sdp-plan-section__status {
+      flex-shrink: 0;
+      padding: 1px var(--agentos-spacing-padding6);
+      border-radius: var(--agentos-radius-rounded-full999);
+      font-size: var(--agentos-font-size-xs);
+      font-weight: var(--agentos-font-weight-medium);
+      line-height: var(--agentos-font-leading-14);
+    }
+    .sdp-plan-section__status.is-progress {
+      border: 0;
+      background: var(--agentos-brand-warning-color-warning-bg);
+      color: var(--agentos-brand-warning-color-warning);
+    }
+    .sdp-plan-section__trigger {
+      flex-shrink: 0;
+    }
+    .sdp-plan-section__trigger:disabled {
+      color: var(--agentos-neutral-text-color-text-quaternary);
+      cursor: default;
+    }
+    .sdp-plan-section__body { padding: var(--agentos-spacing-padding-xxs4); }
+
+    .sdp-plan-tree {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .sdp-plan-tree__branch { margin: 0; padding: 0; }
+    .sdp-plan-tree__node {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      gap: var(--agentos-spacing-gap-xs8);
+      min-height: var(--agentos-control-height-control-height-md32);
+      padding: var(--agentos-spacing-padding6) var(--agentos-spacing-padding-xs8);
+      border: 0;
+      border-radius: var(--agentos-radius-rounded-md6);
+      background: transparent;
+      color: var(--agentos-neutral-text-color-text);
+      font-size: var(--agentos-font-size-sm);
+      line-height: var(--agentos-font-leading-18);
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.14s ease;
+    }
+    .sdp-plan-tree__node:hover,
+    .srp-plan-card--tree .sdp-plan-tree__node:hover,
+    .srp-plan-card--tree .sdp-plan-tree__leaf:hover {
+      background: var(--agentos-neutral-fill-color-fill-tertiary);
+      color: var(--agentos-neutral-text-color-text);
+    }
+    .sdp-plan-tree__chev {
+      flex-shrink: 0;
+      color: var(--agentos-neutral-text-color-text-quaternary);
+      transition: transform 0.14s ease;
+    }
+    .sdp-plan-tree__branch:not(.is-open) .sdp-plan-tree__chev { transform: rotate(-90deg); }
+    .sdp-plan-tree__node-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: var(--agentos-icon-size-icon-size-md16);
+      height: var(--agentos-icon-size-icon-size-md16);
+      flex-shrink: 0;
+      color: var(--agentos-neutral-text-color-text-secondary);
+    }
+    .sdp-plan-tree__node-icon svg {
+      width: var(--agentos-icon-size-icon-size-md16);
+      height: var(--agentos-icon-size-icon-size-md16);
+    }
+    .sdp-plan-tree__node-name {
+      overflow: hidden;
+      color: var(--agentos-neutral-text-color-text);
+      font-weight: var(--agentos-font-weight-normal);
+      letter-spacing: var(--agentos-font-tracking-normal);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .sdp-plan-tree__node-count,
+    .srp-plan-card--tree .sdp-plan-section--ontology .sdp-plan-tree__node-count,
+    .srp-plan-card--tree .sdp-plan-section--agent .sdp-plan-tree__node-count {
+      min-width: var(--agentos-control-height-control-height-sm24);
+      margin-left: auto;
+      padding: 1px var(--agentos-spacing-padding6);
+      border-radius: var(--agentos-radius-rounded-full999);
+      background: var(--agentos-neutral-fill-color-fill-secondary);
+      color: var(--agentos-neutral-text-color-text-tertiary);
+      font-size: var(--agentos-font-size-xs);
+      font-weight: var(--agentos-font-weight-medium);
+      line-height: var(--agentos-font-leading-14);
+      text-align: center;
+    }
+    .sdp-plan-tree__leaves {
+      display: flex;
+      max-height: 800px;
+      flex-direction: column;
+      gap: 1px;
+      overflow: hidden;
+      margin: 0;
+      padding: 0 0 var(--agentos-spacing-padding-xxs4) var(--agentos-spacing-padding-xl32);
+      list-style: none;
+      transition: max-height 0.2s ease, opacity 0.14s ease;
+    }
+    .sdp-plan-tree__branch:not(.is-open) .sdp-plan-tree__leaves {
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      opacity: 0;
+    }
+    .sdp-plan-tree__leaf {
+      display: flex;
+      position: relative;
+      align-items: center;
+      min-height: 28px;
+      gap: var(--agentos-spacing-gap-xs8);
+      padding: var(--agentos-spacing-padding-xxs4) var(--agentos-spacing-padding-xs8);
+      border-radius: var(--agentos-radius-rounded-md6);
+      color: var(--agentos-neutral-text-color-text-secondary);
+      font-size: var(--agentos-font-size-sm);
+      line-height: var(--agentos-font-leading-18);
+      cursor: pointer;
+      transition: background 0.14s ease;
+    }
+    .sdp-plan-tree__leaf::before {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: -8px;
+      width: 1px;
+      background: var(--agentos-neutral-border-color-border-secondary);
+      content: "";
+    }
+    .sdp-plan-tree__leaf:hover { transform: none; }
+    .sdp-plan-tree__leaf-name {
+      min-width: 0;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .sdp-plan-tree__leaf-tag,
+    .srp-plan-card--tree .sdp-plan-tree__leaf-tag {
+      flex-shrink: 0;
+      padding: 1px var(--agentos-spacing-padding6);
+      border: 0;
+      border-radius: var(--agentos-radius-rounded-full999);
+      background: var(--agentos-neutral-fill-color-fill-secondary);
+      color: var(--agentos-neutral-text-color-text-tertiary);
+      font-size: var(--agentos-font-size-xs);
+      font-weight: var(--agentos-font-weight-medium);
+      line-height: var(--agentos-font-leading-14);
+    }
+    .srp-plan-card--tree .sdp-plan-tree__leaf:not(.is-done) .sdp-plan-tree__leaf-tag {
+      color: var(--agentos-neutral-text-color-text-tertiary);
+    }
+    .srp-plan-card--tree .sdp-plan-tree__leaf.is-pulsed {
+      background: var(--agentos-brand-primary-color-primary-bg);
+      color: var(--agentos-neutral-text-color-text);
+      animation: none;
+    }
+    .sdp-plan-tree__leaf-dot { display: none; }
+
+    .demo-tabs {
+      display: flex;
+      width: max-content;
+      max-width: 960px;
+      height: var(--agentos-control-height-control-height-md32);
+      align-items: center;
+      gap: 2px;
+      margin: 0 auto var(--agentos-spacing-margin16);
+      padding: 2px;
+      border-radius: var(--agentos-radius-rounded-lg8);
+      background: var(--agentos-neutral-fill-color-fill-secondary);
+    }
+    .demo-tab {
+      height: 28px;
+      padding: 0 var(--agentos-spacing-padding-sm12);
+      border: 0;
+      border-radius: var(--agentos-radius-rounded-md6);
+      background: transparent;
+      color: var(--agentos-neutral-text-color-text-tertiary);
+      font-size: var(--agentos-font-size-sm);
+      font-weight: var(--agentos-font-weight-medium);
+      cursor: pointer;
+      transition: color 420ms var(--agentos-ease-spring), background 420ms var(--agentos-ease-spring), transform 420ms var(--agentos-ease-spring);
+    }
+    .demo-tab:hover { color: var(--agentos-neutral-text-color-text); }
+    .demo-tab:active { transform: scale(0.97); }
+    .demo-tab.is-active {
+      background: var(--agentos-neutral-bg-color-bg-container);
+      color: var(--agentos-neutral-text-color-text);
+      box-shadow: var(--agentos-shadow-card);
+    }
+    .demo-panel[hidden] { display: none; }
+
+    .architecture-stage {
+      display: grid;
+      grid-template-columns: 290px minmax(0, 1fr);
+      gap: 56px;
+      max-width: 960px;
+      min-height: 680px;
+      margin: 0 auto;
+      padding: 40px 48px 48px;
+      overflow: hidden;
+      border-radius: var(--agentos-radius-rounded2-xl16);
+      background: var(--agentos-neutral-bg-color-bg-container);
+      box-shadow: inset 0 0 0 1px var(--agentos-neutral-border-color-border-secondary);
+    }
+    .architecture-preview {
+      min-width: 0;
+    }
+    .architecture-preview__measure {
+      display: flex;
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xs8);
+      margin-bottom: var(--agentos-spacing-margin-sm12);
+      color: var(--agentos-neutral-text-color-text-quaternary);
+      font-size: var(--agentos-font-size-xs);
+      font-weight: var(--agentos-font-weight-medium);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+    .architecture-preview__measure::after {
+      height: 1px;
+      flex: 1;
+      background: var(--agentos-architecture-line-soft);
+      content: "";
+    }
+    .architecture-shell {
+      padding: var(--agentos-spacing-padding-xxs4);
+      border-radius: var(--agentos-radius-rounded-xl12);
+      background: var(--agentos-neutral-border-color-border-secondary);
+      box-shadow: var(--agentos-shadow-architecture);
+    }
+    .architecture-sidebar {
+      position: relative;
+      min-height: 600px;
+      overflow: hidden;
+      padding: var(--agentos-spacing-padding16) var(--agentos-spacing-padding-sm12) var(--agentos-spacing-padding-lg24);
+      border-radius: var(--agentos-radius-rounded-lg8);
+      background: var(--agentos-neutral-bg-color-bg-container);
+      box-shadow: inset 0 1px 0 var(--agentos-neutral-bg-color-bg-base);
+    }
+    .architecture-sidebar::before {
+      display: none;
+      content: none;
+    }
+    .architecture-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--agentos-spacing-gap-xs8);
+      margin-bottom: var(--agentos-spacing-margin-md20);
+      padding: 0 var(--agentos-spacing-padding-xxs4);
+    }
+    .architecture-head__kicker {
+      margin-bottom: 2px;
+      color: var(--agentos-neutral-text-color-text-quaternary);
+      font-size: 9px;
+      font-weight: var(--agentos-font-weight-semibold);
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+    .architecture-head__title {
+      margin: 0;
+      color: var(--agentos-neutral-text-color-text);
+      font-size: var(--agentos-font-size-base);
+      font-weight: var(--agentos-font-weight-semibold);
+      line-height: var(--agentos-font-leading-20);
+      letter-spacing: -0.2px;
+    }
+    .architecture-head__status {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xxs4);
+      padding: 3px var(--agentos-spacing-padding6);
+      border-radius: var(--agentos-radius-rounded-full999);
+      background: var(--agentos-brand-warning-color-warning-bg);
+      color: var(--agentos-brand-warning-color-warning);
+      font-size: 9px;
+      font-weight: var(--agentos-font-weight-medium);
+      white-space: nowrap;
+    }
+    .architecture-head__status::before {
+      width: 5px;
+      height: 5px;
+      border-radius: var(--agentos-radius-rounded-full999);
+      background: currentColor;
+      content: "";
+    }
+    .architecture-map {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: var(--agentos-spacing-gap-sm12);
+    }
+    .architecture-sidebar > .architecture-map,
+    .architecture-sidebar > .architecture-legend {
+      display: none;
+    }
+    .architecture-iso {
+      position: relative;
+      margin: -4px -6px 0;
+      padding: 0;
+    }
+    .architecture-sidebar {
+      min-height: 520px;
+      max-height: 760px;
+      overflow-y: auto;
+    }
+    .architecture-iso svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+    .plan-iso-plate {
+      --agentos-plan-iso-face: var(--agentos-neutral-bg-color-bg-container);
+      --agentos-plan-iso-side-left: var(--agentos-neutral-bg-color-bg-elevated);
+      --agentos-plan-iso-side-right: var(--agentos-neutral-fill-color-fill-secondary);
+      --agentos-plan-iso-stroke: var(--agentos-neutral-border-color-border);
+      --agentos-plan-iso-pattern: var(--agentos-neutral-text-color-text-quaternary);
+      cursor: pointer;
+    }
+    .plan-iso-plate__lift {
+      transition: transform 560ms var(--agentos-ease-spring);
+    }
+    .plan-iso-plate__top {
+      fill: var(--agentos-plan-iso-face);
+      stroke: var(--agentos-plan-iso-stroke);
+      stroke-width: 0.9;
+      stroke-linejoin: round;
+      transition: fill 560ms var(--agentos-ease-spring), stroke 560ms var(--agentos-ease-spring);
+    }
+    .plan-iso-plate__left {
+      fill: var(--agentos-plan-iso-side-left);
+      stroke: var(--agentos-plan-iso-stroke);
+      stroke-width: 0.9;
+      stroke-linejoin: round;
+    }
+    .plan-iso-plate__right {
+      fill: var(--agentos-plan-iso-side-right);
+      stroke: var(--agentos-plan-iso-stroke);
+      stroke-width: 0.9;
+      stroke-linejoin: round;
+    }
+    .plan-iso-plate__shadow {
+      fill: var(--agentos-neutral-text-color-text);
+      opacity: 0.035;
+      transition: opacity 560ms var(--agentos-ease-spring);
+    }
+    .plan-iso-plate__pattern * {
+      fill: none;
+      stroke: var(--agentos-plan-iso-pattern);
+      stroke-width: 0.85;
+      vector-effect: non-scaling-stroke;
+    }
+    .plan-iso-plate__pattern .is-fill {
+      fill: var(--agentos-plan-iso-face);
+    }
+    .plan-iso-plate__pattern .is-accent {
+      fill: var(--agentos-architecture-mint);
+      stroke: none;
+    }
+    .plan-iso-plate.is-ontology {
+      --agentos-plan-iso-face: var(--agentos-architecture-mint-soft);
+      --agentos-plan-iso-side-left: var(--agentos-architecture-mint-soft);
+      --agentos-plan-iso-side-right: var(--agentos-architecture-mint-soft);
+      --agentos-plan-iso-stroke: var(--agentos-architecture-mint);
+      --agentos-plan-iso-pattern: var(--agentos-architecture-mint);
+    }
+    .plan-iso-plate.is-building {
+      --agentos-plan-iso-face: var(--agentos-brand-primary-color-primary-bg);
+      --agentos-plan-iso-side-left: var(--agentos-architecture-blue-soft);
+      --agentos-plan-iso-side-right: var(--agentos-architecture-blue-soft);
+      --agentos-plan-iso-stroke: var(--agentos-brand-primary-color-primary);
+      --agentos-plan-iso-pattern: var(--agentos-brand-primary-color-primary);
+    }
+    .plan-iso-plate.is-building .plan-iso-plate__top {
+      stroke-dasharray: 4 3;
+      animation: planIsoMarch 1.4s linear infinite;
+    }
+    .plan-iso-plate.is-building .plan-iso-plate__lift {
+      transform: translateY(-2px);
+    }
+    .plan-iso-plate:hover .plan-iso-plate__lift,
+    .plan-iso-plate.is-selected .plan-iso-plate__lift {
+      transform: translateY(-3px);
+    }
+    .plan-iso-plate:hover .plan-iso-plate__top,
+    .plan-iso-plate.is-selected .plan-iso-plate__top {
+      stroke: var(--agentos-neutral-text-color-text);
+      stroke-width: 1.2;
+    }
+    .plan-iso-fiber {
+      fill: none;
+      stroke: var(--agentos-architecture-line);
+      stroke-width: 0.7;
+    }
+    .plan-iso-fiber.is-live {
+      stroke: var(--agentos-architecture-mint);
+      opacity: 0.55;
+    }
+    .plan-iso-particle {
+      fill: var(--agentos-architecture-mint);
+    }
+    .plan-iso-leader {
+      fill: none;
+      stroke: var(--agentos-architecture-line);
+      stroke-width: 0.8;
+    }
+    .plan-iso-leader-dot {
+      fill: var(--agentos-neutral-text-color-text-quaternary);
+    }
+    .plan-iso-label {
+      fill: var(--agentos-neutral-text-color-text-secondary);
+      font-size: 12px;
+      font-weight: var(--agentos-font-weight-semibold);
+      letter-spacing: 0.1px;
+      pointer-events: none;
+    }
+    .plan-iso-label.is-active {
+      fill: var(--agentos-brand-primary-color-primary);
+    }
+    .plan-iso-label.is-ontology {
+      fill: var(--agentos-architecture-mint);
+    }
+    .plan-iso-meta {
+      fill: var(--agentos-neutral-text-color-text-quaternary);
+      font-size: 10.5px;
+      font-weight: var(--agentos-font-weight-normal);
+      pointer-events: none;
+    }
+    .plan-iso-caption {
+      fill: var(--agentos-neutral-text-color-text-quaternary);
+      font-size: 9px;
+      font-weight: var(--agentos-font-weight-semibold);
+      letter-spacing: 1px;
+    }
+    .architecture-iso-key {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: -2px var(--agentos-spacing-margin-xxs4) 0;
+      padding-top: var(--agentos-spacing-padding-xs8);
+      border-top: 1px solid var(--agentos-neutral-border-color-border-secondary);
+      color: var(--agentos-neutral-text-color-text-quaternary);
+      font-size: 11px;
+      line-height: 15px;
+    }
+    .architecture-iso-key__direction {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xxs4);
+      color: var(--agentos-neutral-text-color-text-tertiary);
+    }
+    .architecture-iso-key__direction::before {
+      width: 5px;
+      height: 5px;
+      border-radius: var(--agentos-radius-rounded-full999);
+      background: var(--agentos-architecture-mint);
+      content: "";
+    }
+    .architecture-scene-head {
+      margin-bottom: var(--agentos-spacing-margin-xs8);
+      padding: 0 var(--agentos-spacing-padding-xxs4);
+    }
+    .architecture-scene-head__row {
+      display: flex;
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xs8);
+    }
+    .architecture-scene-head__title {
+      min-width: 0;
+      flex: 1;
+      overflow: hidden;
+      color: var(--agentos-neutral-text-color-text);
+      font-size: 13px;
+      font-weight: var(--agentos-font-weight-semibold);
+      line-height: 18px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .architecture-scene-head__audit {
+      border: 0;
+      background: transparent;
+      color: var(--agentos-brand-primary-color-primary);
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .architecture-scene-head__priority {
+      display: inline-flex;
+      height: 20px;
+      align-items: center;
+      padding: 0 var(--agentos-spacing-padding6);
+      border-radius: var(--agentos-radius-rounded-md6);
+      background: var(--agentos-brand-error-color-error-bg);
+      color: var(--agentos-brand-error-color-error);
+      font-size: 10px;
+      font-weight: var(--agentos-font-weight-semibold);
+    }
+    .architecture-scene-head__status {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xxs4);
+      margin-top: 2px;
+      color: var(--agentos-brand-warning-color-warning);
+      font-size: 11px;
+      line-height: 15px;
+    }
+    .architecture-scene-head__status::before {
+      width: 5px;
+      height: 5px;
+      border-radius: var(--agentos-radius-rounded-full999);
+      background: currentColor;
+      content: "";
+    }
+    .architecture-scene-copy {
+      margin: 0 0 var(--agentos-spacing-margin-sm12);
+      padding: 0 var(--agentos-spacing-padding-xxs4) var(--agentos-spacing-padding-sm12);
+      border-bottom: 1px solid var(--agentos-neutral-border-color-border-secondary);
+    }
+    .architecture-scene-copy__label {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--agentos-neutral-text-color-text-secondary);
+      font-size: 12px;
+      font-weight: var(--agentos-font-weight-medium);
+    }
+    .architecture-scene-copy p {
+      display: -webkit-box;
+      overflow: hidden;
+      margin: 0;
+      color: var(--agentos-neutral-text-color-text-tertiary);
+      font-size: 11px;
+      line-height: 15px;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+    }
+    .architecture-plan-head {
+      display: flex;
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xs8);
+      margin-bottom: var(--agentos-spacing-margin-xs8);
+      padding: 0 var(--agentos-spacing-padding-xxs4);
+      color: var(--agentos-neutral-text-color-text-secondary);
+      font-size: 12.5px;
+      font-weight: var(--agentos-font-weight-semibold);
+    }
+    .architecture-plan-head svg {
+      width: var(--agentos-icon-size-icon-size-md16);
+      height: var(--agentos-icon-size-icon-size-md16);
+      color: var(--agentos-neutral-text-color-text-tertiary);
+    }
+    .architecture-product-tree {
+      display: flex;
+      flex-direction: column;
+      gap: var(--agentos-spacing-gap-xs8);
+      margin-top: var(--agentos-spacing-margin-sm12);
+    }
+    .architecture-build-section {
+      overflow: hidden;
+      border-radius: var(--agentos-radius-rounded-lg8);
+      background: var(--agentos-neutral-bg-color-bg-container);
+      box-shadow: inset 0 0 0 1px var(--agentos-neutral-border-color-border-secondary);
+    }
+    .architecture-build-section__head {
+      display: flex;
+      min-height: var(--agentos-control-height-control-height-md32);
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xs8);
+      padding: var(--agentos-spacing-padding-xxs4) var(--agentos-spacing-padding-xs8);
+      border-bottom: 1px solid var(--agentos-neutral-border-color-border-secondary);
+      background: var(--agentos-neutral-bg-color-bg-elevated);
+    }
+    .architecture-build-section__mark {
+      width: 7px;
+      height: 7px;
+      flex-shrink: 0;
+      border-radius: var(--agentos-radius-rounded-sm4);
+      background: var(--agentos-architecture-mint);
+      transform: rotate(45deg);
+    }
+    .architecture-build-section.is-agent .architecture-build-section__mark {
+      background: var(--agentos-brand-primary-color-primary);
+    }
+    .architecture-build-section__title {
+      flex: 1;
+      color: var(--agentos-neutral-text-color-text);
+      font-size: 12.5px;
+      font-weight: var(--agentos-font-weight-semibold);
+    }
+    .architecture-build-section__action {
+      border: 0;
+      background: transparent;
+      color: var(--agentos-brand-primary-color-primary);
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .architecture-build-section__action:disabled {
+      color: var(--agentos-brand-warning-color-warning);
+      cursor: default;
+    }
+    .architecture-build-section__body {
+      padding: 2px 0 6px;
+    }
+    .architecture-branch {
+      margin: 0;
+    }
+    .architecture-branch summary {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 1.75px var(--agentos-spacing-padding-xs8);
+      border-radius: 0;
+      color: var(--agentos-neutral-text-color-text-secondary);
+      font-size: 13px;
+      font-weight: var(--agentos-font-weight-medium);
+      line-height: 18px;
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+    }
+    .architecture-branch summary::-webkit-details-marker { display: none; }
+    .architecture-branch summary:hover { background: var(--agentos-architecture-blue-soft); }
+    .architecture-branch__chev {
+      width: 14px;
+      height: 14px;
+      color: var(--agentos-neutral-text-color-text-quaternary);
+      transition: transform 420ms var(--agentos-ease-spring);
+    }
+    .architecture-branch[open] .architecture-branch__chev { transform: rotate(90deg); }
+    .architecture-branch__icon,
+    .architecture-leaf-icon {
+      display: inline-flex;
+      width: 16px;
+      height: 16px;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--agentos-neutral-text-color-text-tertiary);
+    }
+    .architecture-branch__icon svg,
+    .architecture-leaf-icon svg {
+      display: block;
+      width: 16px;
+      height: 16px;
+    }
+    .architecture-branch[data-tree-kind="ontology"] .architecture-branch__icon,
+    .architecture-branch[data-tree-kind="ontology"] .architecture-leaf-icon {
+      color: var(--agentos-architecture-mint);
+    }
+    .architecture-branch[data-tree-kind="skill"] .architecture-branch__icon,
+    .architecture-branch[data-tree-kind="skill"] .architecture-leaf-icon {
+      color: var(--agentos-brand-warning-color-warning);
+    }
+    .architecture-branch[data-tree-kind="mcp"] .architecture-branch__icon,
+    .architecture-branch[data-tree-kind="mcp"] .architecture-leaf-icon {
+      color: var(--agentos-brand-primary-color-primary);
+    }
+    .architecture-branch[data-tree-kind="knowledge"] .architecture-branch__icon,
+    .architecture-branch[data-tree-kind="knowledge"] .architecture-leaf-icon {
+      color: var(--agentos-neutral-text-color-text-tertiary);
+    }
+    .architecture-leaf-icon {
+      opacity: 0.72;
+    }
+    .architecture-branch__count {
+      margin-left: auto;
+      color: var(--agentos-neutral-text-color-text-quaternary);
+      font-size: 12px;
+      font-weight: var(--agentos-font-weight-medium);
+    }
+    .architecture-leaves {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .architecture-leaves li {
+      display: flex;
+      position: relative;
+      align-items: center;
+      gap: 6px;
+      padding: 1.75px var(--agentos-spacing-padding-xs8) 1.75px 18px;
+      border-radius: 0;
+      color: var(--agentos-neutral-text-color-text-secondary);
+      font-size: 13px;
+      font-weight: var(--agentos-font-weight-normal);
+      line-height: 18px;
+    }
+    .architecture-leaves li::before {
+      position: absolute;
+      z-index: 0;
+      top: 0;
+      bottom: 0;
+      left: 12px;
+      width: 1px;
+      background: var(--agentos-architecture-line-soft);
+      content: "";
+      pointer-events: none;
+    }
+    .architecture-leaves li::after {
+      position: absolute;
+      z-index: 0;
+      inset: 0;
+      background: transparent;
+      content: "";
+      pointer-events: none;
+    }
+    .architecture-leaves li:hover::after { background: var(--agentos-architecture-blue-soft); }
+    .architecture-leaves li > * {
+      position: relative;
+      z-index: 1;
+    }
+    .architecture-leaves__label {
+      min-width: 0;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .architecture-leaves__state {
+      margin-left: auto;
+      flex-shrink: 0;
+      color: var(--agentos-neutral-text-color-text-quaternary);
+      font-size: 11px;
+      line-height: 15px;
+      white-space: nowrap;
+    }
+    @keyframes planIsoMarch {
+      to { stroke-dashoffset: -14; }
+    }
+    .architecture-layer {
+      position: relative;
+      z-index: 1;
+      margin-left: 12px;
+      padding: 3px;
+      border-radius: 11px;
+      background: var(--agentos-neutral-fill-color-fill-secondary);
+      transition: transform 520ms var(--agentos-ease-spring), opacity 520ms var(--agentos-ease-spring);
+    }
+    .architecture-layer:nth-child(even) { margin-right: 6px; margin-left: 18px; }
+    .architecture-layer:hover { transform: translateY(-2px); }
+    .architecture-layer::before {
+      position: absolute;
+      top: 16px;
+      left: -12px;
+      width: 12px;
+      height: 1px;
+      background: var(--agentos-architecture-line);
+      content: "";
+    }
+    .architecture-layer::after {
+      position: absolute;
+      top: 13px;
+      left: -15px;
+      width: 7px;
+      height: 7px;
+      border: 2px solid var(--agentos-neutral-bg-color-bg-container);
+      border-radius: var(--agentos-radius-rounded-full999);
+      background: var(--agentos-neutral-text-color-text-quaternary);
+      box-shadow: 0 0 0 1px var(--agentos-architecture-line);
+      content: "";
+    }
+    .architecture-layer.is-open::after {
+      background: var(--agentos-brand-primary-color-primary);
+      box-shadow: 0 0 0 3px var(--agentos-architecture-blue-soft);
+    }
+    .architecture-layer__core {
+      overflow: hidden;
+      border-radius: var(--agentos-radius-rounded-lg8);
+      background: var(--agentos-neutral-bg-color-bg-container);
+      box-shadow: inset 0 0 0 1px var(--agentos-neutral-border-color-border-secondary), 0 2px 8px var(--agentos-architecture-line-soft);
+    }
+    .architecture-layer__toggle {
+      display: flex;
+      width: 100%;
+      min-height: 38px;
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xs8);
+      padding: var(--agentos-spacing-padding6) var(--agentos-spacing-padding-xs8);
+      border: 0;
+      background: transparent;
+      color: var(--agentos-neutral-text-color-text);
+      cursor: pointer;
+      text-align: left;
+    }
+    .architecture-layer__index {
+      display: inline-flex;
+      width: 20px;
+      height: 20px;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border-radius: var(--agentos-radius-rounded-md6);
+      background: var(--agentos-neutral-fill-color-fill-tertiary);
+      color: var(--agentos-neutral-text-color-text-tertiary);
+      font-size: 9px;
+      font-weight: var(--agentos-font-weight-semibold);
+    }
+    .architecture-layer.is-open .architecture-layer__index {
+      background: var(--agentos-architecture-blue-soft);
+      color: var(--agentos-brand-primary-color-primary);
+    }
+    .architecture-layer__name {
+      min-width: 0;
+      flex: 1;
+      font-size: 11px;
+      font-weight: var(--agentos-font-weight-semibold);
+      line-height: var(--agentos-font-leading-14);
+    }
+    .architecture-layer__meta {
+      color: var(--agentos-neutral-text-color-text-quaternary);
+      font-size: 9px;
+      white-space: nowrap;
+    }
+    .architecture-layer__chevron {
+      width: 12px;
+      height: 12px;
+      flex-shrink: 0;
+      color: var(--agentos-neutral-text-color-text-quaternary);
+      transition: transform 520ms var(--agentos-ease-spring);
+    }
+    .architecture-layer.is-open .architecture-layer__chevron { transform: rotate(180deg); }
+    .architecture-layer__body {
+      padding: 2px var(--agentos-spacing-padding-xs8) var(--agentos-spacing-padding-xs8) 36px;
+    }
+    .architecture-flow {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      position: relative;
+      gap: var(--agentos-spacing-gap-xxs4);
+    }
+    .architecture-flow::before {
+      position: absolute;
+      top: 11px;
+      right: 15%;
+      left: 15%;
+      height: 1px;
+      background: var(--agentos-architecture-line);
+      content: "";
+    }
+    .architecture-flow__node {
+      position: relative;
+      padding-top: 20px;
+      color: var(--agentos-neutral-text-color-text-tertiary);
+      font-size: 9px;
+      line-height: 12px;
+      text-align: center;
+    }
+    .architecture-flow__node::before {
+      position: absolute;
+      z-index: 1;
+      top: 7px;
+      left: calc(50% - 4px);
+      width: 8px;
+      height: 8px;
+      border: 2px solid var(--agentos-neutral-bg-color-bg-container);
+      border-radius: var(--agentos-radius-rounded-sm4);
+      background: var(--agentos-architecture-mint);
+      box-shadow: 0 0 0 1px var(--agentos-architecture-mint-soft);
+      content: "";
+    }
+    .architecture-cells {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--agentos-spacing-gap-xxs4);
+    }
+    .architecture-cell {
+      display: flex;
+      min-height: 30px;
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xxs4);
+      padding: var(--agentos-spacing-padding-xxs4) var(--agentos-spacing-padding6);
+      border-radius: var(--agentos-radius-rounded-md6);
+      background: var(--agentos-neutral-fill-color-fill-tertiary);
+      color: var(--agentos-neutral-text-color-text-secondary);
+      font-size: 9px;
+      line-height: 12px;
+    }
+    .architecture-cell svg {
+      width: 12px;
+      height: 12px;
+      flex-shrink: 0;
+      color: var(--agentos-brand-primary-color-primary);
+    }
+    .architecture-resources {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .architecture-resource {
+      display: flex;
+      min-height: 24px;
+      align-items: center;
+      padding: 0 var(--agentos-spacing-padding6);
+      border-radius: var(--agentos-radius-rounded-sm4);
+      color: var(--agentos-neutral-text-color-text-secondary);
+      font-size: 9px;
+    }
+    .architecture-resource:hover { background: var(--agentos-neutral-fill-color-fill-tertiary); }
+    .architecture-resource__dot {
+      width: 5px;
+      height: 5px;
+      margin-right: var(--agentos-spacing-margin-xs8);
+      border-radius: var(--agentos-radius-rounded-full999);
+      background: var(--agentos-architecture-mint);
+    }
+    .architecture-resource__count {
+      margin-left: auto;
+      color: var(--agentos-neutral-text-color-text-quaternary);
+    }
+    .architecture-legend {
+      margin: 24px 0 0 12px;
+      padding-left: var(--agentos-spacing-padding-sm12);
+      border-left: 1px solid var(--agentos-architecture-line);
+    }
+    .architecture-legend__label {
+      margin-bottom: var(--agentos-spacing-margin-xxs4);
+      color: var(--agentos-neutral-text-color-text-quaternary);
+      font-size: 9px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+    .architecture-legend__value {
+      color: var(--agentos-neutral-text-color-text-secondary);
+      font-size: 10px;
+      line-height: var(--agentos-font-leading-14);
+    }
+    .architecture-story {
+      align-self: center;
+      max-width: 420px;
+    }
+    .architecture-story__eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--agentos-spacing-gap-xs8);
+      margin-bottom: var(--agentos-spacing-margin16);
+      color: var(--agentos-neutral-text-color-text-quaternary);
+      font-size: var(--agentos-font-size-xs);
+      font-weight: var(--agentos-font-weight-semibold);
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+    }
+    .architecture-story__eyebrow::before {
+      width: 24px;
+      height: 1px;
+      background: var(--agentos-brand-primary-color-primary);
+      content: "";
+    }
+    .architecture-story h2 {
+      max-width: 360px;
+      margin: 0 0 var(--agentos-spacing-margin16);
+      color: var(--agentos-neutral-text-color-text);
+      font-size: 22px;
+      font-weight: var(--agentos-font-weight-semibold);
+      line-height: 30px;
+      letter-spacing: var(--agentos-font-tracking-tight);
+    }
+    .architecture-story > p {
+      max-width: 390px;
+      margin: 0 0 var(--agentos-spacing-margin-xl32);
+      color: var(--agentos-neutral-text-color-text-tertiary);
+      font-size: var(--agentos-font-size-md);
+      line-height: 22px;
+    }
+    .architecture-story__principles {
+      display: grid;
+      gap: var(--agentos-spacing-gap-sm12);
+    }
+    .architecture-principle {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: var(--agentos-spacing-gap-sm12);
+      align-items: start;
+    }
+    .architecture-principle__number {
+      color: var(--agentos-brand-primary-color-primary);
+      font-size: var(--agentos-font-size-xs);
+      font-weight: var(--agentos-font-weight-semibold);
+      letter-spacing: 0.6px;
+    }
+    .architecture-principle strong {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--agentos-neutral-text-color-text-secondary);
+      font-size: var(--agentos-font-size-sm);
+      font-weight: var(--agentos-font-weight-semibold);
+    }
+    .architecture-principle span {
+      color: var(--agentos-neutral-text-color-text-tertiary);
+      font-size: 11px;
+      line-height: 16px;
+    }
+
+    @media (max-width: 820px) {
+      body { padding: var(--agentos-spacing-padding16); }
+      .plan-demo { grid-template-columns: 1fr; }
+      .srp-plan-card,
+      .srp-plan-card.srp-plan-card--tree { min-height: 360px; }
+      .architecture-stage {
+        grid-template-columns: 290px;
+        justify-content: center;
+        gap: var(--agentos-spacing-gap16);
+        padding: var(--agentos-spacing-padding16);
+      }
+      .architecture-story { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="page-hd">
+  <div class="page-hd__eyebrow">AgentOS · Scenario planning</div>
+  <h1>打造计划</h1>
+  <p>场景资源依赖的拆解视图，对比计划生成前后的界面状态。</p>
+</header>
+
+<section class="demo-panel" id="panel-current" aria-label="打造计划树">
+<div class="plan-demo">
+
+  <!-- 状态 1：树未出现（占位） -->
+  <div class="plan-demo__col">
+    <p class="plan-demo__label"><span>状态 1</span>树未出现 · 占位</p>
+    <div class="plan-tree-root">
+      <section class="sidebar-srp-plan is-entered" aria-label="SRP 挖知识 · 场景概览">
+        <header class="srp-plan-head">
+          <div class="srp-plan-head__row">
+            <span class="srp-plan-head__title" title="高价值场景1agent">高价值场景1agent</span>
+            <span class="srp-plan-status">
+              <span class="srp-plan-status__dot" aria-hidden="true"></span>
+              <span class="srp-plan-status__text">开发中</span>
+            </span>
+            <div class="srp-plan-head__actions">
+              <button type="button" class="srp-plan-audit-btn" data-srp-audit-check aria-label="进度校验">
+                <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
+                  <path d="M8 1.5l1.6 3.2 3.5.5-2.55 2.5.6 3.5L8 9.9l-3.15 1.7.6-3.5L3.9 5.2l3.5-.5L8 1.5z" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linejoin="round"/>
+                  <circle cx="8" cy="8" r="6.2" stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.35"/>
+                </svg>
+                <span>进度校验</span>
+              </button>
+              <button type="button" class="srp-plan-prio is-p0" aria-haspopup="listbox" aria-label="优先级 P0">
+                <span class="srp-plan-prio__lbl">P0</span>
+                <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+                  <path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </header>
+        <section class="srp-plan-section is-collapsible is-collapsed" aria-label="场景描述与目标">
+          <button type="button" class="srp-plan-section__title" aria-expanded="false">
+            <span>场景描述与目标</span>
+            <svg class="srp-plan-section__chev" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+              <path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <p class="srp-plan-section__body">面向财务共享与应收应付协同：收件箱驱动的记账邮件 Agent，结构化附件与往来上下文，对齐 ERP 入账口径。 把「邮件进箱 → 人工分拣 → 补录台账」升级为 Agent 主导的草稿流：客商识别、币种金额解析、入账建议与安全阈值内自动过账草稿，高风险与争议金额强制 HITL。</p>
+        </section>
+        <article class="srp-plan-card srp-plan-card--empty is-blueprint" role="region" aria-label="Blueprint">
+          <div class="plan-blueprint">
+            <div class="plan-blueprint__top">
+              <span class="plan-blueprint__title">Blueprint</span>
+              <button type="button" class="plan-blueprint__expand" aria-label="展开 Blueprint">
+                <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+                  <path d="M9.2 3.2h3.6v3.6M12.4 3.6 8.2 7.8M6.8 12.8H3.2V9.2M3.6 12.4 7.8 8.2" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            <div id="plan-blueprint"></div>
+          </div>
+        </article>
+      </section>
+    </div>
+  </div>
+
+  <!-- 状态 2：树已出现 -->
+  <div class="plan-demo__col">
+    <p class="plan-demo__label"><span>状态 2</span>树已出现 · 资源依赖架构</p>
+    <div class="plan-tree-root">
+      <section class="sidebar-srp-plan is-entered" aria-label="SRP 挖知识 · 场景概览">
+        <header class="srp-plan-head">
+          <div class="srp-plan-head__row">
+            <span class="srp-plan-head__title" title="高价值场景1agent">高价值场景1agent</span>
+            <span class="srp-plan-status">
+              <span class="srp-plan-status__dot" aria-hidden="true"></span>
+              <span class="srp-plan-status__text">开发中</span>
+            </span>
+            <div class="srp-plan-head__actions">
+              <button type="button" class="srp-plan-audit-btn" data-srp-audit-check aria-label="进度校验">
+                <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
+                  <path d="M8 1.5l1.6 3.2 3.5.5-2.55 2.5.6 3.5L8 9.9l-3.15 1.7.6-3.5L3.9 5.2l3.5-.5L8 1.5z" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linejoin="round"/>
+                  <circle cx="8" cy="8" r="6.2" stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.35"/>
+                </svg>
+                <span>进度校验</span>
+              </button>
+              <button type="button" class="srp-plan-prio is-p0" aria-haspopup="listbox" aria-label="优先级 P0">
+                <span class="srp-plan-prio__lbl">P0</span>
+                <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+                  <path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </header>
+        <section class="srp-plan-section is-collapsible is-collapsed" aria-label="场景描述与目标">
+          <button type="button" class="srp-plan-section__title" aria-expanded="false">
+            <span>场景描述与目标</span>
+            <svg class="srp-plan-section__chev" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+              <path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <p class="srp-plan-section__body">面向财务共享与应收应付协同：收件箱驱动的记账邮件 Agent，结构化附件与往来上下文，对齐 ERP 入账口径。 把「邮件进箱 → 人工分拣 → 补录台账」升级为 Agent 主导的草稿流：客商识别、币种金额解析、入账建议与安全阈值内自动过账草稿，高风险与争议金额强制 HITL。</p>
+        </section>
+        <article class="srp-plan-card srp-plan-card--tree is-streamed" role="region" aria-label="打造计划" id="plan-card">
+
+      <div class="srp-plan-card__head">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+          <rect x="3.5" y="5.5" width="17" height="14" rx="2" stroke="currentColor" stroke-width="1.6" fill="none"/>
+          <path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+        </svg>
+        <span class="srp-plan-card__title">打造计划</span>
+        <span class="srp-plan-card__head-tail">资源依赖架构</span>
+      </div>
+
+      <!-- 本体打造 -->
+      <div class="sdp-plan-section sdp-plan-section--ontology">
+        <div class="sdp-plan-section__head">
+          <span class="sdp-plan-section__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5.5" r="2.2"/><circle cx="5.5" cy="18" r="2.2"/><circle cx="18.5" cy="18" r="2.2"/><path d="m11 7.5-4.5 8.5M13 7.5l4.5 8.5M7.7 18h8.6"/></svg></span>
+          <span class="sdp-plan-section__title">本体打造</span>
+          <span class="sdp-plan-section__status" hidden aria-label="区域状态"></span>
+          <button type="button" class="sdp-plan-section__trigger" data-sdp-section-trigger="ontology">
+            <span>开始打造</span>
+            <svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true">
+              <path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <div class="sdp-plan-section__body">
+          <ul class="sdp-plan-tree" role="tree">
+            <li class="sdp-plan-tree__branch is-open" data-sdp-plan-branch="objects">
+              <button type="button" class="sdp-plan-tree__node" aria-expanded="true">
+                <svg class="sdp-plan-tree__chev" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+                  <path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="sdp-plan-tree__node-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5.5" r="2.2"/><circle cx="5.5" cy="18" r="2.2"/><circle cx="18.5" cy="18" r="2.2"/><path d="m11 7.5-4.5 8.5M13 7.5l4.5 8.5M7.7 18h8.6"/></svg></span>
+                <span class="sdp-plan-tree__node-name">对象与本体</span>
+                <span class="sdp-plan-tree__node-count">4</span>
+              </button>
+              <ul class="sdp-plan-tree__leaves">
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="objects:obj-business" tabindex="0">
+                  <span class="sdp-plan-tree__leaf-dot" aria-hidden="true"></span>
+                  <span class="sdp-plan-tree__leaf-name" title="Product / Customer / Order / Store / Supplier">业务对象</span>
+                  <span class="sdp-plan-tree__leaf-tag">待打造</span>
+                </li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="objects:obj-rule" tabindex="0">
+                  <span class="sdp-plan-tree__leaf-dot" aria-hidden="true"></span>
+                  <span class="sdp-plan-tree__leaf-name" title="ExpertRule / Threshold / Strategy / Policy">决策规则</span>
+                  <span class="sdp-plan-tree__leaf-tag">待打造</span>
+                </li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="objects:obj-capability" tabindex="0">
+                  <span class="sdp-plan-tree__leaf-dot" aria-hidden="true"></span>
+                  <span class="sdp-plan-tree__leaf-name" title="Skill / Tool / Model / Prompt / Context">能力对象</span>
+                  <span class="sdp-plan-tree__leaf-tag">待打造</span>
+                </li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="objects:obj-flow" tabindex="0">
+                  <span class="sdp-plan-tree__leaf-dot" aria-hidden="true"></span>
+                  <span class="sdp-plan-tree__leaf-name" title="DAG / Node / Edge / Condition / Fallback">编排对象</span>
+                  <span class="sdp-plan-tree__leaf-tag">待打造</span>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 智能体打造 -->
+      <div class="sdp-plan-section sdp-plan-section--agent">
+        <div class="sdp-plan-section__head">
+          <span class="sdp-plan-section__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11.5" rx="3"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><path d="M9 13v1.5M15 13v1.5"/></svg></span>
+          <span class="sdp-plan-section__title">智能体打造</span>
+          <span class="sdp-plan-section__status" hidden aria-label="区域状态"></span>
+          <button type="button" class="sdp-plan-section__trigger" data-sdp-section-trigger="agent">
+            <span>开始打造</span>
+            <svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true">
+              <path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <div class="sdp-plan-section__body">
+          <ul class="sdp-plan-tree" role="tree">
+            <li class="sdp-plan-tree__branch is-open" data-sdp-plan-branch="skills">
+              <button type="button" class="sdp-plan-tree__node" aria-expanded="true">
+                <svg class="sdp-plan-tree__chev" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+                  <path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="sdp-plan-tree__node-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3 5.5 13.5H12L11 21l7.5-10.5H12Z"/></svg></span>
+                <span class="sdp-plan-tree__node-name">Skill 能力</span>
+                <span class="sdp-plan-tree__node-count">7</span>
+              </button>
+              <ul class="sdp-plan-tree__leaves">
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:recommend_items" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="智能商品推荐">recommend_items</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:forecast_demand" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="需求预测">forecast_demand</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:assess_churn_risk" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="客户流失评估">assess_churn_risk</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:optimize_schedule" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="排班优化">optimize_schedule</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:price_simulation" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="动态定价模拟">price_simulation</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:analyze_store_traffic" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="门店客流分析">analyze_store_traffic</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:inspect_quality" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="质量检查">inspect_quality</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
+              </ul>
+            </li>
+            <li class="sdp-plan-tree__branch is-open" data-sdp-plan-branch="mcp">
+              <button type="button" class="sdp-plan-tree__node" aria-expanded="true">
+                <svg class="sdp-plan-tree__chev" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+                  <path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="sdp-plan-tree__node-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v4M15 3v4M6 7h12v4a6 6 0 0 1-12 0ZM12 17v4"/></svg></span>
+                <span class="sdp-plan-tree__node-name">MCP 协议</span>
+                <span class="sdp-plan-tree__node-count">6</span>
+              </button>
+              <ul class="sdp-plan-tree__leaves">
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="mcp:mcp-pos-realtime" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="POS 实时流（SSE）">mcp-pos-realtime</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="mcp:mcp-crm-profile" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="客户画像（REST + CDC）">mcp-crm-profile</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="mcp:mcp-scm-supply" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="供应链（gRPC）">mcp-scm-supply</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="mcp:mcp-iot-store" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="门店 IoT（MQTT）">mcp-iot-store</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="mcp:mcp-ml-inference" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="模型推理（gRPC）">mcp-ml-inference</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="mcp:mcp-knowledge-graph" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="知识图谱（SPARQL + REST）">mcp-knowledge-graph</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
+              </ul>
+            </li>
+            <li class="sdp-plan-tree__branch is-open" data-sdp-plan-branch="knowledge">
+              <button type="button" class="sdp-plan-tree__node" aria-expanded="true">
+                <svg class="sdp-plan-tree__chev" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+                  <path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="sdp-plan-tree__node-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18.5V5.5A1.5 1.5 0 0 1 6.5 4H19v13H6.5A1.5 1.5 0 0 0 5 18.5Z"/><path d="M5 18.5A1.5 1.5 0 0 0 6.5 20H19v-3M9 8h6"/></svg></span>
+                <span class="sdp-plan-tree__node-name">知识库</span>
+                <span class="sdp-plan-tree__node-count">4</span>
+              </button>
+              <ul class="sdp-plan-tree__leaves">
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="knowledge:kb-cases" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="169 条标注案例 · 已就绪">案例库</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="knowledge:kb-sop" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="47 篇标准作业流程">SOP 知识库</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
+                <li class="sdp-plan-tree__leaf is-partial" data-sdp-plan-leaf="knowledge:kb-glossary" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="286 条术语 · 待补充行业基准">业务术语库</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
+                <li class="sdp-plan-tree__leaf is-missing" data-sdp-plan-leaf="knowledge:kb-benchmark" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="需对接外部数据源">行业基准库</span><span class="sdp-plan-tree__leaf-tag">待补充</span></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+        </article>
+      </section>
+    </div>
+  </div>
+
+</div>
+</section>
+
+<section class="demo-panel" id="panel-architecture" aria-hidden="true" hidden>
+  <div class="architecture-stage">
+    <div class="architecture-preview">
+      <div class="architecture-preview__measure">Sidebar · 290 px</div>
+      <div class="architecture-shell">
+        <aside class="architecture-sidebar" aria-label="结构式打造计划侧栏">
+          <header class="architecture-scene-head">
+            <div class="architecture-scene-head__row">
+              <span class="architecture-scene-head__title">高价值场景1agent</span>
+              <button type="button" class="architecture-scene-head__audit">进度校验</button>
+              <span class="architecture-scene-head__priority">P0</span>
+            </div>
+            <span class="architecture-scene-head__status">开发中</span>
+          </header>
+          <div class="architecture-scene-copy">
+            <span class="architecture-scene-copy__label">场景描述与目标</span>
+            <p>面向财务共享与应收应付协同：收件箱驱动的记账邮件 Agent，结构化附件与往来上下文，对齐 ERP 入账口径。把「邮件进箱 → 人工分拣 → 补录台账」升级为 Agent 主导的草稿流，高风险与争议金额强制 HITL。</p>
+          </div>
+          <div class="architecture-plan-head">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span>打造计划</span>
+          </div>
+
+          <div class="architecture-iso" id="architectureIso" aria-label="本体打造与智能体打造等轴结构图"></div>
+          <div class="architecture-iso-key">
+            <span class="architecture-iso-key__direction">本体支撑智能体能力</span>
+            <span>点击层板聚焦</span>
+          </div>
+
+          <div class="architecture-product-tree">
+            <section class="architecture-build-section">
+              <header class="architecture-build-section__head">
+                <span class="architecture-build-section__mark"></span>
+                <span class="architecture-build-section__title">本体打造</span>
+                <button type="button" class="architecture-build-section__action">开始打造</button>
+              </header>
+              <div class="architecture-build-section__body">
+                <details class="architecture-branch" data-tree-kind="ontology" open>
+                  <summary><svg class="architecture-branch__chev" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m4 2.5 4 3.5-4 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="architecture-branch__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="5.5" r="2.2" stroke="currentColor" stroke-width="1.5"/><circle cx="5.5" cy="18" r="2.2" stroke="currentColor" stroke-width="1.5"/><circle cx="18.5" cy="18" r="2.2" stroke="currentColor" stroke-width="1.5"/><path d="m11 7.5-4.5 8.5M13 7.5l4.5 8.5M7.7 18h8.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span><span>对象与本体</span><span class="architecture-branch__count">4</span></summary>
+                  <ul class="architecture-leaves">
+                    <li>业务对象<span class="architecture-leaves__state">待打造</span></li>
+                    <li>决策规则<span class="architecture-leaves__state">待打造</span></li>
+                    <li>能力对象<span class="architecture-leaves__state">待打造</span></li>
+                    <li>编排对象<span class="architecture-leaves__state">待打造</span></li>
+                  </ul>
+                </details>
+              </div>
+            </section>
+
+            <section class="architecture-build-section is-agent">
+              <header class="architecture-build-section__head">
+                <span class="architecture-build-section__mark"></span>
+                <span class="architecture-build-section__title">智能体打造</span>
+                <button type="button" class="architecture-build-section__action">开始打造</button>
+              </header>
+              <div class="architecture-build-section__body">
+                <details class="architecture-branch" data-tree-kind="skill" open>
+                  <summary><svg class="architecture-branch__chev" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m4 2.5 4 3.5-4 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="architecture-branch__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M13 3 5.5 13.5H12L11 21l7.5-10.5H12Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Skill 能力</span><span class="architecture-branch__count">7</span></summary>
+                  <ul class="architecture-leaves">
+                    <li>recommend_items<span class="architecture-leaves__state">待打造</span></li>
+                    <li>forecast_demand<span class="architecture-leaves__state">待打造</span></li>
+                    <li>assess_churn_risk<span class="architecture-leaves__state">待打造</span></li>
+                    <li>optimize_schedule<span class="architecture-leaves__state">待打造</span></li>
+                    <li>price_simulation<span class="architecture-leaves__state">待打造</span></li>
+                    <li>analyze_store_traffic<span class="architecture-leaves__state">待打造</span></li>
+                    <li>inspect_quality<span class="architecture-leaves__state">待打造</span></li>
+                  </ul>
+                </details>
+                <details class="architecture-branch" data-tree-kind="mcp" open>
+                  <summary><svg class="architecture-branch__chev" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m4 2.5 4 3.5-4 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="architecture-branch__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M9 3v4M15 3v4M6 7h12v4a6 6 0 0 1-12 0ZM12 17v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>MCP 协议</span><span class="architecture-branch__count">6</span></summary>
+                  <ul class="architecture-leaves">
+                    <li>mcp-pos-realtime<span class="architecture-leaves__state">待打造</span></li>
+                    <li>mcp-crm-profile<span class="architecture-leaves__state">待打造</span></li>
+                    <li>mcp-scm-supply<span class="architecture-leaves__state">待打造</span></li>
+                    <li>mcp-iot-store<span class="architecture-leaves__state">待打造</span></li>
+                    <li>mcp-ml-inference<span class="architecture-leaves__state">待打造</span></li>
+                    <li>mcp-knowledge-graph<span class="architecture-leaves__state">待打造</span></li>
+                  </ul>
+                </details>
+                <details class="architecture-branch" data-tree-kind="knowledge" open>
+                  <summary><svg class="architecture-branch__chev" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m4 2.5 4 3.5-4 3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="architecture-branch__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 18.5V5.5A1.5 1.5 0 0 1 6.5 4H19v13H6.5A1.5 1.5 0 0 0 5 18.5Z" stroke="currentColor" stroke-width="1.5"/><path d="M5 18.5A1.5 1.5 0 0 0 6.5 20H19v-3M9 8h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span><span>知识库</span><span class="architecture-branch__count">4</span></summary>
+                  <ul class="architecture-leaves">
+                    <li>案例库<span class="architecture-leaves__state">待打造</span></li>
+                    <li>SOP 知识库<span class="architecture-leaves__state">待打造</span></li>
+                    <li>业务术语库<span class="architecture-leaves__state">待打造</span></li>
+                    <li>行业基准库<span class="architecture-leaves__state">待补充</span></li>
+                  </ul>
+                </details>
+              </div>
+            </section>
+          </div>
+
+          <div class="architecture-map">
+            <section class="architecture-layer" data-architecture-layer>
+              <div class="architecture-layer__core">
+                <button type="button" class="architecture-layer__toggle" aria-expanded="false">
+                  <span class="architecture-layer__index">01</span>
+                  <span class="architecture-layer__name">业务目标与流程</span>
+                  <span class="architecture-layer__meta">3</span>
+                  <svg class="architecture-layer__chevron" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m3 4.5 3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="architecture-layer__body" hidden>
+                  <div class="architecture-flow">
+                    <span class="architecture-flow__node">邮件接入</span>
+                    <span class="architecture-flow__node">智能解析</span>
+                    <span class="architecture-flow__node">HITL 入账</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="architecture-layer is-open" data-architecture-layer>
+              <div class="architecture-layer__core">
+                <button type="button" class="architecture-layer__toggle" aria-expanded="true">
+                  <span class="architecture-layer__index">02</span>
+                  <span class="architecture-layer__name">本体层</span>
+                  <span class="architecture-layer__meta">4</span>
+                  <svg class="architecture-layer__chevron" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m3 4.5 3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="architecture-layer__body">
+                  <div class="architecture-cells">
+                    <span class="architecture-cell"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="3" r="1.5" stroke="currentColor"/><circle cx="3" cy="12" r="1.5" stroke="currentColor"/><circle cx="13" cy="12" r="1.5" stroke="currentColor"/><path d="m7.2 4.3-3.4 6.2m5-6.2 3.4 6.2M4.5 12h7" stroke="currentColor"/></svg>业务对象</span>
+                    <span class="architecture-cell"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 4h10M3 8h7M3 12h5" stroke="currentColor" stroke-linecap="round"/></svg>决策规则</span>
+                    <span class="architecture-cell"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m9 2-5 7h4l-1 5 5-7H8Z" stroke="currentColor" stroke-linejoin="round"/></svg>能力对象</span>
+                    <span class="architecture-cell"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2.5" y="3" width="4" height="3" rx="1" stroke="currentColor"/><rect x="9.5" y="10" width="4" height="3" rx="1" stroke="currentColor"/><path d="M6.5 4.5h2A2.5 2.5 0 0 1 11 7v3" stroke="currentColor"/></svg>编排对象</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="architecture-layer" data-architecture-layer>
+              <div class="architecture-layer__core">
+                <button type="button" class="architecture-layer__toggle" aria-expanded="false">
+                  <span class="architecture-layer__index">03</span>
+                  <span class="architecture-layer__name">智能体系</span>
+                  <span class="architecture-layer__meta">17</span>
+                  <svg class="architecture-layer__chevron" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m3 4.5 3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="architecture-layer__body" hidden>
+                  <div class="architecture-resources">
+                    <span class="architecture-resource"><i class="architecture-resource__dot"></i>Skill 能力<span class="architecture-resource__count">7</span></span>
+                    <span class="architecture-resource"><i class="architecture-resource__dot"></i>MCP 协议<span class="architecture-resource__count">6</span></span>
+                    <span class="architecture-resource"><i class="architecture-resource__dot"></i>知识库<span class="architecture-resource__count">4</span></span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="architecture-layer" data-architecture-layer>
+              <div class="architecture-layer__core">
+                <button type="button" class="architecture-layer__toggle" aria-expanded="false">
+                  <span class="architecture-layer__index">04</span>
+                  <span class="architecture-layer__name">数据与模型</span>
+                  <span class="architecture-layer__meta">8</span>
+                  <svg class="architecture-layer__chevron" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m3 4.5 3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="architecture-layer__body" hidden>
+                  <div class="architecture-resources">
+                    <span class="architecture-resource"><i class="architecture-resource__dot"></i>业务数据源<span class="architecture-resource__count">5</span></span>
+                    <span class="architecture-resource"><i class="architecture-resource__dot"></i>决策模型<span class="architecture-resource__count">3</span></span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div class="architecture-legend">
+            <div class="architecture-legend__label">Dependency direction</div>
+            <div class="architecture-legend__value">数据 → 本体 → 智能体系 → 业务目标</div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <div class="architecture-story">
+      <div class="architecture-story__eyebrow">Exploded architecture</div>
+      <h2>产品结构不变，只把两大打造分区空间化。</h2>
+      <p>上层是智能体打造，下层是本体打造；完整的 Skill、MCP、知识库和对象明细仍保留在结构树中。</p>
+      <div class="architecture-story__principles">
+        <div class="architecture-principle"><span class="architecture-principle__number">01</span><div><strong>两个产品分区</strong><span>本体打造与智能体打造保持原有命名和职责。</span></div></div>
+        <div class="architecture-principle"><span class="architecture-principle__number">02</span><div><strong>图与树共同表达</strong><span>立体图看依赖，结构树承载完整字段和操作。</span></div></div>
+        <div class="architecture-principle"><span class="architecture-principle__number">03</span><div><strong>真实侧栏尺寸</strong><span>预览严格使用 290px，不靠放大制造效果。</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function () {
+  (function renderPlanBlueprint() {
+    var host = document.getElementById('plan-blueprint');
+    if (!host) return;
+    var A = 0.9, K = 0.36;
+    var stages = [
+      { id: 'req', title: 'Requirements', items: ['req'] },
+      { id: 'know', title: 'Business knowledge', items: ['know'] },
+      { id: 'doc', title: 'Design plans', items: ['doc', 'onto', 'agent'], subs: ['Product plan', 'Ontology plan', 'Agent plan'] },
+      { id: 'onto', title: 'Build ontology', items: ['onto'] },
+      { id: 'tools', title: 'Skills · MCP · more', items: ['skillp', 'mcp', 'res'], subs: ['Skills', 'MCP', 'Resources'] },
+      { id: 'agent', title: 'Generate Agent', items: ['agent'] }
+    ];
+    function pattern(kind) {
+      var g = '';
+      if (kind === 'req') {
+        g += '<circle class="pb-s" r="38"/><circle class="pb-s" r="26"/><circle class="pb-f" r="14"/><circle class="pb-d" r="4"/>';
+        g += '<path class="pb-s" d="M-48 0H-40M40 0H48M0 -48V-40M0 40V48"/>';
+      } else if (kind === 'know') {
+        [-33, -9, 15].forEach(function (y) { [-33, -9, 15].forEach(function (x) { g += '<rect class="pb-f" x="' + x + '" y="' + y + '" width="18" height="18" rx="3"/>'; }); });
+      } else if (kind === 'doc') {
+        g += '<rect class="pb-f" x="-32" y="-36" width="38" height="8" rx="2"/>';
+        [[-20, 64], [-8, 54], [4, 64], [16, 46], [28, 30]].forEach(function (line) { g += '<rect class="pb-s" x="-32" y="' + line[0] + '" width="' + line[1] + '" height="5" rx="2"/>'; });
+      } else if (kind === 'onto') {
+        var nodes = [[-34, -22], [0, -34], [32, -14], [-18, 8], [16, 20], [-38, 30], [40, 34]];
+        [[0, 1], [1, 2], [0, 3], [3, 4], [2, 4], [3, 5], [4, 6], [1, 3]].forEach(function (link) { g += '<path class="pb-s" d="M' + nodes[link[0]][0] + ' ' + nodes[link[0]][1] + 'L' + nodes[link[1]][0] + ' ' + nodes[link[1]][1] + '"/>'; });
+        nodes.forEach(function (node) { g += '<circle class="pb-f" cx="' + node[0] + '" cy="' + node[1] + '" r="6.5"/>'; });
+      } else if (kind === 'skillp') {
+        [-24, -8, 8].forEach(function (y) { g += '<rect class="pb-f" x="-31" y="' + y + '" width="62" height="11" rx="3"/>'; });
+      } else if (kind === 'mcp') {
+        g += '<rect class="pb-f" x="-40" y="-14" width="26" height="28" rx="5"/><rect class="pb-f" x="14" y="-14" width="26" height="28" rx="5"/>';
+        g += '<path class="pb-s" d="M-14 0H14"/><circle class="pb-f" r="5"/>';
+      } else if (kind === 'res') {
+        g += '<rect class="pb-s" x="-26" y="-34" width="48" height="36" rx="5"/><rect class="pb-s" x="-34" y="-22" width="48" height="36" rx="5"/><rect class="pb-f" x="-42" y="-8" width="48" height="36" rx="5"/>';
+      } else if (kind === 'agent') {
+        g += '<path class="pb-s" d="M-36 -32L0 0L36 -32M-36 32L0 0L36 32"/><circle class="pb-s" r="26"/><circle class="pb-f" r="12"/><circle class="pb-d" r="3.6"/>';
+      }
+      return g;
+    }
+    function plate(o) {
+      var w = A * o.s, h = K * o.s, u = o.s / 100;
+      var top = o.cx + ',' + (o.cy - h) + ' ' + (o.cx + w) + ',' + o.cy + ' ' + o.cx + ',' + (o.cy + h) + ' ' + (o.cx - w) + ',' + o.cy;
+      var left = (o.cx - w) + ',' + o.cy + ' ' + o.cx + ',' + (o.cy + h) + ' ' + o.cx + ',' + (o.cy + h + o.t) + ' ' + (o.cx - w) + ',' + (o.cy + o.t);
+      var right = (o.cx + w) + ',' + o.cy + ' ' + o.cx + ',' + (o.cy + h) + ' ' + o.cx + ',' + (o.cy + h + o.t) + ' ' + (o.cx + w) + ',' + (o.cy + o.t);
+      var matrix = 'matrix(' + (A * u) + ',' + (K * u) + ',' + (-A * u) + ',' + (K * u) + ',' + o.cx + ',' + o.cy + ')';
+      return '<g class="pb-plate"><polygon class="pb-left" points="' + left + '"/><polygon class="pb-right" points="' + right + '"/><polygon class="pb-top" points="' + top + '"/><g class="pb-pat" transform="' + matrix + '">' + pattern(o.pat) + '</g></g>';
+    }
+    function draw() {
+      var W = Math.max(248, host.clientWidth || 280);
+      var labelW = 156;
+      var pad = 10;
+      var gap = 16;
+      var s = Math.max(26, Math.min(52, (W - pad - labelW - gap) / (2 * A)));
+      var scale = s / 38;
+      var t = 4 * scale, cx = pad + A * s, lx = cx + A * s + gap;
+      var y = 10 * scale, layout = [];
+      stages.forEach(function (stage) {
+        var single = stage.items.length === 1;
+        var top = y;
+        var height = (single ? 40 : 110) * scale;
+        layout.push({ stage: stage, top: top, height: height, centers: stage.items.map(function (_, index) { return single ? top + 20 * scale : top + (34 + index * 28) * scale; }) });
+        y += height + (single ? 4 : 6) * scale;
+      });
+      var H = Math.round(y + 10);
+      var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Blueprint">';
+      for (var i = 0; i < layout.length - 1; i++) {
+        var from = layout[i].centers[layout[i].centers.length - 1] + K * s + t;
+        var to = layout[i + 1].centers[0] - K * s;
+        svg += '<path class="pb-link" d="M' + cx + ' ' + from + 'V' + to + '"/><polygon points="' + (cx - 3.5) + ',' + (to - 6) + ' ' + cx + ',' + to + ' ' + (cx + 3.5) + ',' + (to - 6) + '" fill="var(--agentos-brand-primary-color-primary)" fill-opacity="0.28"/>';
+      }
+      for (var j = layout.length - 1; j >= 0; j--) {
+        for (var k = layout[j].stage.items.length - 1; k >= 0; k--) svg += plate({ cx: cx, cy: layout[j].centers[k], s: s, t: t, pat: layout[j].stage.items[k] });
+      }
+      layout.forEach(function (item) {
+        svg += '<text class="pb-title" x="' + lx + '" y="' + (item.top + 15 * scale) + '">' + item.stage.title + '</text>';
+        (item.stage.subs || []).forEach(function (sub, index) { svg += '<text class="pb-sub" x="' + lx + '" y="' + (item.centers[index] + 4) + '">' + sub + '</text>'; });
+      });
+      host.innerHTML = svg + '</svg>';
+    }
+    draw();
+    window.addEventListener('resize', draw);
+  })();
+
+  document.querySelectorAll('[data-demo-tab]').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var target = tab.getAttribute('data-demo-tab');
+      document.querySelectorAll('[data-demo-tab]').forEach(function (item) {
+        var active = item === tab;
+        item.classList.toggle('is-active', active);
+        item.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      document.querySelectorAll('[data-demo-panel]').forEach(function (panel) {
+        panel.hidden = panel.getAttribute('data-demo-panel') !== target;
+      });
+    });
+  });
+
+  (function renderArchitectureIso() {
+    var host = document.getElementById('architectureIso');
+    if (!host) return;
+
+    var W = 266;
+    var A = 0.9;
+    var K = 0.36;
+    var cx = 58;
+    var size = 54;
+    var thick = 5;
+    var ys = [62, 152];
+    var layers = [
+      { id: 'intelligence', label: '智能体打造', meta: 'Skill 7 · MCP 6 · KB 4', state: 'is-building', pattern: 'intelligence' },
+      { id: 'ontology', label: '本体打造', meta: '对象与本体 · 4', state: 'is-ontology', pattern: 'ontology' }
+    ];
+
+    function geometry(cy) {
+      var w = A * size;
+      var h = K * size;
+      return {
+        w: w,
+        h: h,
+        top: cx + ',' + (cy - h) + ' ' + (cx + w) + ',' + cy + ' ' + cx + ',' + (cy + h) + ' ' + (cx - w) + ',' + cy,
+        left: (cx - w) + ',' + cy + ' ' + cx + ',' + (cy + h) + ' ' + cx + ',' + (cy + h + thick) + ' ' + (cx - w) + ',' + (cy + thick),
+        right: (cx + w) + ',' + cy + ' ' + cx + ',' + (cy + h) + ' ' + cx + ',' + (cy + h + thick) + ' ' + (cx + w) + ',' + (cy + thick)
+      };
+    }
+
+    function pattern(type, cy) {
+      var u = size / 100;
+      var matrix = 'matrix(' + (A * u) + ',' + (K * u) + ',' + (-A * u) + ',' + (K * u) + ',' + cx + ',' + cy + ')';
+      var marks = '';
+      if (type === 'application') {
+        marks = '<rect class="is-fill" x="-42" y="-30" width="30" height="24" rx="3"/><rect class="is-fill" x="-8" y="-18" width="30" height="24" rx="3"/><rect class="is-fill" x="26" y="-30" width="24" height="24" rx="3"/><path d="M-27 12V28M7 12V28M38 0V28M-27 28H38"/><circle class="is-accent" cx="7" cy="28" r="3"/>';
+      } else if (type === 'intelligence') {
+        marks = '<circle class="is-fill" cx="0" cy="0" r="15"/><circle class="is-fill" cx="-34" cy="-24" r="8"/><circle class="is-fill" cx="35" cy="-22" r="8"/><circle class="is-fill" cx="-30" cy="27" r="8"/><circle class="is-fill" cx="34" cy="26" r="8"/><path d="M-28-19-10-6M28-17 10-6M-23 22-10 7M27 20 10 7"/><circle class="is-accent" cx="0" cy="0" r="4"/>';
+      } else if (type === 'ontology') {
+        marks = '<path d="M-38-20-10-32 15-16 38-30M-38-20-20 8 8 22 34 8M-20 8-6-4 15-16M8 22 34 8M-6-4 34 8"/><circle class="is-fill" cx="-38" cy="-20" r="7"/><circle class="is-fill" cx="-10" cy="-32" r="7"/><circle class="is-fill" cx="15" cy="-16" r="7"/><circle class="is-fill" cx="38" cy="-30" r="7"/><circle class="is-fill" cx="-20" cy="8" r="7"/><circle class="is-fill" cx="-6" cy="-4" r="7"/><circle class="is-fill" cx="8" cy="22" r="7"/><circle class="is-fill" cx="34" cy="8" r="7"/><circle class="is-accent" cx="15" cy="-16" r="3"/>';
+      } else {
+        marks = '<rect class="is-fill" x="-44" y="-32" width="24" height="24" rx="2"/><rect class="is-fill" x="-14" y="-32" width="24" height="24" rx="2"/><rect class="is-fill" x="16" y="-32" width="24" height="24" rx="2"/><rect class="is-fill" x="-29" y="2" width="24" height="24" rx="2"/><rect class="is-fill" x="1" y="2" width="24" height="24" rx="2"/><rect class="is-fill" x="31" y="2" width="16" height="24" rx="2"/><path d="M-38-20h12M-8-20H4M22-20h12M-23 14h12M7 14h12"/>';
+      }
+      return '<g class="plan-iso-plate__pattern" transform="' + matrix + '">' + marks + '</g>';
+    }
+
+    function fibers(yTop, yBottom, live) {
+      var top = geometry(yTop);
+      var bottom = geometry(yBottom);
+      var out = '';
+      [-34, -17, 0, 17, 34].forEach(function (offset, index) {
+        var topRatio = Math.abs(offset) / top.w;
+        var bottomRatio = Math.abs(offset) / bottom.w;
+        var y1 = yTop + top.h * (1 - topRatio) + thick;
+        var y2 = yBottom - bottom.h * (1 - bottomRatio);
+        var path = 'M' + (cx + offset) + ' ' + y2 + 'V' + y1;
+        out += '<path class="plan-iso-fiber' + (live ? ' is-live' : '') + '" d="' + path + '"/>';
+        if (live && index % 2 === 0) {
+          out += '<circle class="plan-iso-particle" r="1.6"><animateMotion dur="' + (2.2 + index * 0.12) + 's" begin="-' + (index * 0.35) + 's" repeatCount="indefinite" path="' + path + '"/><animate attributeName="opacity" values="0;1;1;0" dur="' + (2.2 + index * 0.12) + 's" begin="-' + (index * 0.35) + 's" repeatCount="indefinite"/></circle>';
+        }
+      });
+      return out;
+    }
+
+    function plate(layer, cy) {
+      var g = geometry(cy);
+      return '<g class="plan-iso-plate ' + layer.state + '" data-iso-layer="' + layer.id + '">' +
+        '<polygon class="plan-iso-plate__shadow" points="' + g.top + '" transform="translate(0 7)"/>' +
+        '<g class="plan-iso-plate__lift">' +
+        '<polygon class="plan-iso-plate__left" points="' + g.left + '"/>' +
+        '<polygon class="plan-iso-plate__right" points="' + g.right + '"/>' +
+        '<polygon class="plan-iso-plate__top" points="' + g.top + '"/>' +
+        pattern(layer.pattern, cy) +
+        '</g></g>';
+    }
+
+    var svg = '<svg viewBox="0 0 ' + W + ' 188" role="img" aria-labelledby="planIsoTitle planIsoDesc">' +
+      '<title id="planIsoTitle">本体打造与智能体打造等轴结构</title>' +
+      '<desc id="planIsoDesc">本体打造位于底层，向上支撑 Skill、MCP 与知识库组成的智能体打造。</desc>' +
+      '<text class="plan-iso-caption" x="14" y="15">EXPLODED BUILD ARCHITECTURE</text>';
+
+    for (var i = 0; i < ys.length - 1; i++) {
+      svg += fibers(ys[i], ys[i + 1], true);
+    }
+    for (var j = layers.length - 1; j >= 0; j--) {
+      svg += plate(layers[j], ys[j]);
+    }
+    layers.forEach(function (layer, index) {
+      var g = geometry(ys[index]);
+      var x0 = cx + g.w - 7;
+      var lx = 118;
+      var labelClass = layer.state === 'is-building' ? ' is-active' : layer.state === 'is-ontology' ? ' is-ontology' : '';
+      svg += '<g data-iso-label="' + layer.id + '"><path class="plan-iso-leader" d="M' + x0 + ' ' + ys[index] + 'H' + (lx - 12) + '"/><circle class="plan-iso-leader-dot" cx="' + x0 + '" cy="' + ys[index] + '" r="1.8"/><text class="plan-iso-label' + labelClass + '" x="' + lx + '" y="' + (ys[index] - 3) + '">' + layer.label + '</text><text class="plan-iso-meta" x="' + lx + '" y="' + (ys[index] + 14) + '">' + layer.meta + '</text></g>';
+    });
+    svg += '</svg>';
+    host.innerHTML = svg;
+
+    host.querySelectorAll('[data-iso-layer]').forEach(function (layer) {
+      layer.addEventListener('click', function () {
+        var selected = layer.classList.contains('is-selected');
+        host.querySelectorAll('[data-iso-layer]').forEach(function (item) { item.classList.remove('is-selected'); });
+        if (!selected) layer.classList.add('is-selected');
+      });
+    });
+  })();
+
+  document.querySelectorAll('[data-architecture-layer] .architecture-layer__toggle').forEach(function (toggle) {
+    toggle.addEventListener('click', function () {
+      var layer = toggle.closest('[data-architecture-layer]');
+      var body = layer && layer.querySelector('.architecture-layer__body');
+      if (!layer || !body) return;
+      var willOpen = !layer.classList.contains('is-open');
+      document.querySelectorAll('[data-architecture-layer]').forEach(function (item) {
+        var itemToggle = item.querySelector('.architecture-layer__toggle');
+        var itemBody = item.querySelector('.architecture-layer__body');
+        item.classList.remove('is-open');
+        if (itemToggle) itemToggle.setAttribute('aria-expanded', 'false');
+        if (itemBody) itemBody.hidden = true;
+      });
+      if (willOpen) {
+        layer.classList.add('is-open');
+        toggle.setAttribute('aria-expanded', 'true');
+        body.hidden = false;
+      }
+    });
+  });
+
+  document.querySelectorAll('.architecture-build-section__action').forEach(function (button) {
+    button.addEventListener('click', function () {
+      button.textContent = '进行中';
+      button.disabled = true;
+    });
+  });
+
+  document.querySelectorAll('.architecture-branch').forEach(function (branch) {
+    var iconSource = branch.querySelector('.architecture-branch__icon');
+    if (!iconSource) return;
+    branch.querySelectorAll('.architecture-leaves li').forEach(function (leaf) {
+      var textNode = Array.prototype.find.call(leaf.childNodes, function (node) {
+        return node.nodeType === 3 && node.textContent.trim();
+      });
+      if (!textNode) return;
+      var label = document.createElement('span');
+      label.className = 'architecture-leaves__label';
+      label.textContent = textNode.textContent.trim();
+      leaf.replaceChild(label, textNode);
+      var icon = document.createElement('span');
+      icon.className = 'architecture-leaf-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.innerHTML = iconSource.innerHTML;
+      leaf.insertBefore(icon, label);
+    });
+  });
+
+  /* 场景描述与目标：折叠 / 展开 */
+  document.querySelectorAll('.srp-plan-section.is-collapsible .srp-plan-section__title').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var sec = btn.closest('.srp-plan-section');
+      if (!sec) return;
+      var collapsed = sec.classList.toggle('is-collapsed');
+      btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    });
+  });
+
+  var planCard = document.getElementById('plan-card');
+  if (!planCard) return;
+
+  /* 分支折叠 / 展开 */
+  planCard.querySelectorAll('[data-sdp-plan-branch] .sdp-plan-tree__node').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var br = btn.closest('.sdp-plan-tree__branch');
+      if (!br) return;
+      var open = br.classList.toggle('is-open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  });
+
+  /* 叶节点点击高亮 */
+  planCard.querySelectorAll('[data-sdp-plan-leaf]').forEach(function (leaf) {
+    function fire() {
+      leaf.classList.add('is-pulsed');
+      setTimeout(function () { leaf.classList.remove('is-pulsed'); }, 1100);
+    }
+    leaf.addEventListener('click', fire);
+    leaf.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); fire(); }
+    });
+  });
+
+  /* 区域触发按钮 */
+  planCard.querySelectorAll('[data-sdp-section-trigger]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (btn.disabled) return;
+      var mode = btn.getAttribute('data-sdp-section-trigger');
+      var span = btn.querySelector('span');
+      btn.disabled = true;
+      if (span) span.textContent = '进行中…';
+      var section = btn.closest('.sdp-plan-section');
+      if (section) {
+        section.classList.add('is-in-progress');
+        var statusEl = section.querySelector('.sdp-plan-section__status');
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.textContent = '进行中';
+          statusEl.classList.add('is-progress');
+        }
+      }
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

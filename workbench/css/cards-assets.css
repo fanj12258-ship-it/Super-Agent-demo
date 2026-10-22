@@ -326,11 +326,31 @@
 .ea-home-tags span { padding:2px 8px; border-radius:20px; background:#f0eaff; color:#7b35d5; }
 .ea-home-tags span+span { background:#fff6e6; color:#d99519; }
 .ea-home-primary .ea-foot,.ea-home-canvases .ea-foot { font-size:13px; gap:8px; flex-wrap:wrap; }
-
-/* Full-page enterprise detail — Figma pattern 313:64262. */
-.main.is-enterprise-detail .main-body { padding:0; background:white; box-sizing:border-box; }
-.main.is-enterprise-detail #mainContent { height:100%; min-height:0; }
-.main.is-enterprise-detail .ea-room { padding:0; background:white; }
+@media(max-width:800px) { .ea-home-primary .ea-card { width:100%; } }
+/* Full-page enterprise detail — Figma pattern 313:64262.
+   Lock the height chain (same idea as ontology embed) so .ea-room-article
+   becomes the real scrollport. Without this, article grows with content while
+   overscroll-behavior:contain eats the wheel and nothing scrolls. */
+.main.is-enterprise-detail { min-height: 0; }
+.main.is-enterprise-detail .main-body {
+  min-height: 0;
+  padding: 0;
+  background: white;
+  overflow: hidden;
+}
+.main.is-enterprise-detail #mainContent {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.main.is-enterprise-detail .ea-room {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  padding: 0;
+  background: white;
+}
 .main.is-enterprise-detail .ea-room-breadcrumb { display:none; }
 .main.is-enterprise-detail .ea-room-article { border:0; border-radius:0; }
 .main.is-enterprise-detail .ea-room-header { background:white; }

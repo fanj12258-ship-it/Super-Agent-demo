@@ -89,7 +89,7 @@
 | 空目录壳 | 可在没有子文件时预置一级目录并显示 Files；支持专属目录图标、`Base` 标签与不可折叠状态；执行开始时可再次确保这些基础入口存在，后续内容直接在同一入口解锁 | 可直接复用 | `js/fast-files.js`、`js/fast-route.js` |
 | 企业资产目录入口 | 使用 Workbench 同名资产 `Enterprise Documents / Business Landscape / Scenario Planning`；点击或键盘激活后在右栏打开独立 Tab；内容可按 Journey 节点逐项解锁 | 可直接复用 | `js/fast-files.js`、`js/enterprise-assets.js` |
 | 动态添加文件 | 生成过程中逐个长出文档与业务板 | 可组合 | `js/fast-files.js` |
-| Long task 版本留痕 | 确认并开始执行任务时，在 `Files → Deliverables → Long task` 下保存 `v1`；后续调整可继续保留 v2 等版本用于追溯 | 可直接复用 | `js/fast-flow.js` |
+| Long task 版本留痕 | 确认并开始执行任务时，在 `Files → Deliverables → Long task` 下保存可带业务名称的版本文件（如 `企业全景规划 v1`）；后续调整可继续保留 v2 等版本用于追溯 | 可直接复用 | `js/fast-flow.js` |
 | 新内容反馈 | 蓝点、new 动画、Tab 提示点 | 可直接复用 | `js/fast-files.js` |
 | 文档入口更新红点 | 文档由隐藏变为可查看、内容更新或新交付物出现时，在对应左侧入口显示红点；打开后自动清除 | 可直接复用 | `js/fast-files.js`、`js/enterprise-assets.js`、`css/file-tree.css` |
 | 会话摘要入库 | 当前会话摘要保存为 Markdown | 可直接复用 | `js/fast-summary.js` |
@@ -118,6 +118,7 @@
 | 附件上传 | 选择、附件条、取消、完成 | 可直接复用 | `js/fast-upload.js` |
 | 模型选择 | Popover、子菜单、Esc / 外点 | 可直接复用 | `js/composer-model-picker.js` |
 | Token 用量 | 小型 Popover | 可直接复用 | `js/composer-token-usage.js` |
+| Slash Skill 面板 | 输入 `/` 后在 Composer 上方展示可调用 Skill；支持输入筛选、↑↓、Enter / Tab 插入、Esc / 失焦关闭 | 可直接复用；Skill 清单为演示占位 | `js/composer-slash-skills.js`、`css/chat-composer.css` |
 | 多会话 Tab | 新建、切换、stash / restore | 可直接复用 | `js/fast-conversations.js` |
 | 删除会话 | 两阶段确认 | 可直接复用 | `js/fast-conversations.js` |
 | 当前会话摘要 | 四段摘要 + 存入 Files | 可直接复用 | `js/fast-summary.js` |
@@ -186,6 +187,8 @@
 |---|---|---|---|
 | 文档 Tab Viewer | 打开多个文档、切换、关闭 | 可直接复用 | `js/fast-docs.js` |
 | 资产未生成态 | 保留右栏 Tab、面包屑与资产标题；白色缺省内容块填满右栏剩余高度，底部保留 12px padding，内容垂直居中；通过 `EnterpriseAssets.setContentVisible` 在对应 Journey 节点揭示内容 | 可直接复用 | `js/enterprise-assets.js`、`css/enterprise-assets.css` |
+| 企业资产内容滚动 | 内容解锁后在右侧资产卡内部纵向滚动，标题栏保持可见；适用于企业文档、业务全景与场景规划 | 可直接复用 | `js/enterprise-assets.js`、`css/enterprise-assets.css` |
+| 场景规划勾选 | Application 与 Business Scenario 默认全部不选；由用户显式选择后再发起构建 | 可直接复用 | `js/enterprise-assets.js` |
 | 对话引用打开文档 | Chat cite → 右栏文档 | 可直接复用 | `js/fast-docs.js` |
 | 文档折叠块 | 标题区点击展开 / 收起 | 可直接复用 | `js/fast-docs.js` |
 | 文档差异高亮 | `==内容==` 高亮修改处 | 可直接复用 | `js/fast-change.js`、`js/agent-body.js` |

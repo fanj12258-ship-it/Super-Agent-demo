@@ -9,8 +9,8 @@
 .ea-room button:focus-visible { outline:2px solid #1f82eb; outline-offset:1px; }
 .ea-room-breadcrumb { color:#8c8c8c; padding:12px 0; }
 .ea-room-breadcrumb strong { color:#262626; font-weight:500; }
-.ea-room-article { flex:1; min-height:0; border:1px solid #d9d9d9; border-radius:8px; overflow:hidden; background:white; display:flex; flex-direction:column; }
-.ea-room-header { display:flex; gap:8px; align-items:center; padding:8px 12px; min-height:42px; border-bottom:1px solid #d9d9d9; background:#fafafa; flex-wrap:wrap; }
+.ea-room-article { flex:1; min-height:0; border:1px solid #d9d9d9; border-radius:8px; overflow:auto; overscroll-behavior:contain; background:white; display:flex; flex-direction:column; }
+.ea-room-header { position:sticky; top:0; z-index:4; display:flex; gap:8px; align-items:center; padding:8px 12px; min-height:42px; border-bottom:1px solid #d9d9d9; background:#fafafa; flex-wrap:wrap; flex-shrink:0; }
 .ea-room-header-actions { margin-left:auto; display:flex; align-items:center; gap:8px; flex-shrink:0; }
 .ea-room .ea-header-icon-button { display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; width:24px; height:24px; padding:0; border:0; border-radius:4px; background:#f5f5f5; }
 .ea-room .ea-header-icon-button:hover,
@@ -89,9 +89,9 @@
 .ea-region-placeholder { height:118px; border:1px dotted #d6c3ff; background:#eee; border-radius:4px; }
 .ea-source-overlay { position:absolute; inset:0; z-index:15; display:flex; justify-content:flex-end; }
 .ea-source-mask { position:absolute; inset:0; border:0; background:#0003; }
-.ea-source-drawer { width:90%; position:relative; background:white; display:flex; flex-direction:column; min-height:0; outline:none; }
+.ea-source-drawer { width:90%; height:100%; position:relative; background:white; display:flex; flex-direction:column; min-height:0; outline:none; }
 .ea-source-drawer>header { padding:12px; height:48px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #d9d9d9; flex-shrink:0; }
-.ea-source-body { padding:12px; overflow:auto; }
+.ea-source-body { flex:1; min-height:0; padding:12px; overflow:auto; overscroll-behavior:contain; }
 .ea-source-summary { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
 .ea-source-summary span { color:#8c8c8c; }
 .ea-source-summary p { margin-top:8px; }

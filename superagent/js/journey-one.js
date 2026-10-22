@@ -258,7 +258,7 @@
       window.FastJourneyRoute.ensureAssets();
     }
     if (window.FastFlow && window.FastFlow.createLongTaskVersion) {
-      window.FastFlow.createLongTaskVersion(1, TASKS);
+      window.FastFlow.createLongTaskVersion(1, TASKS, '', '企业全景规划 v1');
     }
     if (window.FastFiles) window.FastFiles.showTab(true);
     await new Promise(function (resolve) { setTimeout(resolve, 280); });
