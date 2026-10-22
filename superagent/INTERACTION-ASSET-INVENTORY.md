@@ -89,7 +89,7 @@
 | 空目录壳 | 可在没有子文件时预置一级目录并显示 Files；支持专属目录图标、`Base` 标签与不可折叠状态；执行开始时可再次确保这些基础入口存在，后续内容直接在同一入口解锁 | 可直接复用 | `js/fast-files.js`、`js/fast-route.js` |
 | 企业资产目录入口 | 使用 Workbench 同名资产 `Enterprise Documents / Business Landscape / Scenario Planning`；点击或键盘激活后在右栏打开独立 Tab；内容可按 Journey 节点逐项解锁 | 可直接复用 | `js/fast-files.js`、`js/enterprise-assets.js` |
 | 动态添加文件 | 生成过程中逐个长出文档与业务板 | 可组合 | `js/fast-files.js` |
-| Long task 版本留痕 | 确认并开始执行任务时，在 `Files → Deliverables → Long task` 下保存 `v1`；后续调整可继续保留 v2 等版本用于追溯 | 可直接复用 | `js/fast-flow.js` |
+| Long task 版本留痕 | 确认并开始执行任务时，在 `Files → Deliverables → Long task` 下保存可带业务名称的版本文件（如 `企业全景规划 v1`）；后续调整可继续保留 v2 等版本用于追溯 | 可直接复用 | `js/fast-flow.js` |
 | 新内容反馈 | 蓝点、new 动画、Tab 提示点 | 可直接复用 | `js/fast-files.js` |
 | 文档入口更新红点 | 文档由隐藏变为可查看、内容更新或新交付物出现时，在对应左侧入口显示红点；打开后自动清除 | 可直接复用 | `js/fast-files.js`、`js/enterprise-assets.js`、`css/file-tree.css` |
 | 会话摘要入库 | 当前会话摘要保存为 Markdown | 可直接复用 | `js/fast-summary.js` |
@@ -118,6 +118,7 @@
 | 附件上传 | 选择、附件条、取消、完成 | 可直接复用 | `js/fast-upload.js` |
 | 模型选择 | Popover、子菜单、Esc / 外点 | 可直接复用 | `js/composer-model-picker.js` |
 | Token 用量 | 小型 Popover | 可直接复用 | `js/composer-token-usage.js` |
+| Slash Skill 面板 | 输入 `/` 后在 Composer 上方展示可调用 Skill；支持输入筛选、↑↓、Enter / Tab 插入、Esc / 失焦关闭 | 可直接复用；Skill 清单为演示占位 | `js/composer-slash-skills.js`、`css/chat-composer.css` |
 | 多会话 Tab | 新建、切换、stash / restore | 可直接复用 | `js/fast-conversations.js` |
 | 删除会话 | 两阶段确认 | 可直接复用 | `js/fast-conversations.js` |
 | 当前会话摘要 | 四段摘要 + 存入 Files | 可直接复用 | `js/fast-summary.js` |
@@ -186,6 +187,8 @@
 |---|---|---|---|
 | 文档 Tab Viewer | 打开多个文档、切换、关闭 | 可直接复用 | `js/fast-docs.js` |
 | 资产未生成态 | 保留右栏 Tab、面包屑与资产标题；白色缺省内容块填满右栏剩余高度，底部保留 12px padding，内容垂直居中；通过 `EnterpriseAssets.setContentVisible` 在对应 Journey 节点揭示内容 | 可直接复用 | `js/enterprise-assets.js`、`css/enterprise-assets.css` |
+| 企业资产内容滚动 | 内容解锁后在右侧资产卡内部纵向滚动，标题栏保持可见；适用于企业文档、业务全景与场景规划 | 可直接复用 | `js/enterprise-assets.js`、`css/enterprise-assets.css` |
+| 场景规划勾选 | Application 与 Business Scenario 默认全部不选；由用户显式选择后再发起构建 | 可直接复用 | `js/enterprise-assets.js` |
 | 对话引用打开文档 | Chat cite → 右栏文档 | 可直接复用 | `js/fast-docs.js` |
 | 文档折叠块 | 标题区点击展开 / 收起 | 可直接复用 | `js/fast-docs.js` |
 | 文档差异高亮 | `==内容==` 高亮修改处 | 可直接复用 | `js/fast-change.js`、`js/agent-body.js` |
@@ -331,9 +334,24 @@
 
 ### Enterprise asset review controls
 
-- Structure and visual pattern: title row with AI edit permission, contextual info tooltip, and version changes switch; Figma `324:72733`, `238:58841`, `238:58944`. Scenario Planning also has a compact sync action.
-- State: AI permission defaults on and is stored separately for each asset title; version changes defaults off. Switches expose `aria-checked` and support native button keyboard activation.
-- Trigger and feedback: switches update permission or reveal the version review panel; sync saves selected planning scenarios to local demo storage and reports the count. Empty selection and storage failure show inline feedback.
+- Structure and visual pattern: shared 42px elevated header with asset name, v1.0.0 pill, timestamp/author/space metadata, history action, and content lock switch. Scenario Planning adds the compact Sync to scenarios action. The following 40px review row contains title and version changes switch only. References: Figma 235:45584, 238:58841, 238:57552, 238:58071, 324:72717, 324:72733.
+- State: content lock defaults off and is tracked independently for each asset kind. Version changes defaults off. Switches expose aria-checked and support native button keyboard activation.
+- Trigger and feedback: lock toggles its state; version changes reveals the review panel; sync saves selected planning scenarios to local demo storage and reports the count. Empty selection and storage failure show inline feedback.
 - Dismissal: turn off version changes to close the review panel; info tooltip closes on pointer leave or blur.
-- Reuse scope and maturity: composable review toolbar for Workbench and scenario-room planning, business landscape, and enterprise profile views. Demo-only: AI permission is UI state and sync writes local storage; neither implies a backend AI lock or remote scenario creation.
-- Implementation: `superagent/js/enterprise-assets.js`, `superagent/css/enterprise-assets.css`, `superagent/assets/enterprise/{info,sync}.svg`.
+- Reuse scope and maturity: composable headers for Workbench and scenario-room planning, business landscape, enterprise documents, and scenario canvas views. Demo-only: locking is UI state and sync writes local storage; neither implies a backend lock or remote scenario creation. Replaces the earlier Allow AI edits controls and download action in these header slots.
+- Implementation: superagent/js/enterprise-assets.js, superagent/css/enterprise-assets.css, superagent/assets/enterprise/{history,info,sync}.svg.
+
+- Scroll containment: enterprise detail headers remain outside `.ea-article-scroll`; only the article body scrolls, with keyboard focus support and scroll position preserved when review controls rerender. The outer FastDocs/Workbench viewport clips overflow to avoid competing vertical scrollbars. Applies to all four enterprise asset detail types.
+
+### Shared line tabs
+
+- Visual reference: Workbench Files Public space / Personal space. 32px height, 12px horizontal padding, 2px gap, 13px text, neutral baseline, black semibold selected label and 2px underline. No selected pill background.
+- Structure: legacy tab classes adapt to one shared stylesheet; existing selection attributes, click handlers, close controls and horizontal overflow remain intact.
+- State and feedback: selected states use is-on/is-active/is-cur/is-current/on or aria-selected=true; hover darkens text, keyboard focus has an inset outline, disabled tabs are muted.
+- Trigger and dismissal: existing tab selection/close events; tab content lifecycle remains owned by each feature.
+- Reuse scope: Files, Market, management, enterprise asset views, scene sidebar, ontology, flow, conversation and document tabs, sheet tabs, and switching dialog. Composable shared presentation; no changes to underlying demo data.
+- Implementation: superagent/css/line-tabs.css, Workbench and Superagent entrypoints, and workshop shell/generated pages. Replaces per-feature visual differences while preserving event contracts.
+
+- Fixed review chrome: company title, tabs, and review row are moved into `.ea-fixed-chrome`, a nonshrinking sibling before `.ea-article-scroll`. This replaces sticky descendants so scrolling to the end cannot move or compress review rows.
+
+Enterprise Profile section navigation uses the ontology segmented control style: gray rounded group, black selected segment, and aria-pressed state; section anchor scrolling is preserved.

@@ -73,7 +73,7 @@ function escapeHtmlModal(value) {
 
 function toolbar(n) {
   return '<div class="res-toolbar"><span class="res-count">' + n + ' item' + (n === 1 ? '' : 's') + ' in ' + escapeHtmlModal(currentTeam) + '</span>' +
-    '<div class="res-toolbar-actions"><button type="button" class="res-chip is-on">All</button><button type="button" class="res-chip">Recent</button></div></div>';
+    '</div>';
 }
 
 function listFor(key) {

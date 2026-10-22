@@ -82,8 +82,9 @@
   font-weight: 600;
   line-height: 16px;
 }
-.on-graph-space { margin-top: 12px; }
-.on-graph-card {
+.on-graph-space, .ea-home-primary .ea-grid { margin-top:12px; }
+.on-graph-card,
+.ea-home-primary .ea-card {
   width: clamp(420px, 50%, 620px);
   display: block;
   overflow: hidden;
@@ -206,7 +207,7 @@
 .on-tag.status.published { background: #e8f8ef; color: #1f7a45; }
 
 @media (max-width: 800px) {
-  .on-graph-card { width: 100%; }
+  .on-graph-card, .ea-home-primary .ea-card { width: 100%; }
 }
 
 /* MCP — connector */
@@ -305,9 +306,11 @@
 }
 /* Enterprise Assets catalog — primary assets followed by scenario canvases. */
 .ea-home-primary .ea-grid { display:flex; flex-wrap:wrap; gap:16px; }
+.ea-home-primary .ea-card { display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; padding:0; }
+.ea-home-primary .ea-preview { width:100%; }
 .ea-home-canvases { border-top:1px solid var(--divider); margin-top:16px; padding-top:16px; }
-.ea-home-canvases>h2 { margin:0 0 16px; font-size:16px; line-height:24px; font-weight:600; }
-.ea-home-primary .ea-card { width:clamp(420px,50%,620px); min-height:318px; border-radius:12px; }
+
+
 .ea-home-primary .ea-preview { height:190px; flex-shrink:0; background:#fafafa; }
 .ea-home-primary .ea-heading,.ea-home-primary .ea-chip,.ea-home-canvases .ea-heading { fill:#000; }
 .ea-home-primary .ea-link { stroke:#000; }
@@ -324,19 +327,49 @@
 .ea-home-tags span+span { background:#fff6e6; color:#d99519; }
 .ea-home-primary .ea-foot,.ea-home-canvases .ea-foot { font-size:13px; gap:8px; flex-wrap:wrap; }
 @media(max-width:800px) { .ea-home-primary .ea-card { width:100%; } }
-/* Full-page enterprise detail — Figma pattern 313:64262. */
-.main.is-enterprise-detail .main-body { padding:0; background:white; }
-.main.is-enterprise-detail #mainContent { min-height:100%; }
-.main.is-enterprise-detail .ea-room { padding:0; background:white; }
+/* Full-page enterprise detail — Figma pattern 313:64262.
+   Lock the height chain (same idea as ontology embed) so .ea-room-article
+   becomes the real scrollport. Without this, article grows with content while
+   overscroll-behavior:contain eats the wheel and nothing scrolls. */
+.main.is-enterprise-detail { min-height: 0; }
+.main.is-enterprise-detail .main-body {
+  min-height: 0;
+  padding: 0;
+  background: white;
+  overflow: hidden;
+}
+.main.is-enterprise-detail #mainContent {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.main.is-enterprise-detail .ea-room {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  padding: 0;
+  background: white;
+}
 .main.is-enterprise-detail .ea-room-breadcrumb { display:none; }
 .main.is-enterprise-detail .ea-room-article { border:0; border-radius:0; }
 .main.is-enterprise-detail .ea-room-header { background:white; }
-.main.is-enterprise-detail .ea-grid-card { margin:16px 0; }
-.main.is-enterprise-detail .ea-room-content { padding:12px; }
+
+.main.is-enterprise-detail .ea-room-content:not(.ea-visual-content) { padding:0 32px; }
 .main.is-enterprise-detail [data-enterprise-back] { padding:0; background:none; border:0; color:inherit; font:inherit; cursor:pointer; }
 
-.ea-home-primary .ea-card { width:clamp(300px,calc((100% - 32px)/3),620px); }
+
 .ea-planning-preview { display:block; max-width:100%; object-fit:contain; }
 .ea-planning .ea-icon { background:#f5f5f5; }
-@media(max-width:1100px) { .ea-home-primary .ea-card { width:calc((100% - 16px)/2); } }
-@media(max-width:800px) { .ea-home-primary .ea-card { width:100%; } }
+
+.main.is-enterprise-detail .main-body { min-height:0; overflow:hidden; }
+
+.main.is-enterprise-detail .main-top { height:54px; }
+
+.main.is-enterprise-detail .main-top { flex:0 0 54px; min-height:54px; box-sizing:border-box; }
+.main.is-enterprise-detail #mainContent { overflow:hidden; }
+
+/* Keep list and detail navigation at the same vertical position. */
+.main.is-enterprise-page .main-top { height:54px; min-height:54px; flex:0 0 54px; box-sizing:border-box; }
+
+.main.is-enterprise-detail .ea-room-content.ea-agent-view { padding:16px 32px; }

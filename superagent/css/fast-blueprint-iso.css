@@ -23,7 +23,7 @@
 
 .bpi-top {
   display: flex; align-items: center; justify-content: space-between;
-  height: 22px; padding: 0 4px 0 8px; font-size: 11px; font-weight: 500; color: var(--text-muted, #a3a3a8);
+  height: 24px; padding: 0 4px 0 8px; font-size: 12.5px; font-weight: 600; color: var(--text-secondary, #8c8c8c);
 }
 .bpi-btn {
   width: 22px; height: 22px; border: 0; border-radius: 6px; background: transparent;
@@ -115,6 +115,16 @@
 /* ---- vertical process map (sidebar): title + status tag (no STEP N) ---- */
 .bpi-v-ttl { font-size: 12px; font-weight: 600; fill: var(--text-primary, #111); }
 .bpi-v-ttl.dim { fill: var(--text-secondary, #8a8a8f); }
+.bpi-v-ttl.is-out { font-size: 13px; font-weight: 700; letter-spacing: -.01em; }
+/* Generate Agent = final deliverable: soft band + gather funnel from stages above */
+.bpi-v-out-band { fill: #f2f5fa; stroke: #e0e6ef; stroke-width: .75; }
+.bpi-v-out-cap { font-size: 8.5px; font-weight: 700; letter-spacing: .1em; fill: #8a96a8; }
+.bpi-v-funnel { opacity: .95; }
+.bpi-v-gather { opacity: .95; }
+.bpi-v .bpi-plate.is-big .bpi-top-f { stroke-width: .85; }
+.bpi-v .bpi-plate.is-big.st-done .bpi-lift,
+.bpi-v .bpi-plate.is-big.st-doing .bpi-lift { transform: translateY(-3px); }
+.bpi-v .bpi-plate.is-big.st-doing .bpi-ground { opacity: 1; }
 .bpi-v-tag { stroke: none; }
 .bpi-v-tag.bpi-s-done, .bpi-v-tag.bpi-s-imported { fill: #eaf3ff; }
 .bpi-v-tag.bpi-s-doing { fill: #eaf3ff; animation: bpi-tag-pulse 1.2s ease-in-out infinite; }

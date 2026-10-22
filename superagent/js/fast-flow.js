@@ -240,7 +240,6 @@
           { name: 'Skill', ver: 'v1', state: 'confirmed' },
           { name: 'MCP', ver: 'v1', state: 'confirmed' },
           { name: '知识库', ver: 'v1', state: 'confirmed' },
-          { name: 'Agent：关账异常审查助手', ver: 'v1', state: 'confirmed', file: 'Agent spec v0.1.md' },
         ],
       },
     ];
@@ -970,7 +969,7 @@
   }
 
   /* ───────── chain ───────── */
-  function createLongTaskVersion(version, tasks, note) {
+  function createLongTaskVersion(version, tasks, note, customName) {
     version = version || 1;
     tasks = tasks || [
       { title: '用户故事设计', desc: '明确各角色流程与关键异常处理。', agent: '场景需求Agent' },
@@ -981,7 +980,7 @@
       { title: '本体对象集构建', desc: '依据本体方案新增或修改对象集。', agent: '本体构建Agent' },
       { title: '智能体及配套能力构建', desc: '构建 Skill、MCP、知识库与 Agent。', agent: '智能打造Agent' },
     ];
-    var name = 'v' + version;
+    var name = customName || 'v' + version;
     var normalizedTasks = tasks.map(function (task) {
       return typeof task === 'string'
         ? { title: task, desc: '按当前版本计划完成该项任务。', agent: 'AgentOS' }
