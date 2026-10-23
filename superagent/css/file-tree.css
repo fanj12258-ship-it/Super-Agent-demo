@@ -245,6 +245,10 @@
   height: 16px;
   display: block;
 }
+/* Agent demo may render #ws-agent via <use>; keep stroke readable next to Seti tiles */
+.files-scroll .tree .file .file-icon--agent {
+  color: #5b7cfa;
+}
 .files-scroll .tree .file .info {
   flex: 1;
   min-width: 0;

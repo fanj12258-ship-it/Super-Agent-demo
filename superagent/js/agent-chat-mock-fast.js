@@ -954,9 +954,10 @@
     var FC = window.FastCompany;
     var planText = text + (text && contextText ? '\n\n' : '') + contextText;
     var diagnosisPlan = window.FastDiagnosis && window.FastDiagnosis.plan(planText);
+    var journeyThreePlan = window.JourneyThreePlan && window.JourneyThreePlan.take(text);
     var journeyTwoPlan = window.JourneyTwoPlan && window.JourneyTwoPlan.take(text);
     var journeyOnePlan = window.JourneyOnePlan && window.JourneyOnePlan.take(text);
-    var jPlan = diagnosisPlan || journeyTwoPlan || journeyOnePlan || (jOn ? FJ.take()
+    var jPlan = diagnosisPlan || journeyThreePlan || journeyTwoPlan || journeyOnePlan || (jOn ? FJ.take()
       : (window.FastChange && window.FastChange.match(text) ? window.FastChange.plan()
       : (FC && FC.active() ? FC.take()
       : (FI && FI.active() ? FI.take()

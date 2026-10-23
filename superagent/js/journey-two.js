@@ -17,6 +17,8 @@
   var tweakStarted = false;
   var tweakRunning = false;
   var tweakCompleted = false;
+  var agentDemoPublished = false;
+  var AGENT_DEMO_NAME = 'Agent demo';
   var AGENT_TRIAL_PROMPTS = [
     '4人小团队申请1个S档名额',
     '帮我润色一段后端开发自评',
@@ -801,15 +803,13 @@
             },
             {
               name: 'Agent 调试',
-              open: function () {
-                if (window.FastAgentPanel) window.FastAgentPanel.open('try');
-                else if (window.FastModules) window.FastModules.open('agent');
-              },
+              open: openAgentDemo,
             },
           ],
           conclusion: '三项方案与可运行配套已就绪。可先打开方案核对，或从下方入口进入本体对象集 / Agent 调试继续验证。',
           ask: '如果试跑效果还需要小修小补，直接告诉我要改哪一块即可。',
         });
+        publishAgentDemo();
         appendNode(ctx, summary);
         executionCompleted = true;
         return { journey: '2', completed: true };
@@ -1086,41 +1086,8 @@
         ctx.scroll();
         await ctx.sleep(420);
 
-        enableAgentTrial();
-
-        var summary = window.FastFlow.deliverableSummary({
-          title: '执行总结',
-          body: '本轮按【Demo 轻量调优】连跑完成三项长任务：已输出更新后的技术方案文档，同步对象集配额与 Mock，并固定自评三段式 Skill / 提示词。中间不停审，Demo 已可再试跑一轮用于客户演示。',
-          lead: '以下为本轮更新的文档，可直接查看：',
-          items: TWEAK_DELIVERABLES.map(function (doc) {
-            return {
-              name: doc.display,
-              iconName: doc.name,
-              open: function () {
-                if (window.FastFiles) window.FastFiles.clearUpdated(doc.name);
-                if (window.FastDocs) window.FastDocs.open(doc.name);
-              },
-            };
-          }),
-          entriesLabel: '相关入口',
-          entries: [
-            {
-              name: '本体对象集',
-              open: function () {
-                if (window.FastModules) window.FastModules.open('ontology');
-              },
-            },
-            {
-              name: 'Agent 调试',
-              open: function () {
-                if (window.FastAgentPanel) window.FastAgentPanel.open('try');
-                else if (window.FastModules) window.FastModules.open('agent');
-              },
-            },
-          ],
-          conclusion: '更新文档、对象集配额规则与 Skill / 提示词均已就绪。可从下方入口打开本体对象集或 Agent 调试，再试跑一轮确认客户演示效果。',
-          ask: '如果还有小修小补，直接告诉我要改哪一块即可。',
-        });
+        var summary = tweakSummaryCard();
+        publishAgentDemo();
         appendNode(ctx, summary);
         tweakCompleted = true;
         return { journey: '2', action: 'tweak-done' };
@@ -1159,6 +1126,52 @@
           '**MOCK** · 输出结构由本轮更新的 Skill / 提示词约束。',
       },
     });
+  }
+
+  /* When chat shows 本体对象集 / Agent 调试, mirror a non-md "Agent demo" row under Files.
+     Click opens the same trial panel as the mid-dialog Agent 调试 entry (#ws-agent icon). */
+  function publishAgentDemo() {
+    var ico = '<svg class="ws-ico" width="14" height="14" aria-hidden="true"><use href="#ws-agent"/></svg>';
+    enableAgentTrial();
+    if (window.FastAgentPanel) {
+      if (window.FastAgentPanel.setIdentity) {
+        window.FastAgentPanel.setIdentity({
+          name: AGENT_DEMO_NAME,
+          display: '绩效配额 · 自评答疑 Agent',
+        });
+      }
+      if (window.FastAgentPanel.ensureRegistered) window.FastAgentPanel.ensureRegistered();
+    }
+    /* Always register under this exact Files name — don't gate the row on panel identity. */
+    if (window.FastDocs && !window.FastDocs.find(AGENT_DEMO_NAME)) {
+      window.FastDocs.register({
+        name: AGENT_DEMO_NAME,
+        kind: 'agent',
+        deliverable: true,
+        iconHtml: ico,
+        build: function () {
+          var host = document.createElement('div');
+          host.className = 'fa-wrap';
+          /* Prefer the live trial panel; fall back to an empty host if unavailable. */
+          requestAnimationFrame(function () {
+            if (window.FastAgentPanel) window.FastAgentPanel.open('try');
+          });
+          return host;
+        },
+      });
+    }
+    if (agentDemoPublished || !window.FastFiles) return;
+    window.FastFiles.addDeliverable(AGENT_DEMO_NAME);
+    window.FastFiles.markUpdated(AGENT_DEMO_NAME);
+    window.FastFiles.markNew();
+    window.FastFiles.showTab(true);
+    agentDemoPublished = true;
+  }
+
+  function openAgentDemo() {
+    if (window.FastAgentPanel) window.FastAgentPanel.open('try');
+    else if (window.FastDocs && window.FastDocs.find(AGENT_DEMO_NAME)) window.FastDocs.open(AGENT_DEMO_NAME);
+    else if (window.FastModules) window.FastModules.open('agent');
   }
 
   async function startTweakPlan() {
@@ -1261,6 +1274,145 @@
   }
   installSpaceHook();
 
+  function tweakSummaryCard() {
+    return window.FastFlow.deliverableSummary({
+      title: '执行总结',
+      body: '本轮按【Demo 轻量调优】连跑完成三项长任务：已输出更新后的技术方案文档，同步对象集配额与 Mock，并固定自评三段式 Skill / 提示词。中间不停审，Demo 已可再试跑一轮用于客户演示。',
+      lead: '以下为本轮更新的文档，可直接查看：',
+      items: TWEAK_DELIVERABLES.map(function (doc) {
+        return {
+          name: doc.display,
+          iconName: doc.name,
+          open: function () {
+            if (window.FastFiles) window.FastFiles.clearUpdated(doc.name);
+            if (window.FastDocs) window.FastDocs.open(doc.name);
+          },
+        };
+      }),
+      entriesLabel: '相关入口',
+      entries: [
+        {
+          name: '本体对象集',
+          open: function () {
+            if (window.FastModules) window.FastModules.open('ontology');
+          },
+        },
+        {
+          name: 'Agent 调试',
+          open: openAgentDemo,
+        },
+      ],
+      conclusion: '更新文档、对象集配额规则与 Skill / 提示词均已就绪。可从下方入口打开本体对象集或 Agent 调试，再试跑一轮确认客户演示效果。',
+      ask: '如果还有小修小补，直接告诉我要改哪一块即可。',
+    });
+  }
+
+  /* Frozen end-state of Journey 2 (post Demo + 小修小补). Journey 3 restores this as its entry. */
+  function restoreEndSnapshot(opts) {
+    opts = opts || {};
+    entered = true;
+    craftStarted = true;
+    executionStarted = true;
+    executionCompleted = true;
+    tweakStarted = true;
+    tweakRunning = false;
+    tweakCompleted = true;
+    agentDemoPublished = false;
+
+    ensureSidebarScene();
+    setOverviewLabel(SIDEBAR.title);
+    setCenterTitle(SIDEBAR.biz[0].name);
+    if (window.FastBlueprint) {
+      window.FastBlueprint.show(
+        SIDEBAR.biz[0].name,
+        'For R&D performance management: a quota-check and self-review Agent that reconciles indicator quotas, answers assessment-rule questions with cited criteria, and helps draft structured self-reviews. Upgrade “look up policy → ask HR → rewrite drafts by hand” into an Agent-led flow: quota check, rule Q&A, evidence-backed draft polish, and human confirmation before submission.'
+      );
+    }
+    if (window.FastDocs && window.FastDocs.resetView) window.FastDocs.resetView();
+    if (window.FastFiles) window.FastFiles.reset();
+    if (window.FastJourneyRoute && window.FastJourneyRoute.ensureAssets) {
+      window.FastJourneyRoute.ensureAssets();
+    }
+    if (window.EnterpriseAssets) {
+      window.EnterpriseAssets.setPlanningAppLimit(1, 1);
+      window.EnterpriseAssets.setPlanningOverride({
+        title: SIDEBAR.title,
+        badge: 'New',
+        scenario: SIDEBAR.desc,
+        biz: PLANNING_BIZ,
+      });
+      window.EnterpriseAssets.setContentVisible('planning', true);
+    }
+
+    DELIVERABLES.forEach(addDeliverable);
+    TWEAK_DELIVERABLES.forEach(addDeliverable);
+    if (window.FastFlow && window.FastFlow.createLongTaskVersion) {
+      window.FastFlow.createLongTaskVersion(1, DEMO_TASKS, '', '快速 Demo 验证 v1');
+      window.FastFlow.createLongTaskVersion(2, TWEAK_TASKS, '', 'Demo 轻量调优 v1');
+    }
+    publishPerfOntology({ sBand: true });
+    publishAgentDemo();
+    if (window.FastFiles) window.FastFiles.showTab(true);
+
+    /* Journey 3: hide interaction replay / 执行总结 — only restore workspace.
+       Full chat hist + summary card remain available when opts.compactChat is false. */
+    if (!opts.compactChat) {
+      var thread = document.getElementById('chat-thread');
+      if (thread && window.FastChat && window.FastChat.staticThread) {
+        if (window.FastChat.enterChatMode) window.FastChat.enterChatMode();
+        var anchor = null;
+        if (opts.keepLiveTurn) {
+          anchor = thread.querySelector('.chat-msg-assistant:last-child');
+          var prevUser = anchor && anchor.previousElementSibling;
+          if (prevUser && prevUser.classList.contains('chat-msg-user')) anchor = prevUser;
+        }
+        var hist = window.FastChat.staticThread([
+          { u: PROMPT },
+          {
+            a: '场景已创建并进入打造。当前位于 **' + SIDEBAR.biz[0].name + '**（应用场景 **' + SIDEBAR.title + '**）。\n\n' +
+              '左侧已切到场景结构树；可直接要求快速搭 Demo，或以最小假设连跑可试跑智能体。',
+            time: '09:12',
+          },
+          { u: CRAFT_PROMPT },
+          {
+            a: '已按【快速 Demo 验证】连跑完成五项长任务：架构 / 本体 / Agent 方案与可运行对象集、智能体配套已就绪。\n\n' +
+              '可打开方案核对，或从入口进入 **本体对象集** / **Agent 调试** 继续验证。',
+            time: '09:18',
+          },
+          { u: TWEAK_PROMPT },
+          {
+            a: '已按【Demo 轻量调优】完成：本体方案设计 v2、Agent方案设计 v2，以及对象集配额规则与自评三段式 Skill / 提示词同步。Demo 已可再试跑一轮用于客户演示。',
+            time: '09:24',
+          },
+        ]);
+        hist.forEach(function (node) {
+          if (anchor) thread.insertBefore(node, anchor);
+          else thread.appendChild(node);
+        });
+        if (window.FastFlow && window.FastFlow.deliverableSummary) {
+          var summary = tweakSummaryCard();
+          var wrap = document.createElement('div');
+          wrap.className = 'chat-msg-assistant';
+          var turn = document.createElement('div');
+          turn.className = 'ao-turn';
+          var body = document.createElement('div');
+          body.className = 'ao-answer answer-body chat-prose ao-body';
+          var seg = document.createElement('div');
+          seg.className = 'ao-seg';
+          seg.appendChild(summary);
+          body.appendChild(seg);
+          turn.appendChild(body);
+          wrap.appendChild(turn);
+          if (anchor) thread.insertBefore(wrap, anchor);
+          else thread.appendChild(wrap);
+        }
+      }
+    } else if (window.FastChat && window.FastChat.enterChatMode) {
+      window.FastChat.enterChatMode();
+    }
+    return { journey: '2', snapshot: 'end' };
+  }
+
   window.JourneyTwoPlan = {
     take: function (text) {
       if (matchesTweak(text)) return createTweakImpactPlan();
@@ -1272,5 +1424,8 @@
       if (executionCompleted && !tweakStarted) return TWEAK_PROMPT;
       return craftStarted ? '' : CRAFT_PROMPT;
     },
+    /** Journey 3 entry: freeze / restore Journey 2 end display + dialog state. */
+    restoreEndSnapshot: restoreEndSnapshot,
+    isEnded: function () { return !!tweakCompleted; },
   };
 }());

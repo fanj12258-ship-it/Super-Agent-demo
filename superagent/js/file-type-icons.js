@@ -93,6 +93,16 @@
       '<path d="M4.2 1.8h5.1L12 4.6v9.2a.8.8 0 0 1-.8.8H4.2a.8.8 0 0 1-.8-.8V2.6a.8.8 0 0 1 .8-.8Z" fill="#e8eaef" stroke="#b0b6c0" stroke-width="1"/>' +
       '<path d="M9.2 1.8v2.9H12" stroke="#b0b6c0" stroke-width="1" stroke-linejoin="round"/>' +
       '</svg>',
+
+    /* Agent demo — Seti tile shaped after #ws-agent (nav asset) */
+    agent:
+      '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
+      '<rect x="1.5" y="1.5" width="13" height="13" rx="3" fill="#5b7cfa"/>' +
+      '<rect x="3.6" y="6.4" width="8.8" height="5.8" rx="1.7" fill="#fff"/>' +
+      '<path d="M8 6.4V4.6" stroke="#fff" stroke-width="1.25" stroke-linecap="round"/>' +
+      '<circle cx="8" cy="4" r="0.85" fill="#fff"/>' +
+      '<path d="M6.15 9.1v1M9.85 9.1v1" stroke="#5b7cfa" stroke-width="1.25" stroke-linecap="round"/>' +
+      '</svg>',
   };
 
   /* aliases */
@@ -110,6 +120,16 @@
   }
 
   function typeOf(name) {
+    var raw = String(name || '');
+    var base = raw.replace(/\.[^.]+$/, '');
+    var compact = base.replace(/\s+/g, '');
+    /* Agent / 机器人 — Agent demo · Agent v3 · Agentv4 · *.agent */
+    if (/^agent(\s*demo)?$/i.test(base) ||
+        /^agent\s*v?\d+$/i.test(base) ||
+        /^agentv\d+$/i.test(compact) ||
+        /\.agent$/i.test(raw)) {
+      return 'agent';
+    }
     var e = extOf(name);
     if (e === 'csv') return 'csv';
     if (e === 'xlsx' || e === 'xls') return 'xls';
@@ -122,6 +142,12 @@
     if (e === 'pptx' || e === 'ppt') return 'ppt';
     if (e === 'png' || e === 'jpg' || e === 'jpeg' || e === 'gif' || e === 'webp' || e === 'svg') return 'img';
     if (e === 'txt' || e === 'log') return 'txt';
+    if (e === 'agent') return 'agent';
+    /* Extensionless journey deliverables → green MD tile (画布 / 方案 / Skill / 对象集 …) */
+    if (!e && base &&
+        /(画布|方案设计|原型设计|规则方案|测试用例|^Skill|^技能|知识库|对象集|架构方案|本体方案|^MCP)/i.test(base)) {
+      return 'md';
+    }
     return 'file';
   }
 

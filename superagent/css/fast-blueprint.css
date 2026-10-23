@@ -10,7 +10,7 @@
   margin: 0 0 12px;
   padding: 10px 12px 12px;
   border-radius: 10px;
-  background: #f3f3f5;
+  background: #f7f7f8;
 }
 .bp-desc-toggle {
   display: flex;
@@ -49,7 +49,7 @@
   padding: 8px 8px 6px;
   border: 0;
   border-radius: 10px;
-  background: #f3f3f5; /* match .bp-desc */
+  background: #f7f7f8; /* match .bp-desc */
 }
 .fast-bp.is-structure .bpi-top {
   height: 22px;

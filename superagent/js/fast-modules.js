@@ -44,6 +44,21 @@
 
   /* ───────── small html helpers ───────── */
   function tag(kind, text) { return '<span class="fx-tag ' + kind + '">' + text + '</span>'; }
+  /* pending ↔ published toggle. mode: 'publish' → 待发布/已发布；'confirm' → 待确认/已发布 */
+  function assetPubTag(pack, assetKey, mode) {
+    if (!pack) return '';
+    if (!pack.publishStatus) pack.publishStatus = 'pending';
+    var st = pack.publishStatus === 'published' ? 'published' : 'pending';
+    var pendingLabel = mode === 'confirm' ? '待确认' : '待发布';
+    var label = st === 'published' ? '已发布' : pendingLabel;
+    var kind = st === 'published' ? 'ok' : 'pending';
+    return '<span class="fx-tag ' + kind + ' fx-pub-toggle" data-pub-toggle="1" data-pub-asset="' + esc(assetKey) +
+      '" role="button" tabindex="0" title="点击切换状态" aria-pressed="' +
+      (st === 'published' ? 'true' : 'false') + '">' + label + '</span>';
+  }
+  function ontoPubTag() {
+    return assetPubTag(activeOnto, 'onto', 'publish');
+  }
   function mat(key) {
     if (S.phase === 'production') return tag('prod', 'Production');
     return S.mocks[key] === 'verified' ? tag('ok', 'Verified') : tag('mock', 'Mock');
@@ -122,6 +137,103 @@
     Sandbox.emit();
   }
 
+  /* Optional Journey asset packs (workbench-style cards + 待确认/已发布 toggle). */
+  var activeAgent = null;
+  var activeSkill = null;
+  var activeKnowledge = null;
+  var activeMcp = null;
+  function publishAgent(pack) {
+    activeAgent = pack || null;
+    if (activeAgent && !activeAgent.publishStatus) activeAgent.publishStatus = 'pending';
+    Sandbox.emit();
+  }
+  function publishSkill(pack) {
+    activeSkill = pack || null;
+    if (activeSkill && !activeSkill.publishStatus) activeSkill.publishStatus = 'pending';
+    Sandbox.emit();
+  }
+  function publishKnowledge(pack) {
+    activeKnowledge = pack || null;
+    if (activeKnowledge && !activeKnowledge.publishStatus) activeKnowledge.publishStatus = 'pending';
+    Sandbox.emit();
+  }
+  function publishMcp(pack) {
+    activeMcp = pack || null;
+    if (activeMcp && !activeMcp.publishStatus) activeMcp.publishStatus = 'pending';
+    Sandbox.emit();
+  }
+  function packByAsset(key) {
+    if (key === 'onto') return activeOnto;
+    if (key === 'agent') return activeAgent;
+    if (key === 'skill') return activeSkill;
+    if (key === 'knowledge') return activeKnowledge;
+    if (key === 'mcp') return activeMcp;
+    return null;
+  }
+  function agentCardHtml(pack, e) {
+    pack = pack || {};
+    if (!pack.publishStatus) pack.publishStatus = 'pending';
+    var letter = pack.letter || (pack.name || 'A').charAt(0).toUpperCase();
+    var color = pack.color || '#6a54f0';
+    var caps = pack.caps || ['Skill', 'Ontology', 'MCP'];
+    var status = pack.status || '就绪 · 可调试';
+    var state = pack.state || 'ready';
+    var tags = caps.map(function (c) {
+      return '<span class="fx-ag-tag">' + esc(c) + '</span>';
+    }).join('');
+    return '<div class="fx-card fx-ag is-' + e + '" role="button" tabindex="0" data-try="1">' +
+      '<span class="fx-ag-m"><span class="fx-ag-top"><span class="fx-ag-ava" style="background:' + esc(color) + '">' + esc(letter) + '</span>' +
+      '<span class="fx-ag-c"><span class="fx-ag-n">' + esc(pack.name || 'Agent') + '</span>' +
+      '<span class="fx-ag-r">' + esc(pack.role || pack.desc || '') + '</span></span></span>' +
+      '<span class="fx-ag-tags"><span class="fx-ag-model">' + esc(pack.model || 'Auto') + '</span>' + tags +
+      (pack.boundOnto ? '<span class="fx-ag-tag">' + esc(pack.boundOnto) + '</span>' : '') +
+      assetPubTag(pack, 'agent', 'confirm') +
+      '</span></span>' +
+      '<span class="fx-ag-f"><span class="fx-ag-s"><i class="dot ' + esc(state) + '"></i>' + esc(status) + '</span>' +
+      '<span class="fx-ag-cta" data-try="1">' + esc(pack.cta || '调试') + '</span></span></div>';
+  }
+  function journeySkillCard(pack, e) {
+    pack = pack || {};
+    if (!pack.publishStatus) pack.publishStatus = 'pending';
+    var name = pack.name || 'Skillv4';
+    var ver = pack.version || 'v4';
+    var desc = pack.desc || '生产级 Skill：配额答疑、自评润色、工时占比加权说明。';
+    var slug = pack.slug || name.toLowerCase().replace(/\s+/g, '-');
+    return { id: pack.id || 'journey-skill', env: e, html: card('fx-sk', e, pack.id || 'journey-skill',
+      '<span class="fx-sk-code"><span><i class="c">---</i></span><span><i class="k">name</i>: <i class="s">' + esc(slug) + '</i></span><span><i class="k">version</i>: <i class="s">' + esc(ver) + '</i></span><span><i class="k">description</i>: <i class="s">|</i></span><span>  ' + esc(desc.slice(0, 28)) + '…</span><span><i class="k">tags</i>: <i class="s">[performance, production]</i></span><span><i class="c">---</i></span></span>' +
+      '<span class="fx-sk-b"><span class="fx-sk-tr"><span class="fx-sk-n">' + esc(name) + '</span><span class="fx-sk-v">' + esc(ver) + '</span></span>' +
+      '<span class="fx-sk-d">' + esc(desc) + '</span>' +
+      '<span class="fx-sk-t">' + assetPubTag(pack, 'skill', 'confirm') + tag('mock', 'Mock') + '</span></span>') };
+  }
+  function journeyKnowledgeCard(pack, e) {
+    pack = pack || {};
+    if (!pack.publishStatus) pack.publishStatus = 'pending';
+    var name = pack.name || '知识库v2';
+    var meta = pack.meta || '已索引 · 生产口径';
+    return { id: pack.id || 'journey-kb', env: e, html: card('fx-kb', e, pack.id || 'journey-kb',
+      '<span class="fx-kb-p"><span class="fx-kb-src">' + esc(pack.source || 'Craft') + '</span>' +
+      '<span class="fx-kb-doc back"><i class="t"></i><i class="w90"></i><i class="w60"></i></span>' +
+      '<span class="fx-kb-doc front"><i class="t"></i><i class="w80"></i><i class="w90"></i><i class="w45"></i><i class="w60"></i></span></span>' +
+      '<span class="fx-kb-b"><span class="fx-kb-n">' + esc(name) + '</span>' +
+      '<span class="fx-kb-m"><i class="dot"></i>' + esc(meta) + '</span>' +
+      '<span class="fx-kb-t">' + assetPubTag(pack, 'knowledge', 'confirm') + '</span></span>') };
+  }
+  function journeyMcpCard(pack, e) {
+    pack = pack || {};
+    if (!pack.publishStatus) pack.publishStatus = 'pending';
+    var name = pack.name || 'MCPv1';
+    var desc = pack.desc || '绩效服务只读连接：配额 / 周期 / 证据。';
+    var letter = pack.letter || 'M';
+    var color = pack.color || '#4f46e5';
+    return { id: pack.id || 'journey-mcp', env: e, html: card('fx-mcp', e, pack.id || 'journey-mcp',
+      '<span class="fx-logo" style="background:' + esc(color) + '">' + esc(letter) + '</span>' +
+      '<span class="fx-mcp-b"><span class="fx-mcp-n">' + esc(name) + '</span>' +
+      '<span class="fx-mcp-d">' + esc(desc) + '</span>' +
+      '<span class="fx-mcp-u">Updated: just now</span>' +
+      '<span class="fx-mcp-r">' + assetPubTag(pack, 'mcp', 'confirm') +
+      '<span class="fx-chip mono">' + esc(pack.chip || 'read-only') + '</span></span></span>') };
+  }
+
   /* — Ontology — */
   def('ontology', 'Ontology', {
     ready: function () { return S.generated || !!activeOnto; },
@@ -131,11 +243,12 @@
       if (activeOnto) {
         var nObj = Object.keys(activeOnto.objects || {}).length;
         var nRel = (activeOnto.edges || []).length;
+        if (!activeOnto.publishStatus) activeOnto.publishStatus = 'pending';
         list.push({ id: activeOnto.id || 'perf', env: e, html: card('fx-on', e, activeOnto.id || 'perf',
           '<span class="fx-on-h"><span class="fx-on-ava">' + graphAva() + '</span><span class="fx-on-n">' + esc(activeOnto.name || 'Performance ontology') + '</span></span>' +
           '<span class="fx-on-d">' + esc(activeOnto.desc || '') + '</span>' +
           '<span class="fx-on-m">Generated · ' + esc(activeOnto.version || 'v0.1') + '</span>' +
-          '<span class="fx-on-t">' + pill(e) + tag('mock', 'Mock') + '<span class="fx-chip">' + nObj + ' objects · ' + nRel + ' relations</span></span>') });
+          '<span class="fx-on-t">' + pill(e) + ontoPubTag() + tag('mock', 'Mock') + '<span class="fx-chip">' + nObj + ' objects · ' + nRel + ' relations</span></span>') });
       }
       if (S.generated) {
         list.push({ id: 'main', env: e, html: card('fx-on', e, 'main',
@@ -154,7 +267,8 @@
       if (activeOnto && id === (activeOnto.id || 'perf')) {
         var pack = activeOnto;
         var mockRows = pack.mockRows || [];
-        return '<div class="fx-title">' + esc(pack.name || 'Performance ontology') + ' ' + pill(envOf(false)) + ' ' + tag('mock', 'Mock') + '</div>' +
+        if (!pack.publishStatus) pack.publishStatus = 'pending';
+        return '<div class="fx-title">' + esc(pack.name || 'Performance ontology') + ' ' + pill(envOf(false)) + ' ' + ontoPubTag() + ' ' + tag('mock', 'Mock') + '</div>' +
           '<div class="fx-banner sand">画布与调试视图：展示员工绩效档案、部门配额对象节点、关系边、规则及自动生成的 Mock 数据。</div>' +
           (window.FastOntoGraph ? window.FastOntoGraph.view({
             objects: pack.objects,
@@ -193,18 +307,35 @@
 
   /* — Skill — */
   def('skill', 'Skill', {
-    ready: function () { return S.generated; },
+    ready: function () { return S.generated || !!activeSkill; },
     why: '快速出一版后，生成的 Skill 草稿会出现在这里。',
+    crumb: function (id) {
+      if (activeSkill && id === (activeSkill.id || 'journey-skill')) return activeSkill.name || 'Skillv4';
+      return id;
+    },
     items: function () {
-      var e = envOf(false), ok = S.mocks.skill === 'verified', ver = S.phase === 'production' ? 'v1.0' : 'v0.1';
-      return Object.keys(SKILLS).map(function (n) {
-        var k = SKILLS[n];
-        return { id: n, env: e, html: card('fx-sk', e, n,
-          '<span class="fx-sk-code"><span><i class="c">---</i></span><span><i class="k">name</i>: <i class="s">' + esc(n) + '</i></span><span><i class="k">version</i>: <i class="s">' + ver + '</i></span><span><i class="k">description</i>: <i class="s">|</i></span><span>  ' + esc(k.d.slice(0, 22)) + '…</span><span><i class="k">tags</i>: <i class="s">[sourcing, ' + (ok || S.phase === 'production' ? 'verified' : 'mock') + ']</i></span><span><i class="c">---</i></span></span>' +
-          '<span class="fx-sk-b"><span class="fx-sk-tr"><span class="fx-sk-n">' + esc(n) + '</span><span class="fx-sk-v">' + ver + '</span></span><span class="fx-sk-d">' + esc(k.d) + '</span><span class="fx-sk-t">' + pill(e) + (S.phase === 'production' ? '' : mat('skill')) + '</span></span>') };
-      });
+      var list = [];
+      var e = envOf(false);
+      if (activeSkill) list.push(journeySkillCard(activeSkill, e));
+      if (S.generated) {
+        var ok = S.mocks.skill === 'verified', ver = S.phase === 'production' ? 'v1.0' : 'v0.1';
+        Object.keys(SKILLS).forEach(function (n) {
+          var k = SKILLS[n];
+          list.push({ id: n, env: e, html: card('fx-sk', e, n,
+            '<span class="fx-sk-code"><span><i class="c">---</i></span><span><i class="k">name</i>: <i class="s">' + esc(n) + '</i></span><span><i class="k">version</i>: <i class="s">' + ver + '</i></span><span><i class="k">description</i>: <i class="s">|</i></span><span>  ' + esc(k.d.slice(0, 22)) + '…</span><span><i class="k">tags</i>: <i class="s">[sourcing, ' + (ok || S.phase === 'production' ? 'verified' : 'mock') + ']</i></span><span><i class="c">---</i></span></span>' +
+            '<span class="fx-sk-b"><span class="fx-sk-tr"><span class="fx-sk-n">' + esc(n) + '</span><span class="fx-sk-v">' + ver + '</span></span><span class="fx-sk-d">' + esc(k.d) + '</span><span class="fx-sk-t">' + pill(e) + (S.phase === 'production' ? '' : mat('skill')) + '</span></span>') });
+        });
+      }
+      return list;
     },
     detail: function (id) {
+      if (activeSkill && id === (activeSkill.id || 'journey-skill')) {
+        var p = activeSkill;
+        return '<div class="fx-title">' + esc(p.name || 'Skillv4') + ' ' + assetPubTag(p, 'skill', 'confirm') + '</div>' +
+          '<p class="fx-p">' + esc(p.desc || '') + '</p>' +
+          kv([['版本', esc(p.version || 'v4')], ['状态', p.publishStatus === 'published' ? '已发布' : '待确认']]) +
+          (p.file ? '<p class="fx-hint">对应文件：<a href="#" data-doc="' + esc(p.file) + '">' + esc(p.file) + '</a></p>' : '');
+      }
       var k = SKILLS[id]; if (!k) return null;
       var rules = k.rules.map(function (r) {
         var v = r[1];
@@ -222,16 +353,33 @@
 
   /* — MCP — */
   def('mcp', 'MCP', {
-    ready: function () { return S.generated; },
+    ready: function () { return S.generated || !!activeMcp; },
     why: '快速出一版后，生成的 ERP 连接草稿会出现在这里。',
+    crumb: function (id) {
+      if (activeMcp && id === (activeMcp.id || 'journey-mcp')) return activeMcp.name || 'MCPv1';
+      return id === 'erp' ? 'ERP connector' : id === 'rules' ? 'Rules & templates' : id;
+    },
     items: function () {
-      var e = envOf(false), ok = S.mocks.erp === 'verified';
-      return [
-        { id: 'erp', env: e, html: logoCard('erp', e, 'E', '#4f46e5', 'ERP connector', ok ? '只读 ERP 接口：供应商、料号、报价。' : '用 14 条 ERP 导出样例回答，不连接真实 ERP。', pill(e) + (S.phase === 'production' ? '' : mat('erp')) + '<span class="fx-chip mono">read-only</span>') },
-        { id: 'rules', env: 'real', html: logoCard('rules', 'real', 'R', '#0f766e', 'Rules & templates', '准入标准、评审摘要模板，来自你上传的资料。', pill('real') + tag('real', 'Real')) },
-      ];
+      var list = [];
+      var e = envOf(false);
+      if (activeMcp) list.push(journeyMcpCard(activeMcp, e));
+      if (S.generated) {
+        var ok = S.mocks.erp === 'verified';
+        list.push(
+          { id: 'erp', env: e, html: logoCard('erp', e, 'E', '#4f46e5', 'ERP connector', ok ? '只读 ERP 接口：供应商、料号、报价。' : '用 14 条 ERP 导出样例回答，不连接真实 ERP。', pill(e) + (S.phase === 'production' ? '' : mat('erp')) + '<span class="fx-chip mono">read-only</span>') },
+          { id: 'rules', env: 'real', html: logoCard('rules', 'real', 'R', '#0f766e', 'Rules & templates', '准入标准、评审摘要模板，来自你上传的资料。', pill('real') + tag('real', 'Real')) }
+        );
+      }
+      return list;
     },
     detail: function (id) {
+      if (activeMcp && id === (activeMcp.id || 'journey-mcp')) {
+        var p = activeMcp;
+        return '<div class="fx-title">' + esc(p.name || 'MCPv1') + ' ' + assetPubTag(p, 'mcp', 'confirm') + '</div>' +
+          '<p class="fx-p">' + esc(p.desc || '') + '</p>' +
+          kv([['模式', '只读'], ['状态', p.publishStatus === 'published' ? '已发布' : '待确认']]) +
+          (p.file ? '<p class="fx-hint">对应文件：<a href="#" data-doc="' + esc(p.file) + '">' + esc(p.file) + '</a></p>' : '');
+      }
       if (id === 'rules') {
         return '<div class="fx-title">Rules &amp; templates ' + pill('real') + '</div>' + banner(true) +
           kv([['来源', '你上传的资料'], ['内容', '准入标准 v3.2 · 评审摘要模板']]) +
@@ -274,17 +422,31 @@
 
   /* — Knowledge base (uploaded materials: already real) — */
   def('knowledge', 'Knowledge base', {
-    ready: function () { return !!document.querySelector('#fast-materials .file'); },
+    ready: function () { return !!activeKnowledge || !!document.querySelector('#fast-materials .file'); },
     why: '上传资料后，已索引的知识库会出现在这里。',
+    crumb: function (id) {
+      if (activeKnowledge && id === (activeKnowledge.id || 'journey-kb')) return activeKnowledge.name || '知识库v2';
+      return id;
+    },
     items: function () {
+      var list = [];
+      if (activeKnowledge) list.push(journeyKnowledgeCard(activeKnowledge, envOf(false)));
       var groups = FD() ? FD().groups() : [];
-      return groups.map(function (g) {
-        return { id: g.folder, env: 'real', html: card('fx-kb', 'real', g.folder,
+      groups.forEach(function (g) {
+        list.push({ id: g.folder, env: 'real', html: card('fx-kb', 'real', g.folder,
           '<span class="fx-kb-p"><span class="fx-kb-src">Upload</span><span class="fx-kb-doc back"><i class="t"></i><i class="w90"></i><i class="w60"></i></span><span class="fx-kb-doc front"><i class="t"></i><i class="w80"></i><i class="w90"></i><i class="w45"></i><i class="w60"></i></span></span>' +
-          '<span class="fx-kb-b"><span class="fx-kb-n">' + esc(g.folder) + '</span><span class="fx-kb-m"><i class="dot"></i>' + g.files.length + ' 份文件<em>·</em>已索引</span><span class="fx-kb-t">' + pill('real') + '</span></span>') };
+          '<span class="fx-kb-b"><span class="fx-kb-n">' + esc(g.folder) + '</span><span class="fx-kb-m"><i class="dot"></i>' + g.files.length + ' 份文件<em>·</em>已索引</span><span class="fx-kb-t">' + pill('real') + '</span></span>') });
       });
+      return list;
     },
     detail: function (id) {
+      if (activeKnowledge && id === (activeKnowledge.id || 'journey-kb')) {
+        var p = activeKnowledge;
+        return '<div class="fx-title">' + esc(p.name || '知识库v2') + ' ' + assetPubTag(p, 'knowledge', 'confirm') + '</div>' +
+          '<p class="fx-p">' + esc(p.desc || '生产级知识库：考核政策、折算口径、异议复核说明。') + '</p>' +
+          kv([['状态', p.publishStatus === 'published' ? '已发布' : '待确认'], ['索引', esc(p.meta || '已索引')]]) +
+          (p.file ? '<p class="fx-hint">对应文件：<a href="#" data-doc="' + esc(p.file) + '">' + esc(p.file) + '</a></p>' : '');
+      }
       var g = (FD() ? FD().groups() : []).filter(function (x) { return x.folder === id; })[0]; if (!g) return null;
       return '<div class="fx-title">' + esc(id) + ' ' + tag('ok', 'Indexed') + '</div><div class="fx-list">' + g.files.map(function (d) {
         return '<button type="button" class="fx-row" data-doc="' + esc(d.name) + '"><span class="fx-rm"><b>' + esc(d.name) + '</b><i>' + esc(d.note) + '</i></span>' + CHEV + '</button>';
@@ -294,15 +456,27 @@
 
   /* — Agent — */
   def('agent', 'Agent', {
-    ready: function () { return S.generated; },
+    ready: function () { return S.generated || !!activeAgent; },
     why: '快速出一版后，生成的 Agent 会出现在这里，可以直接试用。',
     items: function () {
-      var e = envOf(false), left = Sandbox.mocksLeft();
-      var status = S.phase === 'production' ? 'Live · v1.0' : S.phase === 'hardening' ? '加固中 · RC' : '进行中';
-      return [{ id: 'agent', env: e, html: '<div class="fx-card fx-ag is-' + e + '" role="button" tabindex="0" data-try="1">' +
-        '<span class="fx-ag-m"><span class="fx-ag-top"><span class="fx-ag-ava">S</span><span class="fx-ag-c"><span class="fx-ag-n">Sourcing Strategy Agent</span><span class="fx-ag-r">筛选候选供应商、比价、评分，并给出风险提示。</span></span></span>' +
-        '<span class="fx-ag-tags"><span class="fx-ag-model">Auto</span><span class="fx-ag-tag">Skill × 3</span><span class="fx-ag-tag">Ontology</span><span class="fx-ag-tag">MCP</span>' + (S.phase === 'production' ? '' : (left ? tag('mock', left + ' 处 Mock') : tag('ok', 'Mock 已清零'))) + '</span></span>' +
-        '<span class="fx-ag-f"><span class="fx-ag-s"><i class="dot ' + e + '"></i>' + status + '</span><span class="fx-ag-cta" data-try="1">试用</span></span></div>' }];
+      var list = [];
+      var e = envOf(false);
+      if (activeAgent) {
+        list.push({
+          id: activeAgent.id || 'prod-agent',
+          env: e,
+          html: agentCardHtml(activeAgent, e),
+        });
+      }
+      if (S.generated) {
+        var left = Sandbox.mocksLeft();
+        var status = S.phase === 'production' ? 'Live · v1.0' : S.phase === 'hardening' ? '加固中 · RC' : '进行中';
+        list.push({ id: 'agent', env: e, html: '<div class="fx-card fx-ag is-' + e + '" role="button" tabindex="0" data-try="1">' +
+          '<span class="fx-ag-m"><span class="fx-ag-top"><span class="fx-ag-ava">S</span><span class="fx-ag-c"><span class="fx-ag-n">Sourcing Strategy Agent</span><span class="fx-ag-r">筛选候选供应商、比价、评分，并给出风险提示。</span></span></span>' +
+          '<span class="fx-ag-tags"><span class="fx-ag-model">Auto</span><span class="fx-ag-tag">Skill × 3</span><span class="fx-ag-tag">Ontology</span><span class="fx-ag-tag">MCP</span>' + (S.phase === 'production' ? '' : (left ? tag('mock', left + ' 处 Mock') : tag('ok', 'Mock 已清零'))) + '</span></span>' +
+          '<span class="fx-ag-f"><span class="fx-ag-s"><i class="dot ' + e + '"></i>' + status + '</span><span class="fx-ag-cta" data-try="1">试用</span></span></div>' });
+      }
+      return list;
     },
     detail: function () { return null; },
   });
@@ -490,6 +664,31 @@
       if (g) { var p = g.getAttribute('data-goto').split(':'); open(p[0], p[1] ? { filter: p[1] } : null); return; }
       if (e.target.closest('[data-back]')) { m.stack.pop(); render(key); var b0 = host.querySelector('.fx-body'); if (b0) b0.scrollTop = 0; return; }
       if (e.target.closest('[data-launch-agent]')) { e.preventDefault(); open('agent'); return; }
+      var pub = e.target.closest('[data-pub-toggle]');
+      if (pub) {
+        e.preventDefault();
+        e.stopPropagation();
+        var assetKey = pub.getAttribute('data-pub-asset') || 'onto';
+        var pack = packByAsset(assetKey);
+        if (pack) {
+          var next = pack.publishStatus === 'published' ? 'pending' : 'published';
+          pack.publishStatus = next;
+          refreshAll();
+          try {
+            var evtName = assetKey === 'onto' ? 'fastontologypublish' : 'fastassetpublish';
+            document.dispatchEvent(new CustomEvent(evtName, {
+              detail: {
+                asset: assetKey,
+                status: next,
+                name: pack.name || '',
+                version: pack.version || '',
+                id: pack.id || '',
+              },
+            }));
+          } catch (err) { /* ignore */ }
+        }
+        return;
+      }
       var o = e.target.closest('[data-open]');
       if (o) { m.stack.push(o.getAttribute('data-open')); render(key); var b = host.querySelector('.fx-body'); if (b) b.scrollTop = 0; }
     });
@@ -552,5 +751,13 @@
     updateLauncher();
   }
 
-  window.FastModules = { open: open, render: refreshAll, publishOntology: publishOntology };
+  window.FastModules = {
+    open: open,
+    render: refreshAll,
+    publishOntology: publishOntology,
+    publishAgent: publishAgent,
+    publishSkill: publishSkill,
+    publishKnowledge: publishKnowledge,
+    publishMcp: publishMcp,
+  };
 })();

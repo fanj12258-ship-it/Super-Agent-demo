@@ -120,9 +120,11 @@
     var folder = folderPath
       ? ensureFolder(g, folderPath, folderPath === 'Long task' ? { open: false } : null)
       : null;
-    var type = FTI ? FTI.typeOf(name) : 'file';
     var doc = window.FastDocs && window.FastDocs.find(name);
-    var glyph = (doc && doc.kind === 'flow' && window.FastFlowBoard) ? window.FastFlowBoard.fileIcon() : (FTI ? FTI.svg(type) : '');
+    var type = (doc && doc.kind === 'agent') ? 'agent' : (FTI ? FTI.typeOf(name) : 'file');
+    var glyph = (doc && doc.kind === 'flow' && window.FastFlowBoard) ? window.FastFlowBoard.fileIcon()
+      : (doc && doc.kind === 'agent' && doc.iconHtml) ? doc.iconHtml
+      : (FTI ? FTI.svg(type) : '');
     var row = document.createElement('div');
     row.className = 'file is-new' + (kind === 'deliverable' ? ' has-update-dot' : '') + (folder ? ' indent-1' : '');
     row.setAttribute('data-kind', 'file');
@@ -223,6 +225,25 @@
     showTab: showTab,
     markUpdated: function (name) { setEntryUpdated(name, true); },
     clearUpdated: function (name) { setEntryUpdated(name, false); },
+    /* Rename a file row label + data-doc (basename). Keeps folder placement. */
+    renameDeliverable: function (oldName, newName) {
+      if (!oldName || !newName || oldName === newName) return null;
+      var row = null;
+      Array.prototype.forEach.call(groups.deliverable.tree.querySelectorAll('.file'), function (r) {
+        var label = r.querySelector('.name');
+        if (label && label.textContent === oldName) row = r;
+      });
+      if (!row) return null;
+      var label = row.querySelector('.name');
+      if (label) label.textContent = newName;
+      row.setAttribute('data-doc', newName);
+      if (updatedEntries[oldName]) {
+        delete updatedEntries[oldName];
+        updatedEntries[newName] = true;
+      }
+      row.classList.toggle('has-update-dot', !!updatedEntries[newName]);
+      return row;
+    },
     showSyncTip: function (message) {
       if (!syncTip) return;
       if (syncTipText && message) syncTipText.textContent = message;

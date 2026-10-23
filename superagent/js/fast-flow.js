@@ -219,8 +219,9 @@
     };
   }
 
-  function deliverableInventory() {
-    var groups = [
+  function deliverableInventory(opts) {
+    opts = opts || {};
+    var groups = opts.groups || [
       {
         title: '方案与设计交付物',
         items: [
@@ -249,8 +250,8 @@
     });
     var box = el('section', 'ff-card ff-deliverables');
     box.innerHTML =
-      '<div class="ff-del-head"><span class="ff-del-title">交付清单</span>' +
-      '<span class="ff-del-count">' + confirmed + ' 项已确认</span></div>' +
+      '<div class="ff-del-head"><span class="ff-del-title">' + esc(opts.title || '交付清单') + '</span>' +
+      '<span class="ff-del-count">' + (opts.countLabel || (confirmed + ' 项已确认')) + '</span></div>' +
       groups.map(function (group) {
         return '<div class="ff-del-group"><div class="ff-del-kicker">' + esc(group.title) + '</div>' +
           '<div class="ff-del-grid">' + group.items.map(function (item) {
@@ -270,22 +271,46 @@
     return box;
   }
 
+  function outputLinkIcon(item) {
+    var fallbackIcon = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 1.5h6l3 3v10h-9v-13Z" stroke="currentColor"/><path d="M9.5 1.5v3h3" stroke="currentColor"/></svg>';
+    var name = item && (item.name || '');
+    var file = item && (item.file || '');
+    var kind = item && item.kind;
+    /* Prefer registered FastDocs row (carries kind / exact filename). */
+    if (window.FastDocs && window.FastDocs.find) {
+      var doc = (file && window.FastDocs.find(file)) || (name && window.FastDocs.find(name)) || null;
+      if (doc) {
+        if (doc.kind === 'agent' || (doc.iconHtml && /ws-agent|ft-type-icon--agent/.test(doc.iconHtml))) {
+          if (window.FileTypeIcons) return window.FileTypeIcons.markup('Agent.agent', 16);
+        }
+        if (window.FastDocs.icon) return window.FastDocs.icon(doc.name, 16) || fallbackIcon;
+      }
+    }
+    var key = (item && item.iconName) || file || name;
+    if (kind === 'agent' || /^agent(\s|v|\d|$)/i.test(String(name).replace(/\s+/g, ' ').trim())) {
+      key = 'Agent.agent';
+    } else if (key && !/\.[a-z0-9]+$/i.test(key) && kind !== 'agent') {
+      /* Display titles without extension → treat as markdown deliverable */
+      key = key + '.md';
+    }
+    if (window.FastDocs && window.FastDocs.icon) return window.FastDocs.icon(key, 16) || fallbackIcon;
+    if (window.FileTypeIcons) return window.FileTypeIcons.markup(key, 16) || fallbackIcon;
+    return fallbackIcon;
+  }
+
   function deliverableSummary(opts) {
     opts = opts || {};
     var items = opts.items || [];
     var entries = opts.entries || [];
-    var fallbackIcon = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 1.5h6l3 3v10h-9v-13Z" stroke="currentColor"/><path d="M9.5 1.5v3h3" stroke="currentColor"/></svg>';
     var box = el('section', 'ff-output-summary');
     box.innerHTML =
       '<h3 class="ff-output-title">' + esc(opts.title || '执行总结') + '</h3>' +
       (opts.body ? '<p class="ff-output-body">' + esc(opts.body) + '</p>' : '') +
       '<p class="ff-output-lead">' + esc(opts.lead || '本轮任务已完成，以下产出已生成并可直接查看。') + '</p>' +
       '<div class="ff-output-links">' + items.map(function (item, index) {
-        var icon = window.FastDocs && window.FastDocs.icon
-          ? window.FastDocs.icon(item.iconName || item.name, 16)
-          : fallbackIcon;
+        var icon = outputLinkIcon(item);
         return '<button type="button" class="ff-output-link" data-output-index="' + index + '">' +
-          '<span class="ff-output-icon" aria-hidden="true">' + (icon || fallbackIcon) + '</span>' +
+          '<span class="ff-output-icon" aria-hidden="true">' + icon + '</span>' +
           '<span class="ff-output-name">' + esc(item.name) + '</span></button>';
       }).join('') + '</div>' +
       (entries.length
@@ -343,12 +368,11 @@
     var box = el('div', 'ff-exec-think');
     box.innerHTML =
       '<button type="button" class="ff-exec-think-head" aria-expanded="true">' +
-      '<span class="ff-exec-think-label thinking-copy">深度思考中…</span>' +
+      '<span class="ff-exec-think-label thinking-copy">深度思考</span>' +
       '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="m4.5 5.5 2.5 3 2.5-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
       '<div class="ff-exec-think-body"></div>';
     var head = box.querySelector('.ff-exec-think-head');
     var body = box.querySelector('.ff-exec-think-body');
-    var label = box.querySelector('.ff-exec-think-label');
     var open = true;
     head.addEventListener('click', function () {
       open = !open;
@@ -363,10 +387,10 @@
         body.appendChild(row);
         body.scrollTop = body.scrollHeight;
       },
+      /* Label stays「深度思考」for the whole run — no stage copy like 等待你确认 / 用时. */
       finish: function () {
-        label.textContent = '用时 10秒';
-        label.classList.remove('thinking-copy');
         box.classList.add('is-done');
+        box.classList.remove('is-waiting');
         setTimeout(function () {
           open = false;
           body.hidden = true;
@@ -374,13 +398,9 @@
         }, 420);
       },
       waitForUser: function () {
-        label.textContent = '等待你确认';
-        label.classList.remove('thinking-copy');
         box.classList.add('is-waiting');
       },
       resume: function () {
-        label.textContent = '深度思考中…';
-        label.classList.add('thinking-copy');
         box.classList.remove('is-waiting');
       },
     };
@@ -426,34 +446,53 @@
   }
 
   function deliverableConfirmation(opts) {
+    opts = opts || {};
     var choice = 'pass';
+    var passLabel = opts.passLabel || '方案没问题，确认通过';
+    var pauseLabel = opts.pauseLabel || '先暂停一下';
+    var headTitle = opts.headTitle || '需要你确认';
+    var headHint = opts.headHint || '已预选确认通过，可直接确认';
+    var placeholder = opts.placeholder || '输入修改意见或补充要求…';
+    var showView = opts.file || opts.showView;
     var box = el('section', 'ff-card ff-review-card ff-review-output');
     box.innerHTML =
-      '<div class="ff-head"><span class="ff-t">需要你确认</span><span class="ff-h">已预选确认通过，可直接确认</span></div>' +
+      '<div class="ff-head"><span class="ff-t">' + esc(headTitle) + '</span><span class="ff-h">' + esc(headHint) + '</span></div>' +
       '<div class="ff-d">' +
       '<div class="ff-d-top"><span class="ff-d-t">' + esc(opts.title) + '</span></div>' +
       '<div class="ff-d-why">' + esc(opts.desc) + '</div>' +
       '<div class="ff-opts">' +
       '<button type="button" class="ff-opt is-on" data-choice="pass"><span class="ff-radio"></span>' +
-      '<span class="ff-opt-t">方案没问题，确认通过</span><span class="ff-rec">推荐</span></button>' +
+      '<span class="ff-opt-t">' + esc(passLabel) + '</span><span class="ff-rec">推荐</span></button>' +
       '<button type="button" class="ff-opt" data-choice="pause"><span class="ff-radio"></span>' +
-      '<span class="ff-opt-t">先暂停一下</span></button></div>' +
-      '<div class="ff-review-custom"><input type="text" placeholder="输入修改意见或补充要求…" aria-label="修改意见或补充要求" /></div></div>' +
+      '<span class="ff-opt-t">' + esc(pauseLabel) + '</span></button></div>' +
+      '<div class="ff-review-custom"><input type="text" placeholder="' + esc(placeholder) + '" aria-label="' + esc(placeholder) + '" /></div></div>' +
       '<div class="ff-foot"><button type="button" class="fm-btn is-primary" data-act="submit">确认通过</button>' +
-      '<button type="button" class="fm-btn ff-review-view" data-act="view">查看方案</button></div>';
+      (showView ? '<button type="button" class="fm-btn ff-review-view" data-act="view">查看方案</button>' : '') + '</div>';
     var input = box.querySelector('input');
     var submit = box.querySelector('[data-act="submit"]');
+    /* A=pass / B=pause / C=custom input — mutually exclusive. */
+    function clearOptSelection() {
+      box.querySelectorAll('[data-choice]').forEach(function (x) { x.classList.remove('is-on'); });
+    }
+    function selectOpt(id) {
+      choice = id;
+      box.querySelectorAll('[data-choice]').forEach(function (x) {
+        x.classList.toggle('is-on', x.getAttribute('data-choice') === id);
+      });
+    }
     function syncSubmit() {
-      var feedback = input.value.trim();
-      submit.textContent = feedback ? '发送修改意见' : (choice === 'pause' ? '先暂停' : '确认通过');
+      if (choice === 'custom') submit.textContent = '发送修改意见';
+      else if (choice === 'pause') submit.textContent = '先暂停';
+      else submit.textContent = '确认通过';
     }
     var done = new Promise(function (resolve) {
       box.addEventListener('click', function (e) {
         if (box.classList.contains('is-done')) return;
         var opt = e.target.closest('[data-choice]');
         if (opt) {
-          choice = opt.getAttribute('data-choice');
-          box.querySelectorAll('[data-choice]').forEach(function (x) { x.classList.toggle('is-on', x === opt); });
+          /* Picking A/B clears C */
+          input.value = '';
+          selectOpt(opt.getAttribute('data-choice'));
           syncSubmit();
           return;
         }
@@ -464,14 +503,47 @@
           return;
         }
         var feedback = input.value.trim();
-        var result = feedback ? '已提交意见：' + feedback : (choice === 'pause' ? '已暂停' : opts.result);
+        var result;
+        if (choice === 'custom') {
+          if (!feedback) { input.focus(); return; }
+          result = '已提交意见：' + feedback;
+        } else if (choice === 'pause') {
+          result = '已暂停';
+        } else {
+          result = opts.result;
+        }
         box.classList.add('is-done');
         b.classList.add('is-picked');
         box.querySelectorAll('button, input').forEach(function (x) { x.disabled = true; });
         dismissReviewCard(box);
         resolve(result);
       });
-      input.addEventListener('input', syncSubmit);
+      function applyCustom(text) {
+        input.value = text;
+        choice = 'custom';
+        clearOptSelection();
+        syncSubmit();
+      }
+      input.addEventListener('input', function () {
+        var feedback = input.value.trim();
+        if (feedback) {
+          /* Typing C clears A/B selection */
+          choice = 'custom';
+          clearOptSelection();
+        } else if (choice === 'custom') {
+          /* Cleared C → fall back to recommended A */
+          selectOpt('pass');
+        }
+        syncSubmit();
+      });
+      /* Demo: click/focus the input to auto-fill a scripted custom口径. */
+      if (opts.fillOnFocus) {
+        input.addEventListener('focus', function () {
+          if (box.classList.contains('is-done')) return;
+          if (input.value.trim()) return;
+          applyCustom(opts.fillOnFocus);
+        });
+      }
       input.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') submit.click();
       });
@@ -1208,6 +1280,7 @@
     deliverableConfirmation: deliverableConfirmation,
     deliverableSummary: deliverableSummary,
     createLongTaskVersion: createLongTaskVersion,
+    deliverableInventory: deliverableInventory,
   };
 
   if (TASK_CARD_PREVIEW_LOCK) {

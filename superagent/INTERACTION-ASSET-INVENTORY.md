@@ -123,8 +123,11 @@
 |---|---|---|---|
 | Composer 发送 | Enter / Send，进入 busy，逐段输出 | 可直接复用 | `js/agent-chat-mock-fast.js` |
 | Space 演示填充 | 空输入按 Space，逐字填入当前 Journey 提供的首句；未提供时回落到现有脚本优先链 | 仅演示；文案归各故事线 | `js/fast-route.js`、`js/agent-chat-mock-fast.js` |
-| Journey 1 / 2 / 3 / 4 / Main / Side 选择器 | 单一互斥路线选择；默认 Journey 1；Journey 1 预置 Files 目录但左栏仍默认 Scenarios；Main 与 Side 保留原有路线；选择后派发 `fastjourneychange` | 可组合；Journey 2 已接首句 + 场景确认 | `workshop/fragments/fast-route.html`、`js/fast-route.js`、`js/journey-two.js`、`css/fast-overrides.css` |
-| Journey 定位提示 | 无额外图标；13px；hover Journey 按钮后立即显示路线说明，移出立即关闭；键盘聚焦立即显示；Journey 1 / 2 已挂文案 | 可直接复用；文案归各故事线 | `workshop/fragments/fast-route.html`、`css/fast-overrides.css` |
+| Journey 1 / 2 / 3 / 4 / Main / Side 选择器 | 单一互斥路线选择；默认 Journey 1；Journey 1 预置 Files 目录但左栏仍默认 Scenarios；Main 与 Side 保留原有路线；选择后派发 `fastjourneychange` | 可组合；Journey 2 已接首句 + 场景确认；Journey 3 Space 进入 J2 结束态快照 | `workshop/fragments/fast-route.html`、`js/fast-route.js`、`js/journey-two.js`、`js/journey-three.js`、`css/fast-overrides.css` |
+| Journey 2 结束态快照 | `JourneyTwoPlan.restoreEndSnapshot`：定格场景 / Blueprint / Files 交付物 / 本体(v2 规则) / Agent demo / 对话回放 + 调优总结卡；供 Journey 3 切入 | Journey 2 终态 · Journey 3 入口 | `js/journey-two.js`、`js/journey-three.js` |
+| Journey 3 开始执行 | 任务 1–3 产品方案 → 对焦建议；Space① 异议复核改写画布 V3→V4 + 蓝色文档链；Space② 定稿后生成 `规则方案设计v1.md` | Journey 3 产品方案 | `js/journey-three.js`、`js/fast-flow.js`、`js/fast-files.js`、`js/fast-docs.js` |
+| Agent demo 文件行 | 非 md；出现「本体对象集 / Agent 调试」入口时写入 Deliverables；点击同「Agent 调试」打开试玩面板；图标用 `#ws-agent`（nav 锁定资产） | Journey 2 已接 | `js/journey-two.js`、`js/fast-agent-panel.js`、`js/fast-files.js`、`js/file-type-icons.js` |
+| Journey 定位提示 | 无额外图标；13px；hover Journey 按钮后立即显示路线说明，移出立即关闭；键盘聚焦立即显示；Journey 1 / 2 / 3 已挂文案（J3 关键特征【Demo 转生产】） | 可直接复用；文案归各故事线 | `workshop/fragments/fast-route.html`、`css/fast-overrides.css` |
 | 附件上传 | 选择、附件条、取消、完成 | 可直接复用 | `js/fast-upload.js` |
 | 模型选择 | Popover、子菜单、Esc / 外点 | 可直接复用 | `js/composer-model-picker.js` |
 | Token 用量 | 小型 Popover | 可直接复用 | `js/composer-token-usage.js` |
@@ -156,8 +159,11 @@
 | 创建场景预览卡 | 创建场景 / 再聊聊 | 从自由对话进入业务场景 |
 | 场景确认格式 | 对话内复用侧栏场景结构：Application + 下挂 Business；标签 / 优先级 / 描述；确认创建或再调整 | 直接建场景后的父子结构确认（Journey 2） |
 | 多场景勾选卡 | 勾选多个机会并批量创建 | 企业诊断、机会发现 |
-| 长任务执行卡 | 可注入任务列表；逐项切换等待、执行、完成、审核与停止状态；下方可组合三行窗口，在单个步骤约 3 秒内高频滚动多条细粒度思考动作 | 文档生成、批量分析、结构更新 |
-| 交付物人工审核卡 | 查看右栏方案、确认通过、暂停或提交修改意见；主操作与透明底“查看方案”并排展示；审核期间执行卡同步等待 | 阶段性交付审核、人在环卡点 |
+| 长任务执行卡 | 可注入任务列表；逐项切换等待、执行、完成、审核与停止状态；下方可组合三行窗口，在单个步骤约 3 秒内高频滚动多条细粒度思考动作 | 文档生成、批量分析、结构更新；Journey 3「开始执行」后必须保留此小进度卡 |
+| 深度思考块 | `executionThinkingBlock`：可展开/收起；标题固定「深度思考」，不按阶段改成等待确认/用时；与执行进度卡并排 | 长任务逐步推进；Journey 3 已接 |
+| 交付清单 | `deliverableInventory`：分组清单 + 已确认/待确认；可点开已关联文档 | Main 交付清单复用；Journey 3 不单独展示「资产盘点」卡 |
+| 意图识别 / 做法选择卡 | `FastMode.choiceCard`：标题可作「意图识别」+ summary dl + 双选项（点选即确认） | 主 Demo 起步做法选择 |
+| 交付物人工审核卡 | A 确认通过 / B 先暂停 / C 自定义输入，三者互斥：输入 C 时取消 A/B 选中，点选 A/B 时清空 C；可隐藏「查看方案」；头标题可注入 | 阶段性交付审核、人在环卡点；Journey 3 To-be 边界确认 |
 | 产出物执行总结 | 以正文形式总结任务范围、推进过程与最终结论，不使用卡片外框；产出物逐行以“小图标 + 蓝色链接名称”列出；可追加一组更轻量的相关入口 chip；末尾可追加下一步询问 | 多任务完成总结、交付物导航、模块入口、等待外部确认 |
 | 深度思考 → 结构化结论 → Plan 任务卡 | 按分析维度展示可感知的思考过程；正文收敛结论；复用任务卡注入任务、Agent 标签、说明与 CTA | 售前诊断、规划类任务、执行前确认 |
 | 模式 / 做法选择卡 | 两种做法、说明、结构图预览 | 演示不同工作策略 |
@@ -172,6 +178,8 @@
 - `js/fast-flow.js`
 - `js/journey-one.js`
 - `js/journey-two.js`
+- `js/journey-three.js`
+- `js/fast-mode.js`
 - `js/fast-scene-card.js`
 - `js/fast-intake.js`
 - `js/fast-company.js`

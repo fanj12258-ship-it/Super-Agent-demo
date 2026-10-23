@@ -301,9 +301,24 @@
     }
   }
 
+  function rename(oldName, newName) {
+    var d = find(oldName);
+    if (!d || !newName || d.name === newName) return d;
+    delete byName[d.name.toLowerCase()];
+    if (panes[d.name]) {
+      panes[newName] = panes[d.name];
+      delete panes[d.name];
+    }
+    if (current === d.name) current = newName;
+    d.name = newName;
+    byName[newName.toLowerCase()] = d;
+    return d;
+  }
+
   window.FastDocs = {
     register: register,
     setMd: setMd,
+    rename: rename,
     append: append,
     all: function () { return mats(); },
     find: find,

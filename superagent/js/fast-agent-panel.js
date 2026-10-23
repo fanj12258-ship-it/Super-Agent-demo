@@ -8,8 +8,11 @@
 (function () {
   'use strict';
   var NAME = 'Sourcing Agent v0.1';
+  var DISPLAY = 'Sourcing Strategy Agent';
   var registered = false, wrap, tabs = {}, panes = {}, thread, input, sendBtn, busy = false, mocksEl;
   var repairNotes = {};
+  /* Nav asset: #ws-agent (agentos-nav-icons.locked.svg) — same mark as the right-rail Agent launcher. */
+  var ICO = '<svg class="ws-ico fd-tab-ico" width="14" height="14" aria-hidden="true"><use href="#ws-agent"/></svg>';
 
   var PROMPTS = [
     { q: '新品要导入 PCB 板，帮我筛出候选供应商并比价', k: 'pcb' },
@@ -71,7 +74,6 @@
   function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  var ICO = '<svg class="fd-tab-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>';
 
   function stream(host, md) {
     return window.AgentBody.run({ host: host, segments: [{ md: md, gap: 200 }], speed: 0.5, sleep: sleep, scroll: toBottom });
@@ -261,7 +263,7 @@
   function build() {
     wrap = el('div', 'fa-wrap');
     var head = el('div', 'fa-head',
-      '<div class="fa-head-l"><span class="fa-name">Sourcing Strategy Agent</span><span class="fa-ver">v0.1</span></div>' +
+      '<div class="fa-head-l"><span class="fa-name">' + esc(DISPLAY) + '</span><span class="fa-ver">v0.1</span></div>' +
       '<span class="fa-head-r"><span class="fa-ready fa-envchip"><i></i><em></em></span><button type="button" class="fa-promote"></button></span>');
     var bar = el('div', 'fa-tabs');
     [['try', 'Try'], ['spec', 'Spec'], ['mocks', 'Mocks · 3']].forEach(function (t) {
@@ -282,17 +284,30 @@
     Object.keys(panes).forEach(function (n) { panes[n].hidden = n !== k; tabs[n].classList.toggle('is-active', n === k); });
   }
 
+  /* Call before first open — Journey 2 uses Files row "Agent demo". */
+  function setIdentity(opts) {
+    if (registered || !opts) return;
+    if (opts.name) NAME = opts.name;
+    if (opts.display) DISPLAY = opts.display;
+  }
+  function ensureRegistered() {
+    if (registered || !window.FastDocs) return registered;
+    window.FastDocs.register({ name: NAME, kind: 'agent', deliverable: true, build: build, iconHtml: ICO });
+    registered = true;
+    return true;
+  }
+
   function open(k) {
-    if (!registered && window.FastDocs) {
-      window.FastDocs.register({ name: NAME, kind: 'agent', build: build, iconHtml: ICO });
-      registered = true;
-    }
+    ensureRegistered();
     window.FastDocs.open(NAME);
     if (k && tabs[k]) sub(k);
   }
 
   window.FastAgentPanel = {
     open: open,
+    setIdentity: setIdentity,
+    ensureRegistered: ensureRegistered,
+    fileName: function () { return NAME; },
     get prompts() { return PROMPTS; },
     setTrialPrompts: setTrialPrompts,
     repair: function (key, note) { repairNotes[key] = '\n\n**诊断修复**\n\n' + note; },

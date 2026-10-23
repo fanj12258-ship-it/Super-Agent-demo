@@ -34,7 +34,7 @@
   }
 
   function usesEnterpriseFolders(journey) {
-    return journey === '1' || journey === '2';
+    return journey === '1' || journey === '2' || journey === '3';
   }
 
   function ensureEnterpriseFolders() {
@@ -80,8 +80,8 @@
       }
     }
     if (window.EnterpriseAssets && window.EnterpriseAssets.setPlanningAppLimit) {
-      /* Journey 2: first Application + first Business only, with J2 copy; others show all. */
-      if (selection === '2') {
+      /* Journey 2 / 3: same R&D performance scene (J3 enters at J2 end). */
+      if (selection === '2' || selection === '3') {
         window.EnterpriseAssets.setPlanningAppLimit(1, 1);
         if (window.EnterpriseAssets.setPlanningOverride) {
           window.EnterpriseAssets.setPlanningOverride({
@@ -152,6 +152,10 @@
     prompt: function () {
       if (selection === '1') return JOURNEY_ONE_PROMPT;
       if (selection === '2') return JOURNEY_TWO_PROMPT;
+      /* Journey 3 prompt is installed by js/journey-three.js */
+      if (selection === '3' && window.JourneyThreePlan && window.JourneyThreePlan.prompt) {
+        return window.JourneyThreePlan.prompt();
+      }
       return '';
     }
   };
