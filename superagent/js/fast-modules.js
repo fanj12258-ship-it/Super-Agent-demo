@@ -53,6 +53,7 @@
     var label = st === 'published' ? '已发布' : pendingLabel;
     var kind = st === 'published' ? 'ok' : 'pending';
     return '<span class="fx-tag ' + kind + ' fx-pub-toggle" data-pub-toggle="1" data-pub-asset="' + esc(assetKey) +
+      '" data-pub-id="' + esc(pack.id || '') +
       '" role="button" tabindex="0" title="点击切换状态" aria-pressed="' +
       (st === 'published' ? 'true' : 'false') + '">' + label + '</span>';
   }
@@ -140,6 +141,7 @@
   /* Optional Journey asset packs (workbench-style cards + 待确认/已发布 toggle). */
   var activeAgent = null;
   var activeSkill = null;
+  var skillPacks = [];
   var activeKnowledge = null;
   var activeMcp = null;
   function publishAgent(pack) {
@@ -148,8 +150,21 @@
     Sandbox.emit();
   }
   function publishSkill(pack) {
-    activeSkill = pack || null;
-    if (activeSkill && !activeSkill.publishStatus) activeSkill.publishStatus = 'pending';
+    if (!pack) {
+      skillPacks = [];
+      activeSkill = null;
+      Sandbox.emit();
+      return;
+    }
+    if (!pack.publishStatus) pack.publishStatus = 'pending';
+    pack.id = pack.id || pack.name || 'journey-skill';
+    var idx = -1;
+    for (var i = 0; i < skillPacks.length; i++) {
+      if (skillPacks[i].id === pack.id) { idx = i; break; }
+    }
+    if (idx >= 0) skillPacks[idx] = pack;
+    else skillPacks.push(pack);
+    activeSkill = pack;
     Sandbox.emit();
   }
   function publishKnowledge(pack) {
@@ -162,10 +177,67 @@
     if (activeMcp && !activeMcp.publishStatus) activeMcp.publishStatus = 'pending';
     Sandbox.emit();
   }
-  function packByAsset(key) {
+  function onCraftJourney() {
+    var route = window.FastJourneyRoute && window.FastJourneyRoute.get && window.FastJourneyRoute.get();
+    return route === '2' || route === '3';
+  }
+  function catalog() {
+    var skill = skillPacks.map(function (p) {
+      var published = p.publishStatus === 'published';
+      return { id: p.id, name: p.name || 'Skill', status: published ? 'Published' : 'Ready', state: published ? 'published' : 'pending' };
+    });
+    var mcp = [];
+    if (activeMcp) mcp.push({
+      id: activeMcp.id || 'journey-mcp',
+      name: activeMcp.name || 'MCP',
+      status: activeMcp.publishStatus === 'published' ? 'Published' : 'Ready',
+      state: activeMcp.publishStatus === 'published' ? 'published' : 'pending'
+    });
+    var knowledge = [];
+    if (activeKnowledge) knowledge.push({
+      id: activeKnowledge.id || 'journey-kb',
+      name: activeKnowledge.name || 'Knowledge base',
+      status: activeKnowledge.publishStatus === 'published' ? 'Published' : 'Ready',
+      state: activeKnowledge.publishStatus === 'published' ? 'published' : 'pending'
+    });
+    var ontology = [];
+    if (activeOnto) ontology.push({
+      id: activeOnto.id || 'perf',
+      name: activeOnto.name || 'Object set',
+      status: activeOnto.publishStatus === 'published' ? 'Published' : 'Ready',
+      state: activeOnto.publishStatus === 'published' ? 'published' : 'pending'
+    });
+    var agent = [];
+    if (activeAgent) agent.push({
+      id: activeAgent.id || 'prod-agent',
+      name: activeAgent.name || 'Agent',
+      status: activeAgent.publishStatus === 'published' ? 'Published' : 'Ready',
+      state: activeAgent.publishStatus === 'published' ? 'published' : 'pending'
+    });
+    if (!onCraftJourney() && S.generated) {
+      Object.keys(SKILLS).forEach(function (n) {
+        skill.push({ id: n, name: n, status: 'Ready', state: 'pending' });
+      });
+      if (!activeMcp) {
+        mcp.push({ id: 'erp', name: 'ERP connector', status: 'Ready', state: 'pending' });
+        mcp.push({ id: 'rules', name: 'Rules & templates', status: 'Ready', state: 'pending' });
+      }
+      if (!activeOnto) ontology.push({ id: 'main', name: 'Sourcing ontology', status: 'Ready', state: 'pending' });
+      if (!activeAgent) agent.push({ id: 'agent', name: 'Sourcing Strategy Agent', status: 'Ready', state: 'pending' });
+    }
+    return { skill: skill, mcp: mcp, knowledge: knowledge, ontology: ontology, agent: agent };
+  }
+  function packByAsset(key, id) {
     if (key === 'onto') return activeOnto;
     if (key === 'agent') return activeAgent;
-    if (key === 'skill') return activeSkill;
+    if (key === 'skill') {
+      if (id) {
+        for (var i = 0; i < skillPacks.length; i++) {
+          if (skillPacks[i].id === id) return skillPacks[i];
+        }
+      }
+      return activeSkill;
+    }
     if (key === 'knowledge') return activeKnowledge;
     if (key === 'mcp') return activeMcp;
     return null;
@@ -310,13 +382,14 @@
     ready: function () { return S.generated || !!activeSkill; },
     why: '快速出一版后，生成的 Skill 草稿会出现在这里。',
     crumb: function (id) {
-      if (activeSkill && id === (activeSkill.id || 'journey-skill')) return activeSkill.name || 'Skillv4';
+      var p = skillPacks.filter(function (x) { return x.id === id; })[0] || activeSkill;
+      if (p && id === (p.id || 'journey-skill')) return p.name || 'Skillv4';
       return id;
     },
     items: function () {
       var list = [];
       var e = envOf(false);
-      if (activeSkill) list.push(journeySkillCard(activeSkill, e));
+      skillPacks.forEach(function (p) { list.push(journeySkillCard(p, e)); });
       if (S.generated) {
         var ok = S.mocks.skill === 'verified', ver = S.phase === 'production' ? 'v1.0' : 'v0.1';
         Object.keys(SKILLS).forEach(function (n) {
@@ -329,8 +402,9 @@
       return list;
     },
     detail: function (id) {
-      if (activeSkill && id === (activeSkill.id || 'journey-skill')) {
-        var p = activeSkill;
+      var held = skillPacks.filter(function (x) { return x.id === id; })[0];
+      if (held) {
+        var p = held;
         return '<div class="fx-title">' + esc(p.name || 'Skillv4') + ' ' + assetPubTag(p, 'skill', 'confirm') + '</div>' +
           '<p class="fx-p">' + esc(p.desc || '') + '</p>' +
           kv([['版本', esc(p.version || 'v4')], ['状态', p.publishStatus === 'published' ? '已发布' : '待确认']]) +
@@ -657,7 +731,10 @@
       var m = MODS[key];
       var a = e.target.closest('[data-act]');
       if (a && !a.disabled) { if (window.FastHandoff) window.FastHandoff.act(a.getAttribute('data-act')); return; }
-      if (e.target.closest('[data-try]')) { if (window.FastAgentPanel) window.FastAgentPanel.open('try'); return; }
+      if (e.target.closest('[data-try]') && !e.target.closest('[data-pub-toggle]')) {
+        if (window.FastAgentPanel) window.FastAgentPanel.open('try');
+        return;
+      }
       var f = e.target.closest('[data-filter]');
       if (f) { m.filter = f.getAttribute('data-filter'); render(key); return; }
       var g = e.target.closest('[data-goto]');
@@ -669,11 +746,14 @@
         e.preventDefault();
         e.stopPropagation();
         var assetKey = pub.getAttribute('data-pub-asset') || 'onto';
-        var pack = packByAsset(assetKey);
+        var assetId = pub.getAttribute('data-pub-id') || '';
+        var pack = packByAsset(assetKey, assetId);
         if (pack) {
           var next = pack.publishStatus === 'published' ? 'pending' : 'published';
           pack.publishStatus = next;
-          refreshAll();
+          /* Refresh right-side cards and broadcast so the left Assets shelf maps
+             pending → Ready and published → Published immediately. */
+          Sandbox.emit();
           try {
             var evtName = assetKey === 'onto' ? 'fastontologypublish' : 'fastassetpublish';
             document.dispatchEvent(new CustomEvent(evtName, {
@@ -751,9 +831,20 @@
     updateLauncher();
   }
 
+  document.addEventListener('fastjourneychange', function () {
+    activeOnto = null;
+    activeAgent = null;
+    activeSkill = null;
+    skillPacks = [];
+    activeKnowledge = null;
+    activeMcp = null;
+    Sandbox.emit();
+  });
+
   window.FastModules = {
     open: open,
     render: refreshAll,
+    catalog: catalog,
     publishOntology: publishOntology,
     publishAgent: publishAgent,
     publishSkill: publishSkill,

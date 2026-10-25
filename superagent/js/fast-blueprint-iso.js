@@ -19,7 +19,7 @@
   var STRUCTURE_ONLY = true;
   bp.classList.toggle('is-structure', STRUCTURE_ONLY);
   var topLabel = bp.querySelector('.bpi-top span');
-  if (topLabel) topLabel.textContent = 'Blueprint';
+  if (topLabel) topLabel.textContent = 'Assets';
 
   var K = 0.36, A = 0.9;
   // one shared <pattern> for "mock" plates (hatched fill) — referenced from CSS as url(#bpi-hatch)
@@ -103,10 +103,9 @@
       '<polygon class="bpi-top-f" points="' + top + '"/>' +
       '<g class="bpi-pat" transform="' + m + '">' + pattern(o.pat) + '</g></g></g>';
   }
-  /* ---------- vertical process map (sidebar): order + structure of the eight steps ---------- */
+  /* Sidebar structure map. Requirements and Business knowledge stay in the
+     hidden state rows, but are not drawn on the in-scene blueprint. */
   var VST = [
-    { id: 'req',   data: 'req',   items: ['req'],                  steps: 'STEP 1',    title: 'Requirements' },
-    { id: 'know',  data: 'know',  items: ['know'],                 steps: 'STEP 2',    title: 'Business knowledge' },
     { id: 'doc',   data: 'doc',   items: ['doc', 'onto', 'agent'], steps: 'STEPS 3–5', title: 'Design plans', subs: ['Product plan', 'Ontology plan', 'Agent plan'] },
     { id: 'onto',  data: 'onto',  items: ['onto'],                 steps: 'STEP 6',    title: 'Build ontology' },
     { id: 'tools', data: 'skill', items: ['skillp', 'mcp', 'res'], steps: 'STEP 7',    title: 'Skills · MCP · more', subs: ['Skills', 'MCP', 'Resources'] },

@@ -1724,6 +1724,8 @@
     var FM = window.FastModules;
     if (!FM) return;
     if (FM.publishSkill) {
+      /* A production Skill supersedes the two Demo Skills restored from Journey 2. */
+      FM.publishSkill(null);
       FM.publishSkill({
         id: 'journey-skill',
         name: opts.skillName || 'Skillv3',

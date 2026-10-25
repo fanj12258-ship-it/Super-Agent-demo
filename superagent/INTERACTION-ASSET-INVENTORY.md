@@ -79,7 +79,19 @@
 |---|---|---|---|
 | 场景房间标题块（`.bp-head`） | 场景名 + Business / Crafting / Fast 等标签 | **保留** | `css/fast-blueprint.css`、`workshop/shell.html` `.bp-head` |
 | 场景描述与目标（`.bp-desc`） | 标题块下方可折叠英文说明；进入场景时由 `FastBlueprint.show(title, desc)` / `setDesc` 写入 | **已接入** | `css/fast-blueprint.css`、`js/fast-blueprint.js`、`js/journey-two.js` |
-| Blueprint 静态结构卡（`.bpi-card` + `is-structure`） | 灰底与场景描述一致（`#f3f3f5`）；Requirements → Generate Agent 顺排不断开；无 outcome 框、无状态标签、无流动画；描边/标题用黑色；卡片高度贴合结构 | **已接入**（结构敲定阶段） | `css/fast-blueprint.css`、`js/fast-blueprint-iso.js`（`STRUCTURE_ONLY`） |
+| Assets 结构卡（`.bpi-card` + `is-structure`） | 顶栏写 Assets，下方灰字 `Application assets produced in this scenario.`；结构图实现保留但当前为对比评审而隐藏，随后按 Skill / MCP / Knowledge base / Object set / Agent 陈列；分类标题使用右侧栏同源 `#ws-skill / #ws-mcp / #ws-knowledge / #ws-ontology / #ws-agent` 图标。**固定空态约定：即使整个场景尚无任何资产，Assets 卡片及五个分类标题仍全部展示，每个分类标题下显示 `Not generated yet`；不隐藏分类，不创建可点击的假入口。** 非 Journey 2 / 3 的静态评审态可使用两个英文 Skill 和一条英文 Object set 样例；Journey 2 / 3 必须使用下方时序中的真实资产，不回退样例。同类资产纵向排列；每行左侧名称，右侧只允许 `Ready`（待发布）或 `Published`（已发布），版本/更新/历史进详情 | **已接入**（结构图暂时隐藏评审） | `css/fast-blueprint.css`、`js/fast-blueprint-iso.js`、`js/fast-blueprint.js`、`js/fast-modules.js` `catalog` |
+
+#### Journey 2 / 3 的 Assets 时序约定
+
+- **Journey 2 进入场景至前三项方案任务完成：** 五类均保持 `Not generated yet`，不使用静态样例冒充已产出资产。
+- **Journey 2 任务 4 完成：** `研发绩效对象集` 出现，状态为 `Ready`。
+- **Journey 2 任务 5 完成：** `Quota Q&A Skill`、`Self-Review Polish Skill` 和 `绩效配额 · 自评答疑 Agent` 出现，均为 `Ready`；MCP / Knowledge base 继续保持缺省。
+- **Journey 2 轻量调优完成：** 两个 Skill、对象集和 Agent 保留并同步到最新内容；左栏不展示版本过程，状态仍为 `Ready`。
+- **Journey 3 入口：** 恢复 Journey 2 结束态；产品、规则和技术方案阶段只产出设计文件，不提前改变应用资产架。
+- **Journey 3 本体构建：** 对象集依次替换为 `对象集v3`、`对象集v4`，先为 `Ready`；发布后变为 `Published`。
+- **Journey 3 Agent 组装：** Demo 的两个 Skill 被生产级 `Skillv3` 替换，同时新增 `知识库v2`、`MCPv1`；组装完成后 Agent 替换为 `Agent v3`。配套资产和 Agent 为 `Ready`，绑定的 `对象集v4` 为 `Published`。
+- **Journey 3 联动收尾：** 对象集升级为 `对象集v5 · Published`，Skill / Agent 分别替换为 `Skillv4 · Ready`、`Agent v4 · Ready`；知识库和 MCP 保留当前名称与 `Ready` 状态。
+- **右侧状态联动：** 在右侧 Skill / MCP / Knowledge base / Object set / Agent 详情中点击“待发布（待确认）↔ 已发布”，左侧对应的具体资产行立即在 `Ready ↔ Published` 之间同步切换；多 Skill 场景按资产 ID 精确映射，不影响同类其他资产。
 
 ### 4.3 Blueprint / 结构资产
 

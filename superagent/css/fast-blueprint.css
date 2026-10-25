@@ -45,8 +45,10 @@
 /* Scenario room: show Blueprint as a static structure map (no live progress chrome). */
 .fast-bp .bp-diagram { display: none; }
 .fast-bp.is-structure .bpi-card {
+  flex: none;
+  min-height: auto;
   margin: 0 0 8px;
-  padding: 8px 8px 6px;
+  padding: 8px 8px 16px;
   border: 0;
   border-radius: 10px;
   background: #f7f7f8; /* match .bp-desc */
@@ -57,7 +59,110 @@
   margin-bottom: 2px;
   color: #3a3a3e;
 }
+.fast-bp .bp-assets-desc {
+  margin: 0 4px 6px;
+  color: #8a8a8f;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 15px;
+}
+.fast-bp.is-structure #bp-iso,
+.fast-bp.is-structure .bpi-btn { display: none; }
 .fast-bp.is-structure .bp-foot { display: none; }
+.fast-bp .bp-assets-section {
+  margin: 10px 2px 2px;
+  padding-top: 10px;
+  border-top: 1px solid #e4e4e7;
+}
+.fast-bp.is-structure .bp-assets-section {
+  margin-top: 6px;
+  margin-bottom: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+.fast-bp .bp-assets {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+}
+.fast-bp .bp-assets[hidden] { display: none !important; }
+.fast-bp .bp-asset-group { display: flex; flex-direction: column; gap: 6px; }
+.fast-bp .bp-asset-k {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  padding: 0 2px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 15px;
+  letter-spacing: 0.01em;
+  color: #8a8a8f;
+}
+.fast-bp .bp-asset-k-icon {
+  flex: none;
+  color: #8a8a8f;
+}
+.fast-bp .bp-asset-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fast-bp .bp-asset {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 36px;
+  margin: 0;
+  padding: 7px 10px;
+  border: 1px solid #ececec;
+  border-radius: 8px;
+  background: #fff;
+  color: #3a3a3e;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  text-align: left;
+  cursor: pointer;
+}
+.fast-bp .bp-asset-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fast-bp .bp-asset-status {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  color: #8a8a8f;
+  font-size: 10.5px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.fast-bp .bp-asset-status i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #f59e0b;
+}
+.fast-bp .bp-asset-status.is-published i { background: #22a05a; }
+.fast-bp .bp-asset-empty {
+  padding: 9px 10px;
+  border: 1px dashed #d8d8dc;
+  border-radius: 8px;
+  color: #9a9aa0;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 15px;
+}
+.fast-bp .bp-asset:hover { background: #f5f5f5; }
+.fast-bp .bp-asset:focus-visible { outline: 2px solid rgba(31, 130, 235, .5); outline-offset: 1px; }
 .fast-bp.is-structure #bp-iso {
   line-height: 0;
   padding: 0 0 2px;

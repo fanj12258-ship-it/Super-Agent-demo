@@ -933,6 +933,15 @@
     .srp-plan-card.srp-plan-card--tree {
       background: var(--agentos-neutral-bg-color-bg-container);
     }
+    #plan-card.srp-plan-card.srp-plan-card--tree {
+      min-height: 0;
+      padding: 0;
+      overflow: visible;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
     .srp-plan-card__head,
     .srp-plan-card--tree .srp-plan-card__head {
       display: flex;
@@ -1038,6 +1047,12 @@
     .pb-sub { font-size: 11px; fill: var(--agentos-neutral-text-color-text-tertiary); }
     .pb-link { fill: none; stroke: var(--agentos-brand-primary-color-primary); stroke-opacity: 0.28; stroke-width: 0.75; }
 
+    #plan-card .sdp-plan-section--ontology,
+    #plan-card .sdp-plan-section--agent {
+      width: 260px;
+      max-width: 100%;
+      flex-shrink: 0;
+    }
     .sdp-plan-section,
     .srp-plan-card--tree .sdp-plan-section--ontology,
     .srp-plan-card--tree .sdp-plan-section--agent {
@@ -2167,63 +2182,14 @@
   <div class="plan-demo__col">
     <p class="plan-demo__label"><span>状态 2</span>树已出现 · 资源依赖架构</p>
     <div class="plan-tree-root">
-      <section class="sidebar-srp-plan is-entered" aria-label="SRP 挖知识 · 场景概览">
-        <header class="srp-plan-head">
-          <div class="srp-plan-head__row">
-            <span class="srp-plan-head__title" title="高价值场景1agent">高价值场景1agent</span>
-            <span class="srp-plan-status">
-              <span class="srp-plan-status__dot" aria-hidden="true"></span>
-              <span class="srp-plan-status__text">开发中</span>
-            </span>
-            <div class="srp-plan-head__actions">
-              <button type="button" class="srp-plan-audit-btn" data-srp-audit-check aria-label="进度校验">
-                <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
-                  <path d="M8 1.5l1.6 3.2 3.5.5-2.55 2.5.6 3.5L8 9.9l-3.15 1.7.6-3.5L3.9 5.2l3.5-.5L8 1.5z" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linejoin="round"/>
-                  <circle cx="8" cy="8" r="6.2" stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.35"/>
-                </svg>
-                <span>进度校验</span>
-              </button>
-              <button type="button" class="srp-plan-prio is-p0" aria-haspopup="listbox" aria-label="优先级 P0">
-                <span class="srp-plan-prio__lbl">P0</span>
-                <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
-                  <path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </header>
-        <section class="srp-plan-section is-collapsible is-collapsed" aria-label="场景描述与目标">
-          <button type="button" class="srp-plan-section__title" aria-expanded="false">
-            <span>场景描述与目标</span>
-            <svg class="srp-plan-section__chev" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
-              <path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-          <p class="srp-plan-section__body">面向财务共享与应收应付协同：收件箱驱动的记账邮件 Agent，结构化附件与往来上下文，对齐 ERP 入账口径。 把「邮件进箱 → 人工分拣 → 补录台账」升级为 Agent 主导的草稿流：客商识别、币种金额解析、入账建议与安全阈值内自动过账草稿，高风险与争议金额强制 HITL。</p>
-        </section>
-        <article class="srp-plan-card srp-plan-card--tree is-streamed" role="region" aria-label="打造计划" id="plan-card">
+      <section class="sidebar-srp-plan is-entered" aria-label="Ontology and Agent">
+        <article class="srp-plan-card srp-plan-card--tree is-streamed" role="region" aria-label="Ontology and Agent" id="plan-card">
 
-      <div class="srp-plan-card__head">
-        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-          <rect x="3.5" y="5.5" width="17" height="14" rx="2" stroke="currentColor" stroke-width="1.6" fill="none"/>
-          <path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-        </svg>
-        <span class="srp-plan-card__title">打造计划</span>
-        <span class="srp-plan-card__head-tail">资源依赖架构</span>
-      </div>
-
-      <!-- 本体打造 -->
+      <!-- Ontology -->
       <div class="sdp-plan-section sdp-plan-section--ontology">
         <div class="sdp-plan-section__head">
           <span class="sdp-plan-section__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5.5" r="2.2"/><circle cx="5.5" cy="18" r="2.2"/><circle cx="18.5" cy="18" r="2.2"/><path d="m11 7.5-4.5 8.5M13 7.5l4.5 8.5M7.7 18h8.6"/></svg></span>
-          <span class="sdp-plan-section__title">本体打造</span>
-          <span class="sdp-plan-section__status" hidden aria-label="区域状态"></span>
-          <button type="button" class="sdp-plan-section__trigger" data-sdp-section-trigger="ontology">
-            <span>开始打造</span>
-            <svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true">
-              <path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
+          <span class="sdp-plan-section__title">Ontology</span>
         </div>
         <div class="sdp-plan-section__body">
           <ul class="sdp-plan-tree" role="tree">
@@ -2240,22 +2206,18 @@
                 <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="objects:obj-business" tabindex="0">
                   <span class="sdp-plan-tree__leaf-dot" aria-hidden="true"></span>
                   <span class="sdp-plan-tree__leaf-name" title="Product / Customer / Order / Store / Supplier">业务对象</span>
-                  <span class="sdp-plan-tree__leaf-tag">待打造</span>
                 </li>
                 <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="objects:obj-rule" tabindex="0">
                   <span class="sdp-plan-tree__leaf-dot" aria-hidden="true"></span>
                   <span class="sdp-plan-tree__leaf-name" title="ExpertRule / Threshold / Strategy / Policy">决策规则</span>
-                  <span class="sdp-plan-tree__leaf-tag">待打造</span>
                 </li>
                 <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="objects:obj-capability" tabindex="0">
                   <span class="sdp-plan-tree__leaf-dot" aria-hidden="true"></span>
                   <span class="sdp-plan-tree__leaf-name" title="Skill / Tool / Model / Prompt / Context">能力对象</span>
-                  <span class="sdp-plan-tree__leaf-tag">待打造</span>
                 </li>
                 <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="objects:obj-flow" tabindex="0">
                   <span class="sdp-plan-tree__leaf-dot" aria-hidden="true"></span>
                   <span class="sdp-plan-tree__leaf-name" title="DAG / Node / Edge / Condition / Fallback">编排对象</span>
-                  <span class="sdp-plan-tree__leaf-tag">待打造</span>
                 </li>
               </ul>
             </li>
@@ -2263,18 +2225,11 @@
         </div>
       </div>
 
-      <!-- 智能体打造 -->
+      <!-- Agent -->
       <div class="sdp-plan-section sdp-plan-section--agent">
         <div class="sdp-plan-section__head">
           <span class="sdp-plan-section__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11.5" rx="3"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><path d="M9 13v1.5M15 13v1.5"/></svg></span>
-          <span class="sdp-plan-section__title">智能体打造</span>
-          <span class="sdp-plan-section__status" hidden aria-label="区域状态"></span>
-          <button type="button" class="sdp-plan-section__trigger" data-sdp-section-trigger="agent">
-            <span>开始打造</span>
-            <svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true">
-              <path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
+          <span class="sdp-plan-section__title">Agent</span>
         </div>
         <div class="sdp-plan-section__body">
           <ul class="sdp-plan-tree" role="tree">
@@ -2288,13 +2243,13 @@
                 <span class="sdp-plan-tree__node-count">7</span>
               </button>
               <ul class="sdp-plan-tree__leaves">
-                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:recommend_items" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="智能商品推荐">recommend_items</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
-                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:forecast_demand" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="需求预测">forecast_demand</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
-                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:assess_churn_risk" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="客户流失评估">assess_churn_risk</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
-                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:optimize_schedule" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="排班优化">optimize_schedule</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
-                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:price_simulation" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="动态定价模拟">price_simulation</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
-                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:analyze_store_traffic" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="门店客流分析">analyze_store_traffic</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
-                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:inspect_quality" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="质量检查">inspect_quality</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:recommend_items" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="智能商品推荐">recommend_items</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:forecast_demand" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="需求预测">forecast_demand</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:assess_churn_risk" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="客户流失评估">assess_churn_risk</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:optimize_schedule" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="排班优化">optimize_schedule</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:price_simulation" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="动态定价模拟">price_simulation</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:analyze_store_traffic" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="门店客流分析">analyze_store_traffic</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="skills:inspect_quality" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="质量检查">inspect_quality</span></li>
               </ul>
             </li>
             <li class="sdp-plan-tree__branch is-open" data-sdp-plan-branch="mcp">
@@ -2307,12 +2262,12 @@
                 <span class="sdp-plan-tree__node-count">6</span>
               </button>
               <ul class="sdp-plan-tree__leaves">
-                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="mcp:mcp-pos-realtime" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="POS 实时流（SSE）">mcp-pos-realtime</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
-                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="mcp:mcp-crm-profile" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="客户画像（REST + CDC）">mcp-crm-profile</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
-                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="mcp:mcp-scm-supply" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="供应链（gRPC）">mcp-scm-supply</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
-                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="mcp:mcp-iot-store" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="门店 IoT（MQTT）">mcp-iot-store</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
-                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="mcp:mcp-ml-inference" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="模型推理（gRPC）">mcp-ml-inference</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
-                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="mcp:mcp-knowledge-graph" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="知识图谱（SPARQL + REST）">mcp-knowledge-graph</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="mcp:mcp-pos-realtime" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="POS 实时流（SSE）">mcp-pos-realtime</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="mcp:mcp-crm-profile" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="客户画像（REST + CDC）">mcp-crm-profile</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="mcp:mcp-scm-supply" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="供应链（gRPC）">mcp-scm-supply</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="mcp:mcp-iot-store" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="门店 IoT（MQTT）">mcp-iot-store</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="mcp:mcp-ml-inference" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="模型推理（gRPC）">mcp-ml-inference</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="mcp:mcp-knowledge-graph" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="知识图谱（SPARQL + REST）">mcp-knowledge-graph</span></li>
               </ul>
             </li>
             <li class="sdp-plan-tree__branch is-open" data-sdp-plan-branch="knowledge">
@@ -2325,10 +2280,10 @@
                 <span class="sdp-plan-tree__node-count">4</span>
               </button>
               <ul class="sdp-plan-tree__leaves">
-                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="knowledge:kb-cases" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="169 条标注案例 · 已就绪">案例库</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
-                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="knowledge:kb-sop" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="47 篇标准作业流程">SOP 知识库</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
-                <li class="sdp-plan-tree__leaf is-partial" data-sdp-plan-leaf="knowledge:kb-glossary" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="286 条术语 · 待补充行业基准">业务术语库</span><span class="sdp-plan-tree__leaf-tag">待打造</span></li>
-                <li class="sdp-plan-tree__leaf is-missing" data-sdp-plan-leaf="knowledge:kb-benchmark" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="需对接外部数据源">行业基准库</span><span class="sdp-plan-tree__leaf-tag">待补充</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="knowledge:kb-cases" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="169 条标注案例 · 已就绪">案例库</span></li>
+                <li class="sdp-plan-tree__leaf is-ready" data-sdp-plan-leaf="knowledge:kb-sop" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="47 篇标准作业流程">SOP 知识库</span></li>
+                <li class="sdp-plan-tree__leaf is-partial" data-sdp-plan-leaf="knowledge:kb-glossary" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="286 条术语 · 待补充行业基准">业务术语库</span></li>
+                <li class="sdp-plan-tree__leaf is-missing" data-sdp-plan-leaf="knowledge:kb-benchmark" tabindex="0"><span class="sdp-plan-tree__leaf-dot"></span><span class="sdp-plan-tree__leaf-name" title="需对接外部数据源">行业基准库</span></li>
               </ul>
             </li>
           </ul>

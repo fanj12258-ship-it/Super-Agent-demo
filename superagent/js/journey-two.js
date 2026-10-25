@@ -769,6 +769,7 @@
           var doc = DELIVERABLES.filter(function (item) { return item.task === i; })[0];
           if (doc) addDeliverable(doc);
           if (i === 3) publishPerfOntology({ sBand: false });
+          if (i === 4) publishDemoSkills({ tweaked: false });
           progress.done(i);
           ctx.scroll();
           if (i < DEMO_TASKS.length - 1) await ctx.sleep(280);
@@ -1076,6 +1077,7 @@
             TWEAK_DELIVERABLES.forEach(addDeliverable);
           }
           if (i === 1) publishPerfOntology({ sBand: true });
+          if (i === 2) publishDemoSkills({ tweaked: true });
           progress.done(i);
           ctx.scroll();
           if (i < TWEAK_TASKS.length - 1) await ctx.sleep(280);
@@ -1130,9 +1132,41 @@
 
   /* When chat shows 本体对象集 / Agent 调试, mirror a non-md "Agent demo" row under Files.
      Click opens the same trial panel as the mid-dialog Agent 调试 entry (#ws-agent icon). */
+  function publishDemoSkills(opts) {
+    opts = opts || {};
+    if (!window.FastModules || !window.FastModules.publishSkill) return;
+    window.FastModules.publishSkill({
+      id: 'j2-skill-quota',
+      name: 'Quota Q&A Skill',
+      desc: 'Demo Skill for quota lookup and assessment-rule Q&A.',
+      publishStatus: 'pending',
+    });
+    window.FastModules.publishSkill({
+      id: 'j2-skill-polish',
+      name: 'Self-Review Polish Skill',
+      desc: opts.tweaked
+        ? 'Demo Skill updated with the three-part self-review structure.'
+        : 'Demo Skill for evidence-preserving self-review rewriting.',
+      publishStatus: 'pending',
+    });
+  }
+
   function publishAgentDemo() {
     var ico = '<svg class="ws-ico" width="14" height="14" aria-hidden="true"><use href="#ws-agent"/></svg>';
     enableAgentTrial();
+    if (window.FastModules && window.FastModules.publishAgent) {
+      window.FastModules.publishAgent({
+        id: 'j2-agent-demo',
+        name: '绩效配额 · 自评答疑 Agent',
+        letter: '绩',
+        color: '#6a54f0',
+        role: '配额核对、考核答疑与自评润色',
+        status: '就绪 · 可调试',
+        state: 'ready',
+        cta: '调试',
+        publishStatus: 'pending',
+      });
+    }
     if (window.FastAgentPanel) {
       if (window.FastAgentPanel.setIdentity) {
         window.FastAgentPanel.setIdentity({
@@ -1351,6 +1385,7 @@
       window.FastFlow.createLongTaskVersion(2, TWEAK_TASKS, '', 'Demo 轻量调优 v1');
     }
     publishPerfOntology({ sBand: true });
+    publishDemoSkills({ tweaked: true });
     publishAgentDemo();
     if (window.FastFiles) window.FastFiles.showTab(true);
 

@@ -118,5 +118,77 @@
     shorten();
   }
 
+  /* Fixed shelf contract: all five category headings remain visible even when the
+     scenario has no assets; renderAssets() puts "Not generated yet" below each one. */
+  var ASSET_GROUPS = [
+    { key: 'skill', label: 'Skill', icon: 'ws-skill', sample: [
+      { id: 'sample-skill-quota', name: 'Quota Q&A Skill', status: 'Ready', state: 'pending', sample: true },
+      { id: 'sample-skill-polish', name: 'Self-Review Polish Skill', status: 'Ready', state: 'pending', sample: true },
+    ] },
+    { key: 'mcp', label: 'MCP', icon: 'ws-mcp', sample: [] },
+    { key: 'knowledge', label: 'Knowledge base', icon: 'ws-knowledge', sample: [] },
+    { key: 'ontology', label: 'Object set', icon: 'ws-ontology', sample: [
+      { id: 'sample-onto', name: 'R&D Performance Object Set', status: 'Published', state: 'published', sample: true },
+    ] },
+    { key: 'agent', label: 'Agent', icon: 'ws-agent', sample: [] },
+  ];
+  function escAsset(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function renderAssets() {
+    var root = document.getElementById('bp-assets');
+    if (!root) return;
+    var cat = window.FastModules && window.FastModules.catalog ? window.FastModules.catalog() : null;
+    var route = window.FastJourneyRoute && window.FastJourneyRoute.get ? window.FastJourneyRoute.get() : '';
+    var useSamples = route !== '2' && route !== '3';
+    var html = '';
+    ASSET_GROUPS.forEach(function (g) {
+      var items = (cat && cat[g.key] && cat[g.key].length)
+        ? cat[g.key]
+        : (useSamples ? (g.sample || []) : []);
+      html += '<section class="bp-asset-group"><h3 class="bp-asset-k"><svg class="bp-asset-k-icon" width="14" height="14" aria-hidden="true"><use href="#' +
+        g.icon + '"/></svg><span>' + g.label + '</span></h3>';
+      if (items.length) {
+        html += '<div class="bp-asset-list">';
+        items.forEach(function (it) {
+          html += '<button type="button" class="bp-asset" data-asset="' + g.key + '" data-asset-id="' + escAsset(it.id) +
+            '" data-sample="' + (it.sample ? '1' : '0') + '"><span class="bp-asset-name">' + escAsset(it.name) +
+            '</span><span class="bp-asset-status is-' + escAsset(it.state || 'pending') + '"><i></i>' +
+            escAsset(it.status || 'Ready') + '</span></button>';
+        });
+        html += '</div>';
+      } else {
+        html += '<div class="bp-asset-empty">Not generated yet</div>';
+      }
+      html += '</section>';
+    });
+    root.innerHTML = html;
+    root.hidden = false;
+  }
+  var assets = document.getElementById('bp-assets');
+  if (assets) {
+    assets.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-asset]');
+      if (!btn || !window.FastModules) return;
+      var key = btn.getAttribute('data-asset');
+      var id = btn.getAttribute('data-asset-id');
+      if (key === 'agent' && window.FastAgentPanel) {
+        window.FastAgentPanel.open('try');
+        return;
+      }
+      var isSample = btn.getAttribute('data-sample') === '1';
+      window.FastModules.open(key, id && !isSample ? { drill: id } : undefined);
+    });
+  }
+  document.addEventListener('fastsandbox', renderAssets);
+  var prevShow = show;
+  show = function (title, desc) {
+    prevShow(title, desc);
+    renderAssets();
+  };
+  renderAssets();
+
   window.FastBlueprint = { show: show, hide: hide, set: set, setDesc: setDesc };
 })();
