@@ -802,7 +802,7 @@ body.aiops-body {
   cursor: pointer;
 }
 
-.cui-rail .fd-tab:hover { background: rgba(0, 0, 0, 0.05); }
+.cui-rail .fd-tab:hover { background: transparent; }
 .cui-rail .fd-tab.is-active {
   background: #fff;
   color: #111;
@@ -3764,51 +3764,19 @@ body.aiops-body {
   border-radius: 12px;
 }
 
-.wg-config-host {
-  position: fixed;
-  inset: 0;
-  z-index: 70;
-  pointer-events: none;
-}
-
-.wg-config-host:not([hidden]) { pointer-events: none; }
-
-.wg-config-card {
-  position: fixed;
-  width: min(340px, calc(100vw - 32px));
-  max-height: min(70vh, 520px);
-  display: flex;
-  flex-direction: column;
-  background: var(--popover-bg, #fff);
-  border: 1px solid var(--popover-border, #ececec);
-  border-radius: var(--popover-radius, 14px);
-  box-shadow: var(--popover-shadow);
-  pointer-events: auto;
-  overflow: hidden;
-}
-
-.wg-config-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 12px 14px 10px;
-  border-bottom: 1px solid var(--popover-sep, #f0f0f0);
-  cursor: grab;
-  user-select: none;
-  touch-action: none;
-}
-
-.wg-config-head.is-dragging {
-  cursor: grabbing;
-}
-
-.wg-config-head strong {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-88);
-  pointer-events: none;
-}
+.wg-config-host { position: fixed; inset: 0; z-index: 80; pointer-events: none; }
+.wg-config-card.cap-menu { width: min(260px, calc(100vw - 16px)); max-height: min(420px, calc(100vh - 16px)); display: flex; flex-direction: column; padding: var(--popover-pad, 6px); background: var(--popover-bg, #fff); border: 1px solid var(--popover-border, #ececec); border-radius: var(--popover-radius, 14px); box-shadow: var(--popover-shadow); pointer-events: auto; overflow: hidden; }
+.wg-config-menu-label { flex-shrink: 0; padding: 6px 10px; font-size: 12px; line-height: 16px; color: var(--text-secondary); }
+.wg-config-body { min-height: 0; overflow: auto; padding: 0; }
+.wg-config-sec { padding: 8px 10px 4px; font-size: 11px; line-height: 16px; color: var(--text-secondary); }
+.wg-config-option { flex-shrink: 0; }
+.wg-config-option-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wg-config-check { display: flex; align-items: center; justify-content: center; flex: 0 0 14px; height: 14px; border: 1px solid var(--border-hover, #c0c0c0); border-radius: 4px; background: #fff; color: #fff; box-sizing: border-box; }
+.wg-config-check svg { opacity: 0; }
+.wg-config-option[aria-checked="true"] .wg-config-check { background: var(--ink, #171717); border-color: var(--ink, #171717); }
+.wg-config-option[aria-checked="true"] .wg-config-check svg { opacity: 1; }
+.wg-config-foot { flex-shrink: 0; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--popover-sep, #f0f0f0); }
+.wg-config-foot button > svg { width: 15px; height: 15px; }
 
 /* Match Workbench `.sm-close` */
 .wg-config-close {
@@ -3830,63 +3798,6 @@ body.aiops-body {
 .wg-config-close:hover {
   background: var(--hover, #f5f5f5);
   color: #333;
-}
-
-.wg-config-body {
-  padding: 12px 14px;
-  overflow: auto;
-  min-height: 0;
-}
-
-.wg-config-hint {
-  margin: 0 0 8px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.wg-config-sec {
-  margin: 12px 0 6px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-45);
-}
-
-.wg-config-sec:first-child { margin-top: 0; }
-
-.wg-check-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.wg-check {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 30px;
-  padding: 4px 6px;
-  border-radius: 6px;
-  font-size: 12px;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.wg-check:hover { background: var(--hover); }
-
-.wg-check input {
-  width: 14px;
-  height: 14px;
-  accent-color: var(--brand-blue);
-}
-
-.wg-config-foot {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  padding: 10px 12px 12px;
-  border-top: 1px solid var(--popover-sep, #f0f0f0);
-  background: #fff;
 }
 
 .btn-soft.is-danger {
@@ -4038,20 +3949,52 @@ body.aiops-body {
 .session-filter-clear { padding: 0; font: inherit; color: var(--ink, #171717); background: transparent; }
 .session-filter-clear:hover { background: transparent; color: var(--ink, #171717); }
 .session-filter-clear:disabled { color: var(--placeholder); cursor: default; }
-.session-date-control { display: inline-flex; align-items: center; height: 28px; border: 1px solid var(--border-strong); border-radius: 8px; }
-.session-date-trigger { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; font-size: 12px; color: var(--text); border-radius: 7px; }
-.session-date-trigger:hover, .session-date-clear:hover { background: var(--hover); }
+.session-date-control { position: relative; display: inline-flex; align-items: center; height: 28px; max-width: 100%; border: 1px solid var(--border-strong); border-radius: 8px; }
+.session-date-trigger { display: inline-flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; height: 100%; padding: 0 10px; font-size: 12px; color: var(--text); border-radius: 7px; background: transparent; }
+.session-date-trigger span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.session-date-control:hover, .session-date-control:focus-within, .session-date-control:has([aria-expanded="true"]) { background: var(--hover); }
+.session-date-trigger:hover { background: transparent; }
 .session-date-control svg { width: 14px; height: 14px; flex-shrink: 0; }
-.session-date-clear { display: grid; place-items: center; width: 24px; height: 24px; margin-right: 2px; border-radius: 5px; color: var(--text-secondary); }
+.session-date-inline-clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--hover); color: var(--text-secondary); opacity: 0; pointer-events: none; }
+.session-date-control:hover .session-date-inline-clear, .session-date-control:focus-within .session-date-inline-clear { opacity: 1; pointer-events: auto; }
+.session-date-control.is-clearable:is(:hover, :focus-within) .session-date-trigger > svg:last-child { opacity: 0; }
+.session-date-inline-clear:hover { background: var(--border-strong); color: var(--text); }
+.session-date-inline-clear:focus-visible { outline: 2px solid var(--brand-blue); outline-offset: 1px; }
+@media (hover: none) { .session-date-inline-clear { opacity: 1; pointer-events: auto; } .session-date-control.is-clearable .session-date-trigger > svg:last-child { opacity: 0; } }
+.session-date-clear { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 5px; color: var(--text-secondary); }
+.session-date-clear svg { width: 14px; height: 14px; }
+.session-date-clear:hover:not(:disabled) { background: var(--hover); }
+.session-date-clear:disabled { color: var(--placeholder); cursor: default; }
 .session-date-picker { position: fixed; z-index: 45; width: 340px; max-width: calc(100vw - 16px); padding: 6px; border: 1px solid var(--popover-border); border-radius: var(--popover-radius); background: var(--popover-bg); box-shadow: var(--popover-shadow); }
 .session-date-presets { display: flex; gap: 6px; padding: 6px 10px 14px; }
 .session-date-presets button { height: 28px; padding: 0 10px; border-radius: 6px; background: var(--bg-subtle); color: var(--text); font-size: 12px; }
 .session-date-presets button:hover { background: var(--hover); }
 .session-date-presets button.is-active { background: var(--selected); color: var(--file-blue); }
 .session-date-fields { display: flex; align-items: flex-end; gap: 8px; padding: 0 10px 12px; color: var(--text-secondary); font-size: 12px; }
-.session-date-fields label { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.session-date-field-group { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .session-date-fields > span { line-height: 32px; }
-.session-date-fields input { box-sizing: border-box; width: 100%; min-width: 0; height: 32px; padding: 0 6px; border: 1px solid var(--border-strong); border-radius: 6px; background: #fff; color: var(--text); font: inherit; }
+.session-date-field { display: flex; align-items: center; justify-content: space-between; gap: 6px; box-sizing: border-box; width: 100%; min-width: 0; height: 32px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--popover-bg); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.session-date-field:hover { border-color: var(--border-hover); background: var(--hover); }
+.session-date-field[aria-expanded="true"] { border-color: var(--brand-blue); box-shadow: 0 0 0 2px var(--brand-blue-bg); }
+.session-date-field svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--text-secondary); }
+.session-date-picker { max-height: calc(100dvh - 16px); overflow-y: auto; }
+.session-date-calendar { margin: 0 10px 12px; padding-top: 10px; border-top: 1px solid var(--popover-sep); }
+.session-date-calendar[hidden] { display: none; }
+.session-calendar-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; color: var(--text); font-size: 12px; font-weight: 500; }
+.session-calendar-heading button { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 6px; color: var(--text-secondary); }
+.session-calendar-heading svg { width: 14px; height: 14px; }
+.session-calendar-heading button:hover { background: var(--hover); color: var(--text); }
+.session-calendar-weekdays, .session-calendar-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.session-calendar-weekdays span { display: grid; place-items: center; height: 28px; color: var(--text-secondary); font-size: 12px; }
+.session-calendar-day { position: relative; display: grid; place-items: center; height: 30px; border-radius: 6px; color: var(--text); font-size: 12px; font-variant-numeric: tabular-nums; cursor: pointer; }
+.session-calendar-day.is-other-month { color: var(--placeholder); }
+.session-calendar-day.is-in-range { background: var(--selected); }
+.session-calendar-day:hover:not(:disabled) { background: var(--hover); }
+.session-calendar-day.is-selected, .session-calendar-day.is-selected:hover { background: var(--brand-blue); color: #fff; }
+.session-calendar-day.is-today::after { content: ''; position: absolute; bottom: 3px; width: 3px; height: 3px; border-radius: 50%; background: var(--brand-blue); }
+.session-calendar-day.is-selected.is-today::after { background: #fff; }
+.session-calendar-day:disabled { color: var(--placeholder); background: transparent; cursor: default; }
+.session-date-field:focus-visible, .session-calendar-heading button:focus-visible, .session-calendar-day:focus-visible { outline: 2px solid var(--brand-blue); outline-offset: 1px; }
 .session-date-picker footer { display: flex; justify-content: flex-end; gap: 8px; padding: 8px 4px 2px; border-top: 1px solid var(--popover-sep); }
 .session-date-picker footer button { height: 28px; min-width: 0; padding: 0 10px; font-size: 12px; border-radius: 6px; }
 .session-date-error { margin: 0; padding: 0 10px 12px; font-size: 12px; color: var(--brand-red); }
@@ -4069,3 +4012,40 @@ body.aiops-body {
 .cui-rail .fd-tab.is-active { box-shadow: none; }
 .cui-rail .fd-tab-name { font-size: 13px; font-weight: 400; }
 .cui-rail .fd-tab:focus-within .fd-tab-x { opacity: 1; }
+
+/* Aggregated duration chart keeps the home widget's selected card skin. */
+.widget-duration { display: flex; flex-direction: column; gap: 8px; padding: 12px; min-height: 160px; }
+.widget-duration-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
+.widget-duration-head small { font-size: 11px; line-height: 16px; color: var(--text-45); white-space: nowrap; }
+.widget-duration .step-row > span { white-space: nowrap; }
+
+/* Health aggregate cards reuse the board's plots and live warning feed. */
+.widget-body:has(> :is(.widget-health-distribution, .widget-health-alerts)) { overflow: auto; }
+.widget-body:has(> :is(.widget-health-distribution, .widget-health-alerts)) > .widget-metrics { flex-shrink: 0; }
+.widget-health-distribution, .widget-health-alerts { display: flex; flex-direction: column; gap: 8px; padding: 12px; min-width: 0; overflow: hidden; }
+.widget-health-distribution { flex: 1 0 160px; min-height: 160px; }
+.widget-health-alerts { flex: 1 0 190px; min-height: 190px; }
+:is(.widget-health-distribution, .widget-health-alerts) > .panelhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; flex-shrink: 0; min-height: 16px; margin: 0; }
+:is(.widget-health-distribution, .widget-health-alerts) > .panelhead h2 { font-size: 12px; line-height: 16px; font-weight: 400; color: var(--text-45); margin: 0; }
+.widget-health-alerts .segments { display: flex; flex-shrink: 0; }
+.widget-health-alerts .health-alert-footer { flex-shrink: 0; }
+
+/* Card headings stay on one line; help icons remain outside the clipped text. */
+.widget-metric-label, .widget-trend-label-text, .aiops-app .metric-label-text {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.widget-trend-label-text { display: block; }
+.widget .metric-label { display: inline-flex; align-items: center; gap: 4px; min-width: 0; max-width: 100%; }
+.aiops-app .metric-help { flex-shrink: 0; }
+.aiops-app .panelhead > h2 { min-width: 0; max-width: 100%; }
+
+/* Shared filter controls use the search button's border token. */
+:root { --control-border: #e8e8ea; }
+body.aiops-body :is(.session-date-control, .session-date-field, .ov-scope, .cap-select, select, .cui-model-btn) { border-color: var(--control-border); }
+body.aiops-body .session-date-field[aria-expanded="true"] { border-color: var(--brand-blue); }
+.session-list-empty { display: flex; flex: 1; min-height: 280px; align-items: center; justify-content: center; flex-direction: column; gap: 12px; color: var(--text-secondary); font-size: 13px; }
+.session-list-empty p { margin: 0; }

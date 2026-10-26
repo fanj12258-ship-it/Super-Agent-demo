@@ -475,11 +475,12 @@
 
 .health-alert-meta time{color:#a1a5ad;font-size:10px;line-height:1.2}
 
-.health-alert-badge{display:inline-flex;align-items:center;font-size:10px;line-height:15px;padding:0 6px;border:1px solid;border-radius:9px;white-space:nowrap}
+/* Workbench .ag-tag geometry, shared by the feed, widget, and detail dialog. */
+.aiops-body .health-alert-badge{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;height:22px;padding:0 8px;border:0;border-radius:var(--radius-xs,6px);font-size:11px;font-weight:500;line-height:22px;white-space:nowrap}
 
-.health-alert-badge.severe{color:#ed795d;border-color:#ed937b;background:#fff8f5}
+.aiops-body .health-alert-badge.severe{color:var(--status-severe-fg,#b91c1c);background:var(--status-severe-bg,#fef2f2)}
 
-.health-alert-badge.warning{color:#d7a046;border-color:#e8ba6e;background:#fffbf1}
+.aiops-body .health-alert-badge.warning{color:var(--status-warn-fg,#b76a00);background:var(--status-warn-bg,#fff4e5)}
 
 .health-alert-footer{color:#a2a6ae;font-size:10px;margin-top:7px;flex:none}
 
@@ -883,7 +884,7 @@
 /* One chart visual system for the three analysis dashboards. */
 .page.is-analysis :is(.cost-trend-panel,.health-slow-panel,.health-alert-distribution,.health-duration-panel,.health-live-alerts,.behavior-trends>.panel){border:1px solid #e3e9f2!important;border-radius:12px!important;background:#fff;padding:14px 16px!important;box-shadow:none;margin:0!important}
 
-.page.is-analysis .cost-trend-panels{display:grid;grid-template-columns:1fr;gap:16px;min-width:0}
+.page.is-analysis .cost-trend-panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:16px;min-width:0}
 
 .page.is-analysis .health-perf-panels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;min-width:0}
 
@@ -951,7 +952,7 @@
 
 .page.is-analysis :is(.toolbar .segments button,.analysis-scope-trigger,.cost-metric-options button){font-size:12px}
 
-.page.is-analysis :is(.health-alert-name,.health-alert-message,.health-alert-meta time,.health-alert-badge,.health-alert-footer,.step-row,.step-row>b){font-size:12px;line-height:20px}
+.page.is-analysis :is(.health-alert-name,.health-alert-message,.health-alert-meta time,.health-alert-footer,.step-row,.step-row>b){font-size:12px;line-height:20px}
 
 .page.is-analysis .health-duration-panel .step-row>b{font-size:12px;line-height:20px}
 
@@ -1513,16 +1514,6 @@
   background: var(--hover, #f5f5f5);
 }
 
-.page.is-analysis .health-alert-badge.severe {
-  background: var(--status-severe-bg, #fef2f2);
-  color: var(--status-severe-fg, #b91c1c);
-}
-
-.page.is-analysis .health-alert-badge.warning {
-  background: var(--status-warn-bg, #fff4e5);
-  color: var(--status-warn-fg, #b76a00);
-}
-
 .page.is-analysis .health-duration-panel .step-track {
   background: var(--bg-subtle, #fafafa);
 }
@@ -1581,6 +1572,8 @@
 .page.is-analysis .health-alert-panels > .health-alert-distribution,
 .page.is-analysis .health-alert-panels > .health-live-alerts,
 .page.is-analysis .health-perf-panels > .health-duration-panel {
+  display: flex;
+  flex-direction: column;
   border: 1px solid #f0f0f0 !important;
   border-radius: 12px !important;
   background: #fff;
@@ -1590,7 +1583,8 @@
   gap: 8px;
 }
 
-.page.is-analysis .health-alert-chart-row {
+.page.is-analysis .health-alert-chart-row,
+.widget-health-distribution .health-alert-chart-row {
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
@@ -1600,7 +1594,8 @@
   row-gap: 6px;
 }
 
-.page.is-analysis .health-alert-ylabels {
+.page.is-analysis .health-alert-ylabels,
+.widget-health-distribution .health-alert-ylabels {
   grid-column: 1;
   grid-row: 1;
   display: grid;
@@ -1609,7 +1604,8 @@
   min-width: 0;
 }
 
-.page.is-analysis .health-alert-ylabel {
+.page.is-analysis .health-alert-ylabel,
+.widget-health-distribution .health-alert-ylabel {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1620,7 +1616,8 @@
   white-space: nowrap;
 }
 
-.page.is-analysis .health-alert-chart-row > .health-alert-plot {
+.page.is-analysis .health-alert-chart-row > .health-alert-plot,
+.widget-health-distribution .health-alert-chart-row > .health-alert-plot {
   grid-column: 2;
   grid-row: 1;
   height: 100% !important;
@@ -1628,13 +1625,15 @@
   min-height: 0;
 }
 
-.page.is-analysis .health-alert-chart-row .health-alert-chart {
+.page.is-analysis .health-alert-chart-row .health-alert-chart,
+.widget-health-distribution .health-alert-chart-row .health-alert-chart {
   display: block;
   width: 100%;
   height: 100%;
 }
 
-.page.is-analysis .health-alert-xaxis {
+.page.is-analysis .health-alert-xaxis,
+.widget-health-distribution .health-alert-xaxis {
   grid-column: 2;
   grid-row: 2;
   display: flex;
@@ -1645,6 +1644,7 @@
 }
 
 .page.is-analysis .health-alert-panels > .panel > .panelhead,
+.widget-health-alerts .health-alert-panels > .panel > .panelhead,
 .page.is-analysis .health-perf-panels > .health-duration-panel > .panelhead {
   margin: 0;
   min-height: 0;
@@ -1656,8 +1656,10 @@
 }
 
 .page.is-analysis .health-alert-panels > .panel > .panelhead h2,
+.widget-health-alerts .health-alert-panels > .panel > .panelhead h2,
 .page.is-analysis .health-perf-panels > .health-duration-panel > .panelhead h2,
 .page.is-analysis .health-alert-panels > .panel > .panelhead h2 > .metric-label,
+.widget-health-alerts .health-alert-panels > .panel > .panelhead h2 > .metric-label,
 .page.is-analysis .health-perf-panels > .health-duration-panel > .panelhead h2 > .metric-label {
   font-size: 12px;
   line-height: 16px;
@@ -1672,16 +1674,19 @@
   color: #92969e;
 }
 
-.page.is-analysis .health-alert-chart text {
+.page.is-analysis .health-alert-chart text,
+.widget-health-distribution .health-alert-chart text {
   fill: var(--text-45);
   font-size: 12px;
 }
 
-.page.is-analysis .health-alert-chart line {
+.page.is-analysis .health-alert-chart line,
+.widget-health-distribution .health-alert-chart line {
   stroke: #e8edf3;
 }
 
-.page.is-analysis .health-live-alerts .segments {
+.page.is-analysis .health-live-alerts .segments,
+.widget-health-alerts .segments {
   margin-left: auto;
   padding: 2px;
   background: var(--fill-03, rgba(0, 0, 0, 0.03));
@@ -1689,7 +1694,8 @@
   gap: 0;
 }
 
-.page.is-analysis .health-live-alerts .segments button {
+.page.is-analysis .health-live-alerts .segments button,
+.widget-health-alerts .segments button {
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 12px;
@@ -1697,13 +1703,15 @@
   color: var(--text-45);
 }
 
-.page.is-analysis .health-live-alerts .segments .selected {
+.page.is-analysis .health-live-alerts .segments .selected,
+.widget-health-alerts .segments .selected {
   background: #fff;
   color: var(--text-88);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
-.page.is-analysis .health-alert-list {
+.page.is-analysis .health-alert-list,
+.widget-health-alerts .health-alert-list {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -1713,16 +1721,19 @@
   margin-right: -8px;
 }
 
-.page.is-analysis .health-alert-list > .health-alert-feed {
+.page.is-analysis .health-alert-list > .health-alert-feed,
+.widget-health-alerts .health-alert-list > .health-alert-feed {
   flex: 1 1 auto;
   padding-right: 0;
 }
 
-.page.is-analysis .health-alert-list > .health-alert-footer {
+.page.is-analysis .health-alert-list > .health-alert-footer,
+.widget-health-alerts .health-alert-list > .health-alert-footer {
   padding: 0 8px;
 }
 
-.page.is-analysis .health-alert-item {
+.page.is-analysis .health-alert-item,
+.widget-health-alerts .health-alert-item {
   position: relative;
   align-items: flex-start;
   gap: 8px;
@@ -1734,11 +1745,13 @@
   background: transparent;
 }
 
-.page.is-analysis .health-alert-item + .health-alert-item {
+.page.is-analysis .health-alert-item + .health-alert-item,
+.widget-health-alerts .health-alert-item + .health-alert-item {
   margin-top: 9px;
 }
 
-.page.is-analysis .health-alert-item + .health-alert-item::before {
+.page.is-analysis .health-alert-item + .health-alert-item::before,
+.widget-health-alerts .health-alert-item + .health-alert-item::before {
   content: '';
   position: absolute;
   left: 8px;
@@ -1748,59 +1761,63 @@
   background: #f0f0f0;
 }
 
-.page.is-analysis .health-alert-item:hover {
+.page.is-analysis .health-alert-item:hover,
+.widget-health-alerts .health-alert-item:hover {
   background: var(--hover, #f5f5f5);
   border-color: transparent;
   border-radius: 8px;
 }
 
-.page.is-analysis .health-alert-name {
+.page.is-analysis .health-alert-name,
+.widget-health-alerts .health-alert-name {
   gap: 6px;
   font-size: 12px;
   line-height: 16px;
   color: var(--text-45);
 }
 
-.page.is-analysis .health-alert-name > b {
+.page.is-analysis .health-alert-name > b,
+.widget-health-alerts .health-alert-name > b {
   font-size: 13px;
   font-weight: 500;
   line-height: 18px;
   color: var(--text-88);
 }
 
-.page.is-analysis .health-alert-name > span:last-child {
+.page.is-analysis .health-alert-name > span:last-child,
+.widget-health-alerts .health-alert-name > span:last-child {
   font-size: 12px;
   line-height: 16px;
   color: var(--text-45);
 }
 
 .page.is-analysis .health-alert-message,
+.widget-health-alerts .health-alert-message,
 .page.is-analysis .health-alert-meta time,
-.page.is-analysis .health-alert-footer {
+.widget-health-alerts .health-alert-meta time,
+.page.is-analysis .health-alert-footer,
+.widget-health-alerts .health-alert-footer {
   font-size: 12px;
   line-height: 16px;
   color: var(--text-secondary, #8c8c8c);
 }
 
-.page.is-analysis .health-alert-footer {
+.page.is-analysis .health-alert-footer,
+.widget-health-alerts .health-alert-footer {
   margin-top: 0;
 }
 
-.page.is-analysis .health-alert-badge {
-  border: 0;
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 16px;
-}
-
-.page.is-analysis .health-duration-panel .step-bars {
+.page.is-analysis .health-duration-panel .step-bars,
+.widget-duration .step-bars {
+  flex: 1;
+  min-height: 0;
+  grid-auto-rows: minmax(0, 1fr);
   gap: 8px;
   padding: 0;
 }
 
-.page.is-analysis .health-duration-panel .step-row {
+.page.is-analysis .health-duration-panel .step-row,
+.widget-duration .step-row {
   grid-template-columns: 88px minmax(0, 1fr) 72px;
   gap: 8px;
   font-size: 12px;
@@ -1808,25 +1825,29 @@
   color: var(--text-45);
 }
 
-.page.is-analysis .health-duration-panel .step-row > span > i {
+.page.is-analysis .health-duration-panel .step-row > span > i,
+.widget-duration .step-row > span > i {
   width: 12px;
   height: 2px;
   border-radius: 1px;
 }
 
-.page.is-analysis .health-duration-panel .step-row > b {
+.page.is-analysis .health-duration-panel .step-row > b,
+.widget-duration .step-row > b {
   font-size: 13px;
   font-weight: 500;
   line-height: 18px;
   color: var(--text-88);
 }
 
-.page.is-analysis .health-duration-panel .step-track {
+.page.is-analysis .health-duration-panel .step-track,
+.widget-duration .step-track {
   height: 8px;
   border-radius: 4px;
   background: var(--fill-03, rgba(0, 0, 0, 0.03));
 }
 
-.page.is-analysis .health-duration-panel .step-track > i {
+.page.is-analysis .health-duration-panel .step-track > i,
+.widget-duration .step-track > i {
   border-radius: 4px;
 }

@@ -24,7 +24,7 @@
 .resource-tabs { display: flex; flex: 1; align-items: center; gap: 2px; min-width: 0; overflow-x: auto; scrollbar-width: none; margin-right: 8px; }
 .resource-tabs::-webkit-scrollbar { display: none; }
 .resource-tab { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; width: max-content; max-width: 260px; height: 30px; border: 0; border-radius: 8px; padding: 0 8px 0 10px; color: var(--text-secondary); transition: background .14s ease, color .14s ease; }
-.resource-tab:hover { background: rgba(0, 0, 0, .05); }
+.resource-tab:hover { background: transparent; }
 .resource-tab.is-active { color: #111; background: #fff; }
 .resource-tab > [role=tab] { display: flex; align-items: center; gap: 6px; min-width: 0; height: 100%; padding: 0; color: inherit; font-size: 13px; font-weight: 400; }
 .resource-tab > [role=tab] svg { width: 14px; height: 14px; flex-shrink: 0; }
@@ -118,3 +118,18 @@
 .resource-art-group .cap-folder b { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .resource-art-group .cap-folder .cap-chev, .resource-art-group .cap-folder .cap-folder-icon { flex-shrink: 0; }
 .resource-art-group.is-closed .cap-chev { transform: rotate(-90deg); }
+
+/* Match Workplace's white detail cards on a quiet canvas. */
+.resource-panel-body > :is(.session-detail, .resource-art-detail) { background: #fff; border: 1px solid #e8e8ec; border-radius: 12px; box-shadow: 0 1px 2px #0000000a, 0 6px 20px #0000000a; overflow: hidden; }
+.resource-panel-body > .session-detail > .sd-heading { padding: 16px 20px; margin: 0; background: #fafafa; border-bottom: 1px solid #e8e8ec; }
+.resource-panel-body .sd-metrics { padding: 14px 20px; }
+.resource-panel-body .sd-tabs { margin: 0 20px; }
+.resource-panel-body .sd-tab-content { padding: 16px 20px 20px; }
+.resource-panel-body .sd-session-meta { margin-top: 8px; }
+.resource-art-detail .cap-drawer-head { padding: 16px 20px; background: #fafafa; border-bottom: 1px solid #e8e8ec; }
+.resource-art-detail .cap-drawer-meta, .resource-art-detail > .cap-note, .resource-art-detail .cap-drawer-actions { padding-left: 20px; padding-right: 20px; }
+.resource-art-detail .cap-tabs { margin: 0 20px; }
+.resource-art-detail .cap-drawer-body { padding: 20px; }
+.resource-art-detail .cap-doc { border: 0; padding: 0; border-radius: 0; }
+.resource-split:is([data-kind="session"], [data-kind="artifact"]) .resource-list-item { height: 36px; min-height: 36px; box-sizing: border-box; padding-top: 4px; padding-bottom: 4px; margin-bottom: 4px; }
+@container resource (max-width:680px) { .resource-panel-body .sd-tab-content { padding: 12px; } .resource-panel-body > .session-detail > .sd-heading { padding: 12px; } .resource-panel-body .sd-metrics { padding: 12px; } .resource-panel-body .sd-tabs { margin: 0 12px; } }

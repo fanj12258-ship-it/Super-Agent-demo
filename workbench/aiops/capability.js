@@ -157,6 +157,9 @@
     pointerDown: false,
     taskDetailId: null,
     runId: null,
+    runOrigin: null,
+    detailTab: 'details',
+    chatScroll: false,
     taskPreview: null,
     menu: null,
     createOpen: false,
@@ -367,6 +370,9 @@
       taskId: task.id,
       taskName: task.name,
       prompt: task.prompt || task.description || '',
+      model: task.model,
+      workspace: task.workspace,
+      progress: 0,
       startedAt: started.toISOString(),
       finishedAt: null,
       status: 'running',
@@ -429,6 +435,7 @@
         var record = createRecord(task, tr('定时触发', 'Scheduled'), started);
         record.inputCount = 48 - days * 4;
         record.status = index === 1 && days === 2 ? 'failed' : 'completed';
+        record.progress = record.status === 'completed' ? 4 : 1;
         record.finishedAt = new Date(started.getTime() + (index === 0 ? 32000 : 46000)).toISOString();
         record.summary = runSummary(record);
         if (record.status === 'completed') makeRunArtifacts(record, task);
@@ -543,70 +550,84 @@
       (ui.listTab === 'runs' ? runRows(allRuns()) : taskCards(visibleTasks())) +
       menuHtml();
   }
-  function produced(task) {
-    var ids = {};
-    (task.history || []).forEach(function (r) { (r.artifactIds || []).forEach(function (id) { ids[id] = true; }); });
-    return arts.filter(function (a) {
-      if (a.deleted || a.templateOnly) return false;
-      if (ids[a.id]) return true;
-      return a.taskId === task.id && !a.runSnapshot;
-    }).sort(function (a, b) { return stamp(b.updatedAt) - stamp(a.updatedAt); });
+  function taskNodes(task) {
+    return task.nodes && task.nodes.length ? task.nodes : [{ id: 'node-1', name: tr('任务节点 1', 'Task node 1'), prompt: task.prompt || '', inputs: task.inputs || [], output: !!task.output, outputs: task.outputs || [] }];
   }
-  function artifactButton(a, capName) {
-    return '<button type="button" class="cap-art" data-cap="' + capName + '" data-id="' + esc(a.id) + '">' + chip(a) +
-      '<span><b>' + esc(displayName(a.name)) + '</b><small>' + esc(artMeta(a)) + '</small></span>' + ico('chevron-right') + '</button>';
+  function taskConfiguration(task) {
+    return '<section class="cap-config-summary"><dl><div><dt>' + tr('重复与时间', 'Schedule') + '</dt><dd>' + esc(scheduleSummary(task)) + '</dd></div><div><dt>' + tr('工作区', 'Workspace') + '</dt><dd>' + esc(task.workspace || tr('默认工作区', 'Default workspace')) + '</dd></div><div><dt>' + tr('模型', 'Model') + '</dt><dd>' + esc(task.model) + '</dd></div></dl></section>' + taskNodes(task).map(function (node, i) {
+      return '<section class="cap-definition-node"><header><span class="cap-node-number">' + (i + 1) + '</span><h3>' + esc(node.name) + '</h3></header><div class="cap-doc">' + renderMd(node.prompt || tr('暂无提示词', 'No prompt')) + '</div>' + ((node.inputs || []).length ? '<div class="cap-context-chips">' + node.inputs.map(function (name) { return '<span>@' + esc(name) + '</span>'; }).join('') + '</div>' : '') + '<div class="cap-readonly-outputs"><b>' + tr('输出配置', 'Outputs') + '</b>' + (node.output ? (node.outputs || []).map(function (o) { return '<section><strong>' + ico(o.type === '文件' ? 'file-text' : 'table-2') + esc(o.name) + '</strong><small>' + esc(o.type === '文件' ? o.format : tr('数据表', 'Table')) + '</small>' + (o.type !== '文件' && o.schema ? '<pre>' + esc(o.schema) + '</pre>' : '') + '</section>'; }).join('') : '<p>' + tr('未启用输出', 'Output disabled') + '</p>') + '</div></section>';
+    }).join('');
   }
   function detailPage() {
     var task = taskById(ui.taskDetailId);
     if (!task) { ui.taskDetailId = null; return listPage(); }
-    var records = (task.history || []).slice().sort(function (a, b) { return new Date(b.startedAt) - new Date(a.startedAt); });
-    var artifacts = produced(task);
-    var groups = [];
-    var seen = {};
-    artifacts.forEach(function (a) {
-      var record = a.runId ? findRun(a.runId) : null;
-      var label = record ? historyLabel(record.startedAt) : tr('任务产出', 'Task output');
-      if (seen[label] == null) { seen[label] = groups.length; groups.push([label, []]); }
-      groups[seen[label]][1].push(a);
-    });
-    return '<button type="button" class="btn-soft cap-back" data-cap="task-back">' + ico('arrow-left') + ' ' + esc(tr('返回定时任务', 'Back to schedules')) + '</button>' +
-      '<div class="page-heading has-actions cap-detail-head"><div class="page-heading-main"><h1>' + esc(displayName(task.name)) + '</h1><p>' + esc(task.description || task.prompt || tr('暂无描述', 'No description')) + '</p></div>' +
-      '<div class="cap-detail-actions">' + switchHtml(task) +
-        '<button type="button" class="btn-soft" data-cap="task-action" data-act="edit" data-id="' + esc(task.id) + '">' + ico('pencil') + ' ' + esc(tr('编辑', 'Edit')) + '</button>' +
-        (task.running
-          ? '<button type="button" class="btn-soft" data-cap="task-action" data-act="pause" data-id="' + esc(task.id) + '">' + esc(tr('暂停本次执行', 'Pause this run')) + '</button>'
-          : '<button type="button" class="btn-ink" data-cap="task-action" data-act="run" data-id="' + esc(task.id) + '">' + ico('play') + ' ' + esc(tr('立即执行', 'Run now')) + '</button>') +
-        '<button type="button" class="cap-icon-btn" data-cap="task-menu" data-id="' + esc(task.id) + '" aria-label="' + esc(tr('更多操作', 'More')) + '">' + ico('ellipsis') + '</button>' +
-      '</div></div>' +
-      '<div class="cap-meta"><span>' + esc(scheduleSummary(task)) + '</span><span title="' + esc(nextAbsolute(task)) + '">' + esc(nextLabel(task)) + '</span><span>' + esc(task.model) + '</span><span>' + esc(task.workspace || tr('默认工作区', 'Default workspace')) + '</span></div>' +
-      '<div class="cap-detail">' +
-        '<section class="cap-panel"><div class="cap-panel-head"><h2>' + esc(tr('执行记录', 'Runs')) + ' <small>' + records.length + '</small></h2><span>' + esc(tr('每次执行后自动更新', 'Updates after each run')) + '</span></div>' +
-          (records.length ? records.map(function (r) {
-            var files = (r.artifactIds || []).map(artById).filter(Boolean);
-            return '<article class="cap-run"><button type="button" class="cap-run-main" data-cap="run-open" data-id="' + esc(r.id) + '"><div class="cap-run-time"><b>' + esc(historyLabel(r.startedAt)) + '</b><span>' + esc(r.trigger) + ' · ' + esc(duration(r)) + '</span>' + pill(r.status) + '</div><p>' + esc(r.summary) + '</p></button>' +
-              (files.length ? '<div class="cap-run-files">' + files.map(function (a) { return artifactButton(a, 'task-art'); }).join('') + '</div>' : '') +
-              '<div class="cap-run-foot"><span>' + esc(tr('执行过程、结果和产出物', 'Process, result, and artifacts')) + '</span><button type="button" class="cap-link" data-cap="run-open" data-id="' + esc(r.id) + '">' + esc(tr('查看执行', 'View run')) + ' ' + ico('arrow-right') + '</button></div></article>';
-          }).join('') : '<div class="cap-empty"><h3>' + esc(tr('暂无执行记录', 'No runs yet')) + '</h3><p>' + esc(tr('任务执行后，可在这里查看状态和产出。', 'Runs will show status and artifacts here.')) + '</p></div>') +
-          '<p class="cap-next">' + esc(task.paused ? tr('定时任务已暂停', 'Schedule is paused') : task.completedOnce ? tr('本次调度已执行完成', 'This one-time schedule has finished') : tr('下次运行：', 'Next run: ') + nextAbsolute(task)) + '</p></section>' +
-        '<aside class="cap-side"><div class="cap-panel-head"><h2>' + esc(tr('全部产出物', 'Artifacts')) + ' <small>' + artifacts.length + '</small></h2><span>' + esc(tr('点击预览', 'Preview')) + '</span></div>' +
-          (artifacts.length ? groups.map(function (g) {
-            return '<section class="cap-side-group"><h3>' + esc(g[0]) + '</h3>' + g[1].map(function (a) { return artifactButton(a, 'task-art'); }).join('') + '</section>';
-          }).join('') : '<div class="cap-empty"><p>' + esc(tr('暂无产出物', 'No artifacts yet')) + '</p><small>' + esc(tr('任务执行完成后会在这里展示', 'They appear after a completed run')) + '</small></div>') +
-        '</aside></div>' + menuHtml();
+    var records = taskRuns(task);
+    var files = scopeList().filter(function (a) { return a.taskId === task.id; });
+    return '<div class="page-heading has-actions cap-definition-head"><button type="button" class="ws-btn" data-cap="task-back" aria-label="' + tr('返回定时任务', 'Back to schedules') + '">' + ico('arrow-left') + '</button><h1>' + esc(displayName(task.name)) + '</h1><div class="cap-detail-actions">' + switchHtml(task) + '<button type="button" class="btn-soft" data-cap="task-action" data-act="edit" data-id="' + task.id + '">' + ico('pencil') + tr('编辑', 'Edit') + '</button><button type="button" class="btn-ink" data-cap="task-action" data-act="run" data-id="' + task.id + '">' + ico('play') + tr('立即执行', 'Run now') + '</button></div></div><p class="cap-definition-description">' + esc(task.description || task.prompt) + '</p><div class="cap-definition-meta"><span>' + esc(scheduleSummary(task)) + '</span><span>' + esc(nextLabel(task)) + '</span></div><div class="cap-definition-layout"><section class="cap-definition-main"><div class="cap-tabs" role="tablist" aria-label="' + tr('定时任务详情', 'Schedule details') + '">' + [['details',tr('任务详情','Task details')],['runs',tr('执行记录','Run history')]].map(function (tab) { return '<button type="button" role="tab" aria-selected="' + (ui.detailTab === tab[0]) + '" class="' + (ui.detailTab === tab[0] ? 'is-active' : '') + '" data-cap="definition-tab" data-tab="' + tab[0] + '">' + tab[1] + (tab[0] === 'runs' ? ' <small>' + records.length + '</small>' : '') + '</button>'; }).join('') + '</div><div role="tabpanel" class="cap-definition-content">' + (ui.detailTab === 'runs' ? runRows(records.map(function (record) { return { task: task, record: record }; })) : taskConfiguration(task)) + '</div></section><aside class="cap-definition-artifacts"><header><h2>' + tr('全部产出物', 'All artifacts') + '</h2><span>' + files.length + '</span></header><div>' + (files.length ? files.map(function (a) { return '<button type="button" data-cap="task-art" data-id="' + esc(a.id) + '">' + chip(a) + '<span><strong>' + esc(a.name) + '</strong><small>' + esc(artMeta(a)) + '</small><small>' + esc(format(a.updatedAt)) + '</small></span>' + ico('chevron-right') + '</button>'; }).join('') : '<p class="cap-note">' + tr('执行后将显示产出物', 'Artifacts appear after a run') + '</p>') + '</div></aside></div>';
+  }
+  function taskRuns(task) {
+    return (task.history || []).slice().sort(function (a, b) { return new Date(b.startedAt) - new Date(a.startedAt); });
+  }
+  function chatArtifact(a) {
+    return '<div class="file-card cap-chat-file"><button type="button" class="cap-chat-file-open" data-cap="task-art" data-id="' + esc(a.id) + '" aria-label="' + esc(tr('预览产出物：', 'Preview artifact: ') + a.name) + '">' +
+      '<span class="file-icon">' + chip(a) + '</span><span class="file-meta"><span class="file-name" title="' + esc(a.name) + '">' + esc(displayName(a.name)) + '</span><span class="file-size">' + esc(artMeta(a)) + '</span></span></button>' +
+      '<button type="button" class="download-btn" data-cap="art-export" data-id="' + esc(a.id) + '" aria-label="' + esc(tr('下载 ', 'Download ') + a.name) + '" title="' + esc(tr('下载', 'Download')) + '">' + ico('download') + '</button></div>';
+  }
+  function chatResult(record, files) {
+    if (record.status !== 'completed') return '<p role="status">' + esc(runSummary(record)) + '</p>';
+    var cost = record.taskId === 'task-cost';
+    var extract = record.taskId === 'task-extract';
+    var html = '<p>' + esc(tr('已完成 ', 'Completed the analysis for ')) + '<strong>' + esc(record.businessDate) + '</strong>' + esc(tr(' 的分析，已核对 ', ' across ')) + '<strong>' + record.inputCount + '</strong>' + esc(tr(' 个来源会话。', ' source sessions.')) + '</p>';
+    if (cost) {
+      var row = files[0] && files[0].data && files[0].data[0];
+      var stats = [
+        [tr('总成本', 'Total cost'), row ? '¥' + row[1] : '¥86.40'],
+        ['Token', row ? row[2] : '12.8M'],
+        [tr('平均耗时', 'Average duration'), row ? row[3] : '42.6s'],
+        [tr('报告生成率', 'Report generation rate'), row ? row[4] : '94.2%']
+      ];
+      html += '<h3>' + tr('分析结果', 'Results') + '</h3><ul>' + stats.map(function (item) { return '<li>' + esc(item[0]) + '：<strong>' + esc(item[1]) + '</strong></li>'; }).join('') + '</ul>' +
+        '<p>' + esc(tr('按文档解析、规则检索、推理和报告生成四个阶段归集后，文档解析是主要的 Token 消耗来源。缓存命中率为 82.6%，建议优先复用已解析文档，再对高消耗会话做进一步排查。', 'Document parsing accounts for most token use across parsing, retrieval, reasoning, and report generation. The cache hit rate is 82.6%; reuse parsed documents and review high-usage sessions first.')) + '</p>';
+    } else if (extract) {
+      html += '<h3>' + tr('抽取结果', 'Extraction results') + '</h3><ul><li>' + esc(tr('核验项：提取 4 条，按报告 ID、引用规则和核验内容去重。', 'Findings: 4 items, deduplicated by report ID, rule, and content.')) + '</li><li>' + esc(tr('规则变更：提取 3 条，包含新增、改写和移除操作。', 'Rule changes: 3 items covering additions, rewrites, and removals.')) + '</li></ul>' +
+        '<p>' + esc(tr('每条记录均保留来源会话和规则版本。待核验和已撤回的记录已单独标记，方便后续复核。', 'Every record retains its source session and rule version. Pending and withdrawn findings are marked for review.')) + '</p>';
+    } else {
+      html += '<p>' + esc(tr('已按任务提示完成输入读取、分析和结果整理，保留本次执行的业务日期和来源记录。', 'Read the inputs, completed the requested analysis, and retained the business date and source records.')) + '</p>';
+    }
+    html += '<p>' + esc(files.length ? tr('结果已保存至「', 'Results saved in ') + (record.workspace || tr('默认工作区', 'Default workspace')) + tr('」，以下为本次执行生成的产出物。', '. The artifacts below belong to this run.') : tr('本次未配置产出物，分析结果保留在当前会话中。', 'No artifacts were configured. The results are retained in this conversation.')) + '</p>';
+    return html;
+  }
+  function executionChat(task, record) {
+    var files = record ? (record.artifactIds || []).map(artById).filter(Boolean) : [];
+    var status = record ? record.status : 'pending';
+    var result = record ? chatResult(record, files) : '<p>' + tr('等待任务首次执行。', 'Waiting for the first run.') + '</p>';
+    var back = ui.runOrigin ? '<button type="button" class="ws-btn cap-chat-back" data-cap="run-back" aria-label="' + tr('返回执行记录', 'Back to runs') + '">' + ico('arrow-left') + '</button>' : '';
+    var thread = '<section class="cap-execution-chat chat-thread" data-run-id="' + esc(record ? record.id : '') + '"><div class="chat-msg-user"><div class="chat-bubble-user">' + renderMd(record ? record.prompt : task.prompt || task.description) + '</div></div><article class="chat-msg-assistant"><div class="ao-turn">' + (record ? '<details class="cap-chat-process"' + (status === 'running' ? ' open' : '') + '><summary>' + ico(status === 'running' ? 'loader-circle' : status === 'completed' ? 'check' : 'circle-alert') + '<span>' + esc(status === 'running' ? tr('正在执行','Running') : tr('用时 ','Duration: ') + duration(record)) + '</span>' + ico('chevron-down') + '</summary><ol class="cap-steps">' + steps(record).map(function (step) { return '<li class="is-' + step.status + '"><span class="dot">' + (step.status === 'done' ? '✓' : step.n) + '</span><div><b>' + esc(step.label) + '</b><small>' + esc(step.note) + '</small></div></li>'; }).join('') + '</ol></details>' : '') + '<div class="ao-answer chat-prose"><div class="chat-md">' + result + '</div></div>' + (files.length ? '<div class="file-grid cap-chat-files">' + files.map(chatArtifact).join('') + '</div>' : '') + '</div></article>' + (record && record.followups || []).map(function (turn) { return '<div class="chat-msg-user"><div class="chat-bubble-user">' + esc(turn.user) + '</div></div><article class="chat-msg-assistant"><div class="ao-answer chat-prose"><div class="chat-md">' + renderMd(turn.answer) + '</div></div></article>'; }).join('') + '</section>';
+    return host.conversationShell ? host.conversationShell(task, record, thread, back) : thread;
+  }
+  function continueRun(id, text) {
+    var record = findRun(id);
+    if (!record) return;
+    record.followups = record.followups || [];
+    record.followups.push({ user: text, answer: tr('已接着本次执行结果继续分析。\n\n你提出的「', 'Continuing from this run.\n\nYour request: ') + text + tr('」已加入当前会话。\n\n本次业务日：', '\n\nBusiness date: ') + record.businessDate + tr('。后续复核将沿用本次会话的来源记录、分析结果和产出物。', '. This conversation retains the run’s sources, results, and artifacts.') });
+    record.chatDraft = '';
+    ui.focus = { sel: '.cui-input' }; ui.chatScroll = true;
+    rerender();
   }
   function steps(record) {
+    var progress = record.progress == null ? 1 : record.progress;
     var labels = [tr('读取任务配置', 'Read setup'), tr('获取输入数据', 'Load inputs'), tr('分析并整理结果', 'Analyze'), tr('生成产出物', 'Write artifacts')];
     var details = [
       tr('读取提示词、引用上下文与输出配置。', 'Read the prompt, context, and outputs.'),
       tr('读取 ', 'Read ') + record.businessDate + tr(' 的 ', ' · ') + record.inputCount + tr(' 个会话输入与输出。', ' session inputs and outputs.'),
-      tr('按业务日期汇总并去重，保留来源会话和规则版本。', 'Aggregate by business date and keep source sessions.'),
+      record.taskId === 'task-cost' ? tr('归集成本、Token 和平均耗时，按四个执行阶段拆解并核对报告生成率。', 'Aggregate cost, tokens, and duration across four execution stages; check the report generation rate.') : tr('按业务日期汇总并去重，保留来源会话和规则版本。', 'Aggregate by business date and keep source sessions.'),
       record.outputNames.length ? tr('生成 ', 'Write ') + record.outputNames.length + tr(' 份产出物并保存本次执行快照。', ' artifact snapshots.') : tr('本次未配置输出，保留执行结果。', 'No output configured.')
     ];
     return labels.map(function (label, i) {
       var status = 'pending';
       if (record.status === 'completed') status = 'done';
-      else if (i === 0) status = 'done';
-      else if (i === 1) status = record.status === 'running' ? 'running' : record.status === 'failed' ? 'failed' : 'paused';
+      else if (i < progress) status = 'done';
+      else if (i === progress) status = record.status === 'running' ? 'running' : record.status === 'failed' ? 'failed' : 'paused';
       var note = status === 'pending' ? tr('尚未执行', 'Waiting') : status === 'failed' ? tr('会话数据读取超时，已停止后续步骤。', 'Timed out while reading sessions.') : status === 'paused' ? tr('本次执行在此暂停。', 'Paused here.') : details[i];
       var tag = { done: tr('已完成', 'Done'), running: tr('执行中', 'Running'), failed: tr('失败', 'Failed'), paused: tr('已暂停', 'Paused'), pending: tr('等待执行', 'Waiting') }[status];
       return { label: label, note: note, status: status, tag: tag, n: i + 1 };
@@ -615,23 +636,8 @@
   function runPage() {
     var record = findRun(ui.runId);
     var task = record ? taskById(record.taskId) : null;
-    if (!record) { ui.runId = null; return detailPage(); }
-    var files = (record.artifactIds || []).map(artById).filter(Boolean);
-    return '<button type="button" class="btn-soft cap-back" data-cap="run-back">' + ico('arrow-left') + ' ' + esc(tr('返回执行记录', 'Back to runs')) + '</button>' +
-      heading(displayName(record.taskName), historyLabel(record.startedAt) + ' · ' + record.trigger) +
-      '<div class="cap-meta">' + pill(record.status) + '<span>' + esc(duration(record)) + '</span><span>' + esc(tr('业务日 ', 'Business date ') + record.businessDate) + '</span><span>' + esc(record.inputCount + tr(' 个会话', ' sessions')) + '</span></div>' +
-      '<section class="cap-panel"><h2>' + esc(tr('执行过程', 'Process')) + '</h2><ol class="cap-steps">' +
-        steps(record).map(function (s) {
-          return '<li class="is-' + s.status + '"><span class="dot">' + (s.status === 'done' ? '✓' : s.n) + '</span><div><b>' + esc(s.label) + '</b><small>' + esc(s.note) + '</small></div><em>' + esc(s.tag) + '</em></li>';
-        }).join('') +
-      '</ol></section>' +
-      '<section class="cap-panel"><h2>' + esc(tr('执行结果', 'Result')) + '</h2><p class="cap-copy">' + esc(record.summary) + '</p>' +
-        (record.prompt ? '<p class="cap-note">' + esc(tr('提示词', 'Prompt')) + ' · ' + esc(record.prompt) + '</p>' : '') +
-      '</section>' +
-      '<section class="cap-panel"><div class="cap-panel-head"><h2>' + esc(tr('生成的产出物', 'Artifacts')) + ' <small>' + files.length + '</small></h2></div>' +
-        (files.length ? '<div class="cap-run-files">' + files.map(function (a) { return artifactButton(a, 'task-art'); }).join('') + '</div>' : '<p class="cap-note">' + esc(record.status === 'running' ? tr('执行完成后展示本次产出物。', 'Artifacts appear when the run finishes.') : tr('本次没有生成产出物。', 'This run produced no artifacts.')) + '</p>') +
-      '</section>' +
-      (task ? '<div class="cap-inline-actions"><button type="button" class="btn-soft" data-cap="task-open" data-id="' + esc(task.id) + '">' + esc(tr('返回任务', 'Back to task')) + '</button></div>' : '');
+    if (!record || !task) { ui.runId = null; return detailPage(); }
+    return executionChat(task, record);
   }
 
   function scopeList() {
@@ -889,9 +895,80 @@
   function field(label, control) {
     return '<label class="cap-field"><span>' + esc(label) + '</span>' + control + '</label>';
   }
+  function activeNode() {
+    var editor = ui.editor;
+    return editor && (editor.draft.nodes.filter(function (node) { return node.id === editor.activeNode; })[0] || editor.draft.nodes[0]);
+  }
+  function showContextMenu(forced) {
+    var editor = document.getElementById('taskPrompt'), menu = document.getElementById('capMentionMenu');
+    if (!editor || !menu || !ui.editor) return;
+    var selection = window.getSelection(), range = selection.rangeCount ? selection.getRangeAt(0).cloneRange() : document.createRange();
+    if (!editor.contains(range.commonAncestorContainer)) { if (!forced) { menu.hidden = true; return; } range.selectNodeContents(editor); range.collapse(false); }
+    var before = range.cloneRange(); before.selectNodeContents(editor); before.setEnd(range.startContainer, range.startOffset);
+    var match = before.toString().match(/@([^\s@]*)$/);
+    if (!forced && !match) { menu.hidden = true; return; }
+    var query = forced ? '' : match[1];
+    if (match && range.startContainer.nodeType === 3) range.setStart(range.startContainer, Math.max(0, range.startOffset - match[0].length));
+    ui.editor.mentionRange = range;
+    var nodes = ui.editor.draft.nodes, at = nodes.indexOf(activeNode());
+    var choices = Array.from(new Set(CONTEXTS.concat(nodes.slice(0, at).flatMap(function (node) { return [node.name].concat(node.outputs.map(function (output) { return output.name; })); })))).filter(function (name) { return name && name.toLowerCase().indexOf(query.toLowerCase()) >= 0; });
+    menu.innerHTML = choices.length ? choices.map(function (name) { return '<button type="button" role="option" data-cap="editor-mention" data-name="' + esc(name) + '">' + ico('at-sign') + '<span>' + esc(name) + '</span></button>'; }).join('') : '<p>' + tr('没有匹配的上下文','No matching context') + '</p>';
+    menu.hidden = false;
+    if (global.lucide) global.lucide.createIcons();
+  }
+  function insertContext(name) {
+    var editor = document.getElementById('taskPrompt'), range = ui.editor.mentionRange;
+    if (!editor) return;
+    readForm();
+    if (!range || !editor.contains(range.commonAncestorContainer)) { range = document.createRange(); range.selectNodeContents(editor); range.collapse(false); }
+    range.deleteContents();
+    var token = document.createElement('span'); token.className = 'cap-context-token'; token.contentEditable = 'false'; token.setAttribute('data-context',name); token.textContent = '@' + name;
+    var space = document.createTextNode('\u00a0'), fragment = document.createDocumentFragment(); fragment.append(token,space); range.insertNode(fragment); range.setStartAfter(space); range.collapse(true);
+    var selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range); editor.focus();
+    if (activeNode().inputs.indexOf(name) < 0) activeNode().inputs.push(name);
+    editor.classList.remove('is-empty'); document.getElementById('capMentionMenu').hidden = true;
+    document.getElementById('capNodeContexts').innerHTML = nodeContextHtml(activeNode());
+    if (global.lucide) global.lucide.createIcons();
+    readForm();
+  }
+  function blankOutput() { return { type: '表', name: '', schema: '', format: 'Markdown' }; }
+  function promptHtml(node) {
+    var html = renderMd(node.prompt || '') || '<p><br></p>';
+    (node.inputs || []).slice().sort(function (a,b) { return b.length-a.length; }).forEach(function (name) {
+      html = html.split('@' + esc(name)).join('<span class="cap-context-token" contenteditable="false" data-context="' + esc(name) + '">@' + esc(name) + '</span>');
+    });
+    return html;
+  }
+  function promptMarkdown(editor) {
+    function inline(node) {
+      if (node.nodeType === 3) return node.nodeValue.replace(/\u00a0/g,' ');
+      if (node.nodeType !== 1) return '';
+      if (node.tagName === 'BR') return '\n';
+      if (node.hasAttribute('data-context')) return '@' + node.getAttribute('data-context');
+      var text = Array.from(node.childNodes).map(inline).join('');
+      if (/^(B|STRONG)$/.test(node.tagName)) return '**' + text + '**';
+      if (/^(I|EM)$/.test(node.tagName)) return '*' + text + '*';
+      if (node.tagName === 'CODE') return '`' + text + '`';
+      return text;
+    }
+    return Array.from(editor.childNodes).map(function (node) {
+      var text = inline(node).trim();
+      if (/^H[1-3]$/.test(node.nodeName)) return '#'.repeat(Number(node.nodeName[1])) + ' ' + text;
+      if (/^(UL|OL)$/.test(node.nodeName)) return Array.from(node.children).map(function (li,i) { return (node.nodeName === 'UL' ? '- ' : (i+1)+'. ') + inline(li).trim(); }).join('\n');
+      return text;
+    }).join('\n\n').trim();
+  }
+  function nodeContextHtml(node) {
+    return (node.inputs || []).map(function (name) { return '<span class="cap-context-chip">@' + esc(displayName(name)) + '<button type="button" data-cap="editor-context-remove" data-name="' + esc(name) + '" aria-label="' + esc(tr('移除引用 ', 'Remove reference ') + name) + '">' + ico('x') + '</button></span>'; }).join('');
+  }
+  function nodeOutputsHtml(node) {
+    if (!node.output) return '<p class="cap-note">' + tr('此节点的结果将保留在会话中。', 'Results stay in the conversation.') + '</p>';
+    return '<div id="taskOutputs">' + (node.outputs || []).map(function (o,i) {
+      return '<section class="cap-output" data-output-row="' + i + '"><header><b>' + tr('输出 ', 'Output ') + (i+1) + '</b><button type="button" class="cap-icon-btn" data-cap="editor-remove-output" data-oi="' + i + '" aria-label="' + tr('移除输出 ', 'Remove output ') + (i+1) + '">' + ico('x') + '</button></header><div class="cap-output-fields">' + field(tr('类型', 'Type'), '<select data-out-type data-cap="editor-output-type" aria-label="' + tr('输出类型 ', 'Output type ') + (i+1) + '"><option value="表"' + (o.type !== '文件' ? ' selected' : '') + '>' + tr('数据表','Table') + '</option><option value="文件"' + (o.type === '文件' ? ' selected' : '') + '>' + tr('文件','File') + '</option></select>') + field(tr('名称', 'Name'), '<input data-out-name aria-label="' + tr('输出名称 ', 'Output name ') + (i+1) + '" placeholder="' + tr('输入产出物名称','Artifact name') + '" value="' + esc(o.name) + '">') + '</div>' + (o.type === '文件' ? field(tr('文件格式','File format'),'<select data-out-format aria-label="' + tr('文件格式 ', 'File format ') + (i+1) + '">' + ['Markdown','JSON','CSV'].map(function (format) { return '<option' + ((o.format || 'Markdown') === format ? ' selected' : '') + '>' + format + '</option>'; }).join('') + '</select>') : field(tr('字段定义','Fields'), '<textarea data-out-schema rows="3" aria-label="' + tr('字段定义 ', 'Fields ') + (i+1) + '" placeholder="date: date&#10;summary: string">' + esc(o.schema || '') + '</textarea>')) + '</section>';
+    }).join('') + '</div><button type="button" class="btn-soft" data-cap="editor-add-output">' + ico('plus') + tr('添加输出','Add output') + '</button><p class="cap-note">' + tr('产出物保存至所选工作区；未选择时归入默认工作区。','Artifacts are saved to the selected workspace, or the default workspace.') + '</p>';
+  }
   function editorHtml() {
-    var d = ui.editor.draft;
-    var s = d.schedule;
+    var d = ui.editor.draft, node = activeNode(), s = d.schedule;
     var repeat = '<select id="taskFreq" data-cap="editor-repeat" aria-label="' + esc(tr('重复', 'Repeat')) + '">' +
       [['daily', tr('每天', 'Daily')], ['weekly', tr('每周', 'Weekly')], ['monthly', tr('每月', 'Monthly')], ['interval', tr('间隔', 'Interval')], ['once', tr('单次', 'Once')]].map(function (o) {
         return '<option value="' + o[0] + '"' + (s.repeat === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
@@ -913,35 +990,11 @@
       extra = field(tr('执行时间', 'Run at'), '<input id="taskOnceAt" type="datetime-local" value="' + esc(s.onceAt || '') + '">');
     }
     var time = (s.repeat === 'daily' || s.repeat === 'weekly' || s.repeat === 'monthly')
-      ? field(tr('时间', 'Time'), '<input id="taskTime" type="time" value="' + esc(s.time || '09:00') + '">')
+      ? field(tr('时间', 'Time'), '<span class="cap-time-control">' + ico('clock-3') + '<input id="taskTime" type="time" value="' + esc(s.time || '09:00') + '"></span>')
       : '';
-    var outputs = d.output ? '<div id="taskOutputs">' + (d.outputs || []).map(function (o, i) {
-      return '<div class="cap-output" data-output-row="' + i + '">' +
-        '<select data-out-type data-cap="editor-output-type" aria-label="' + esc(tr('输出类型', 'Output type')) + '"><option value="表"' + (o.type !== '文件' ? ' selected' : '') + '>' + esc(tr('数据表', 'Table')) + '</option><option value="文件"' + (o.type === '文件' ? ' selected' : '') + '>' + esc(tr('文件', 'File')) + '</option></select>' +
-        '<input data-out-name placeholder="' + esc(o.type === '文件' ? tr('文档名称', 'Document name') : tr('表名称', 'Table name')) + '" value="' + esc(o.name) + '">' +
-        (o.type === '文件'
-          ? '<select data-out-format aria-label="' + esc(tr('格式', 'Format')) + '">' + ['Markdown', 'JSON', 'CSV'].map(function (fmt) { return '<option' + ((o.format || 'Markdown') === fmt ? ' selected' : '') + '>' + fmt + '</option>'; }).join('') + '</select>'
-          : '<input data-out-schema placeholder="' + esc(tr('字段: 类型，每行一个', 'field: type, one per line')) + '" value="' + esc(o.schema || '') + '">') +
-        '<button type="button" class="cap-icon-btn" data-cap="editor-remove-output" data-oi="' + i + '" aria-label="' + esc(tr('移除输出', 'Remove output')) + '">' + ico('x') + '</button></div>';
-    }).join('') + '</div><button type="button" class="btn-soft" data-cap="editor-add-output">' + ico('plus') + ' ' + esc(tr('添加输出', 'Add output')) + '</button>' : '';
-    return '<div class="cap-overlay" data-cap="editor-close"><section class="cap-dialog is-wide" role="dialog" aria-modal="true" aria-label="' + esc(ui.editor.id ? tr('编辑定时任务', 'Edit schedule') : tr('创建定时任务', 'Create schedule')) + '" id="capEditor" data-cap="dialog">' +
-      '<header class="cap-dialog-head"><h2>' + esc(ui.editor.id ? tr('编辑定时任务', 'Edit schedule') : tr('创建定时任务', 'Create schedule')) + '</h2><button type="button" class="cap-icon-btn" data-cap="editor-close" aria-label="' + esc(tr('关闭', 'Close')) + '">' + ico('x') + '</button></header>' +
-      '<div class="cap-dialog-body">' +
-        (d.skill ? '<div class="cap-banner"><b>' + esc(tr('定时任务 Skill · 创建配置', 'Schedule skill')) + '</b><span>' + esc(tr('当前工作台没有对话栏。确认后会保存到定时任务列表，可再编辑调度和输出。', 'This workbench has no chat pane. Saving adds the schedule here.')) + '</span></div>' : '') +
-        '<input id="taskName" class="cap-title-input" maxlength="80" placeholder="' + esc(tr('输入标题，例如：每日运行质量简报', 'Title, for example daily quality brief')) + '" value="' + esc(d.name) + '" aria-label="' + esc(tr('标题', 'Title')) + '">' +
-        '<textarea id="taskDescription" rows="2" placeholder="' + esc(tr('描述任务目标与内容', 'What this task should do')) + '" aria-label="' + esc(tr('描述', 'Description')) + '">' + esc(d.description || '') + '</textarea>' +
-        '<div class="cap-form-row">' + field(tr('重复', 'Repeat'), repeat) + time + '</div>' + extra +
-        '<div class="cap-form-row">' +
-          field(tr('工作区', 'Workspace'), '<select id="taskWorkspace"><option value="">' + esc(tr('选择工作区（可选）', 'Workspace (optional)')) + '</option>' + workspaceChoices().map(function (n) { return '<option value="' + esc(n) + '"' + (d.workspace === n ? ' selected' : '') + '>' + esc(n) + '</option>'; }).join('') + '</select>') +
-          field(tr('模型', 'Model'), '<select id="taskModel">' + MODELS.map(function (m) { return '<option value="' + esc(m) + '"' + (d.model === m ? ' selected' : '') + '>' + esc(m) + '</option>'; }).join('') + '</select>') +
-        '</div>' +
-        field(tr('提示词', 'Prompt'), '<textarea id="taskPrompt" rows="5" placeholder="' + esc(tr('描述要分析的数据、口径和写入方式', 'Describe the data, rules, and outputs')) + '">' + esc(d.prompt || '') + '</textarea>') +
-        '<div class="cap-field"><span>' + esc(tr('引用上下文', 'Context')) + '</span><div class="cap-refs">' + CONTEXTS.map(function (name) {
-          return '<label><input type="checkbox" data-ref="' + esc(name) + '"' + ((d.inputs || []).indexOf(name) >= 0 ? ' checked' : '') + '>' + esc(displayName(name)) + '</label>';
-        }).join('') + '</div></div>' +
-        '<div class="cap-output-head"><h3>' + esc(tr('输出配置', 'Outputs')) + '</h3><label class="cap-checkline"><input id="outputEnabled" type="checkbox" data-cap="editor-output-enabled"' + (d.output ? ' checked' : '') + '> ' + esc(tr('启用输出', 'Enable output')) + '</label></div>' +
-        outputs + '<p class="cap-note">' + esc(tr('保存至所选工作区；未选择时归入默认工作区。', 'Saved to the selected workspace, or the default workspace.')) + '</p>' +
-      '</div><footer class="cap-dialog-foot"><button type="button" class="btn-soft" data-cap="editor-close">' + esc(tr('取消', 'Cancel')) + '</button><button type="button" class="btn-soft" data-cap="editor-save-run">' + esc(tr('保存并执行', 'Save and run')) + '</button><button type="button" class="btn-ink" data-cap="editor-save">' + esc(tr('保存', 'Save')) + '</button></footer></section></div>';
+
+    var index = d.nodes.indexOf(node);
+    return '<div class="cap-overlay" data-cap="editor-close"><section class="cap-dialog is-wide cap-task-editor" role="dialog" aria-modal="true" aria-label="' + esc(ui.editor.id ? tr('编辑定时任务','Edit schedule') : tr('创建定时任务','Create schedule')) + '" id="capEditor" data-cap="dialog"><header class="cap-dialog-head"><h2>' + (ui.editor.id ? tr('编辑定时任务','Edit schedule') : tr('创建定时任务','Create schedule')) + '</h2><button type="button" class="cap-icon-btn" data-cap="editor-close" aria-label="' + tr('关闭','Close') + '">' + ico('x') + '</button></header><div class="cap-dialog-body"><div class="cap-editor-basics">' + field(tr('任务名称','Task name'),'<input id="taskName" maxlength="80" placeholder="' + tr('例如：每日运行质量简报','For example: Daily quality brief') + '" value="' + esc(d.name) + '">') + field(tr('描述','Description'),'<textarea id="taskDescription" rows="2" placeholder="' + tr('描述任务目标与内容','Describe the task') + '">' + esc(d.description || '') + '</textarea>') + '<div class="cap-form-row">' + field(tr('重复','Repeat'),repeat) + time + '</div>' + extra + '<div class="cap-form-row">' + field(tr('工作区','Workspace'),'<select id="taskWorkspace"><option value="">' + tr('默认工作区','Default workspace') + '</option>' + workspaceChoices().map(function (name) { return '<option value="' + esc(name) + '"' + (d.workspace === name ? ' selected' : '') + '>' + esc(name) + '</option>'; }).join('') + '</select>') + field(tr('模型','Model'),'<select id="taskModel">' + MODELS.map(function (model) { return '<option' + (d.model === model ? ' selected' : '') + '>' + esc(model) + '</option>'; }).join('') + '</select>') + '</div></div><div class="cap-node-workspace"><aside class="cap-node-list"><header><strong>' + tr('任务节点','Task nodes') + '</strong><small>' + d.nodes.length + '</small></header>' + d.nodes.map(function (item,i) { return '<button type="button" class="cap-node-card' + (item.id === node.id ? ' is-active' : '') + '" data-cap="editor-node-select" data-id="' + item.id + '" aria-pressed="' + (item.id === node.id) + '"><span class="cap-node-number">' + (i+1) + '</span><span><strong>' + esc(item.name) + '</strong><small>' + esc((item.prompt || tr('添加提示词和输出','Add a prompt and outputs')).replace(/[#*\n]/g,' ').slice(0,54)) + '</small></span></button>'; }).join('') + '<button type="button" class="btn-soft cap-node-add" data-cap="editor-node-add">' + ico('plus') + tr('添加任务节点','Add task node') + '</button><p class="cap-note">' + tr('按顺序执行，可引用前序节点的输出。','Nodes run in order and can reference earlier outputs.') + '</p></aside><section class="cap-node-editor" aria-label="' + tr('编辑任务节点','Edit task node') + '"><header><strong>' + tr('节点配置','Node settings') + '</strong><div><button type="button" class="cap-icon-btn" data-cap="editor-node-move" data-direction="-1" aria-label="' + tr('上移节点','Move node up') + '"' + (index === 0 ? ' disabled' : '') + '>' + ico('arrow-up') + '</button><button type="button" class="cap-icon-btn" data-cap="editor-node-move" data-direction="1" aria-label="' + tr('下移节点','Move node down') + '"' + (index === d.nodes.length-1 ? ' disabled' : '') + '>' + ico('arrow-down') + '</button><button type="button" class="cap-icon-btn" data-cap="editor-node-remove" aria-label="' + tr('删除节点','Delete node') + '"' + (d.nodes.length === 1 ? ' disabled' : '') + '>' + ico('trash-2') + '</button></div></header>' + field(tr('节点名称','Node name'),'<input id="taskNodeName" value="' + esc(node.name) + '">') + '<div class="cap-field"><span>' + tr('提示词','Prompt') + '</span><div class="cap-prompt-wrap"><div class="cap-prompt-toolbar" role="toolbar" aria-label="' + tr('提示词格式','Prompt formatting') + '">' + [['h1','H1'],['h2','H2'],['h3','H3'],['bold','B'],['insertUnorderedList','•']].map(function (item) { return '<button type="button" data-cap="editor-format" data-format="' + item[0] + '" aria-label="' + esc(item[0]) + '">' + item[1] + '</button>'; }).join('') + '<button type="button" data-cap="editor-reference" aria-label="' + tr('引用上下文','Reference context') + '">@</button></div><div id="taskPrompt" class="cap-rich-prompt' + (!node.prompt ? ' is-empty' : '') + '" contenteditable="true" role="textbox" aria-label="' + tr('提示词','Prompt') + '" aria-multiline="true" data-placeholder="' + tr('输入提示词，支持 Markdown，输入 @ 引用上下文','Markdown supported. Type @ to reference context') + '">' + promptHtml(node) + '</div><div id="capMentionMenu" class="cap-mention-menu" role="listbox" aria-label="' + tr('引用上下文','Reference context') + '" hidden></div></div><small class="cap-note">' + tr('输入 # / ## / ### 后按空格设置标题。','Type #, ##, or ### followed by a space for headings.') + '</small></div><div class="cap-context-chips" id="capNodeContexts">' + nodeContextHtml(node) + '</div><div class="cap-output-head"><h3>' + tr('输出配置','Outputs') + '</h3><label class="cap-checkline"><input id="outputEnabled" type="checkbox" data-cap="editor-output-enabled"' + (node.output ? ' checked' : '') + '>' + tr('启用输出','Enable output') + '</label></div>' + nodeOutputsHtml(node) + '</section></div></div><footer class="cap-dialog-foot"><button type="button" class="btn-soft" data-cap="editor-close">' + tr('取消','Cancel') + '</button><button type="button" class="btn-soft" data-cap="editor-save-run">' + tr('保存并执行','Save and run') + '</button><button type="button" class="btn-ink" data-cap="editor-save">' + tr('保存','Save') + '</button></footer></section></div>';
   }
   function artEditHtml() {
     var a = artById(ui.artifactEdit);
@@ -1022,34 +1075,21 @@
   function readForm() {
     var root = document.getElementById('capEditor');
     if (!root || !ui.editor) return;
-    var d = ui.editor.draft;
+    var d = ui.editor.draft, node = activeNode();
     function val(id) { var n = document.getElementById(id); return n ? n.value : ''; }
-    d.name = val('taskName');
-    d.description = val('taskDescription');
-    d.prompt = val('taskPrompt');
-    d.model = val('taskModel') || d.model;
-    d.workspace = val('taskWorkspace');
+    d.name = val('taskName'); d.description = val('taskDescription');
+    d.model = val('taskModel') || d.model; d.workspace = val('taskWorkspace');
     d.schedule.repeat = val('taskFreq') || d.schedule.repeat;
     if (val('taskTime')) d.schedule.time = val('taskTime');
     if (val('taskInterval')) d.schedule.intervalHours = Number(val('taskInterval'));
     if (document.getElementById('taskOnceAt')) d.schedule.onceAt = val('taskOnceAt');
-    var enabled = document.getElementById('outputEnabled');
-    if (enabled) d.output = enabled.checked;
-    var rows = root.querySelectorAll('[data-output-row]');
-    if (rows.length) {
-      d.outputs = Array.prototype.map.call(rows, function (row) {
-        var schema = row.querySelector('[data-out-schema]');
-        var format = row.querySelector('[data-out-format]');
-        return {
-          type: row.querySelector('[data-out-type]').value,
-          name: row.querySelector('[data-out-name]').value,
-          schema: schema ? schema.value : '',
-          format: format ? format.value : 'Markdown'
-        };
-      });
-    }
-    d.inputs = [];
-    root.querySelectorAll('[data-ref]').forEach(function (n) { if (n.checked) d.inputs.push(n.getAttribute('data-ref')); });
+    node.name = val('taskNodeName') || node.name;
+    var prompt = document.getElementById('taskPrompt'); if (prompt) node.prompt = promptMarkdown(prompt);
+    var enabled = document.getElementById('outputEnabled'); if (enabled) node.output = enabled.checked;
+    if (node.output) node.outputs = Array.from(root.querySelectorAll('[data-output-row]')).map(function (row) {
+      var schema = row.querySelector('[data-out-schema]'), format = row.querySelector('[data-out-format]');
+      return { type: row.querySelector('[data-out-type]').value, name: row.querySelector('[data-out-name]').value, schema: schema ? schema.value : '', format: format ? format.value : 'Markdown' };
+    });
   }
   function blankDraft(skill) {
     return {
@@ -1081,6 +1121,8 @@
   function openEditor(id, skill) {
     var task = id ? taskById(id) : null;
     ui.editor = { id: task ? task.id : null, draft: task ? draftFrom(task) : blankDraft(skill) };
+    ui.editor.draft.nodes = task ? clone(taskNodes(task)) : [{ id: uid('node'), name: tr('任务节点 1','Task node 1'), prompt: '', inputs: [], output: true, outputs: [blankOutput()] }];
+    ui.editor.activeNode = ui.editor.draft.nodes[0].id;
     ui.createOpen = false;
     ui.menu = null;
   }
@@ -1126,6 +1168,12 @@
     if (!ui.editor) return;
     readForm();
     var d = ui.editor.draft;
+    if (d.nodes.some(function (node) { return !node.prompt.trim(); })) { toast(tr('请填写每个任务节点的提示词','Add a prompt to each task node')); return; }
+    if (d.nodes.some(function (node) { return node.output && !node.outputs.length; })) { toast(tr('请配置节点输出，或关闭该节点的输出','Configure each node’s outputs or turn them off')); return; }
+    d.prompt = d.nodes.map(function (node) { return d.nodes.length === 1 ? node.prompt : '## ' + node.name + '\n\n' + node.prompt; }).join('\n\n');
+    d.inputs = Array.from(new Set(d.nodes.flatMap(function (node) { return node.inputs; })));
+    d.output = d.nodes.some(function (node) { return node.output; });
+    d.outputs = d.nodes.flatMap(function (node) { return node.output ? node.outputs : []; });
     var name = d.name.trim();
     var prompt = (d.prompt || '').trim();
     var description = (d.description || '').trim();
@@ -1159,6 +1207,7 @@
     task.inputs = d.inputs.slice();
     task.output = !!d.output;
     task.outputs = outputs;
+    task.nodes = clone(d.nodes);
     task.schedule = {
       repeat: s.repeat, time: s.time || '09:00', weekdays: (s.weekdays || []).slice(), monthdays: (s.monthdays || []).slice(),
       intervalHours: Number(s.intervalHours) || 5, onceAt: s.onceAt || '', intervalAnchor: s.intervalAnchor || ''
@@ -1180,10 +1229,21 @@
     var record = createRecord(task, tr('手动执行', 'Manual'), new Date());
     task.history.unshift(record);
     task.running = true;
+    ui.runOrigin = { kind: 'task', taskId: task.id };
+    ui.taskDetailId = task.id;
+    ui.runId = record.id;
+    ui.taskPreview = null;
     toast(tr('任务已开始执行', 'Run started'));
     rerender();
-    task.runTimer = setTimeout(function () {
+    function advance() {
       if (!taskById(task.id) || record.status !== 'running') return;
+      record.progress += 1;
+      if (record.progress < 4) {
+        task.runTimer = setTimeout(advance, 900);
+        var chat = document.querySelector('.cap-execution-chat');
+        if (chat && chat.dataset.runId === record.id && !ui.editor && !ui.taskPreview && !ui.confirm) rerender();
+        return;
+      }
       record.status = 'completed';
       record.finishedAt = new Date().toISOString();
       record.summary = runSummary(record);
@@ -1193,8 +1253,10 @@
       if (task.schedule && task.schedule.repeat === 'once') task.completedOnce = true;
       toast(tr('模拟执行完成，结果已保存', 'Demo run finished'));
       rerender();
-    }, 1600);
+    }
+    task.runTimer = setTimeout(advance, 900);
   }
+
   function pauseTask(id) {
     var task = taskById(id);
     if (!task || !task.running) return;
@@ -1459,10 +1521,11 @@
       else rerender();
       return;
     }
-    if (action === 'task-open') { ui.taskDetailId = id; ui.runId = null; ui.taskPreview = null; ui.menu = null; rerender({ resetScroll: true }); return; }
+    if (action === 'definition-tab') { ui.detailTab = cap.getAttribute('data-tab'); rerender(); return; }
+    if (action === 'task-open') { ui.detailTab = 'details'; ui.runOrigin = null; ui.taskDetailId = id; ui.runId = null; ui.taskPreview = null; ui.menu = null; rerender({ resetScroll: true }); return; }
     if (action === 'task-back') { ui.taskDetailId = null; ui.runId = null; ui.taskPreview = null; rerender({ resetScroll: true }); return; }
-    if (action === 'run-back') { ui.runId = null; ui.taskPreview = null; rerender(); return; }
-    if (action === 'run-open') { ui.runId = id; ui.taskPreview = null; rerender({ resetScroll: true }); return; }
+    if (action === 'run-back') { var origin = ui.runOrigin; ui.runId = null; ui.runOrigin = null; ui.taskDetailId = origin && origin.kind === 'task' ? origin.taskId : null; if (ui.taskDetailId) ui.detailTab = 'runs'; else ui.listTab = 'runs'; ui.taskPreview = null; rerender({ resetScroll: true }); return; }
+    if (action === 'run-open') { ui.runOrigin = ui.taskDetailId ? { kind: 'task', taskId: ui.taskDetailId } : { kind: 'list' }; var run = findRun(id); if (run) ui.taskDetailId = run.taskId; ui.runId = id; ui.taskPreview = null; rerender({ resetScroll: true }); return; }
     if (action === 'task-toggle') { toggleTask(id); return; }
     if (action === 'task-menu') {
       if (ui.menu && ui.menu.id === id) ui.menu = null;
@@ -1482,7 +1545,7 @@
       else if (act === 'pause') pauseTask(id);
       else if (act === 'toggle') toggleTask(id);
       else if (act === 'edit') { openEditor(id, false); rerender(); }
-      else if (act === 'history') { ui.taskDetailId = id; ui.runId = null; ui.taskPreview = null; rerender({ resetScroll: true }); }
+      else if (act === 'history') { ui.detailTab = 'runs'; ui.taskDetailId = id; ui.runId = null; ui.taskPreview = null; rerender({ resetScroll: true }); }
       else if (act === 'delete') { ui.confirm = { kind: 'task', id: id }; rerender(); }
       else if (act === 'busy') toast(tr('该任务正在执行', 'This task is already running'));
       return;
@@ -1542,16 +1605,37 @@
       return;
     }
     if (action === 'editor-close') { ui.editor = null; rerender(); return; }
+    if (action === 'editor-node-select' || action === 'editor-node-add' || action === 'editor-node-remove' || action === 'editor-node-move') {
+      readForm();
+      var nodes = ui.editor.draft.nodes, node = activeNode(), index = nodes.indexOf(node);
+      if (action === 'editor-node-select') ui.editor.activeNode = id;
+      if (action === 'editor-node-add') { var added = { id: uid('node'), name: tr('任务节点 ','Task node ') + (nodes.length + 1), prompt: '', inputs: [], output: true, outputs: [blankOutput()] }; nodes.push(added); ui.editor.activeNode = added.id; }
+      if (action === 'editor-node-remove' && nodes.length > 1) { nodes.splice(index,1); ui.editor.activeNode = nodes[Math.min(index,nodes.length-1)].id; }
+      if (action === 'editor-node-move') { var next = index + Number(cap.getAttribute('data-direction')); if (next >= 0 && next < nodes.length) { nodes.splice(index,1); nodes.splice(next,0,node); } }
+      rerender(); return;
+    }
+    if (action === 'editor-format') {
+      var format = cap.getAttribute('data-format'); document.getElementById('taskPrompt').focus();
+      document.execCommand(/^h[1-3]$/.test(format) ? 'formatBlock' : format, false, /^h/.test(format) ? format : null);
+      readForm(); return;
+    }
+    if (action === 'editor-reference') { showContextMenu(true); return; }
+    if (action === 'editor-mention') { insertContext(cap.getAttribute('data-name')); return; }
+    if (action === 'editor-context-remove') {
+      var name = cap.getAttribute('data-name'); readForm(); activeNode().inputs = activeNode().inputs.filter(function (item) { return item !== name; });
+      document.querySelectorAll('#taskPrompt [data-context]').forEach(function (token) { if (token.getAttribute('data-context') === name) token.remove(); });
+      readForm(); rerender(); return;
+    }
     if (action === 'editor-save' || action === 'editor-save-run') { saveEditor(action === 'editor-save-run'); return; }
     if (action === 'editor-add-output') {
       readForm();
-      ui.editor.draft.outputs.push({ type: '表', name: '', schema: '', format: 'Markdown' });
+      activeNode().outputs.push(blankOutput());
       rerender();
       return;
     }
     if (action === 'editor-remove-output') {
       readForm();
-      ui.editor.draft.outputs.splice(Number(cap.getAttribute('data-oi')), 1);
+      activeNode().outputs.splice(Number(cap.getAttribute('data-oi')), 1);
       rerender();
       return;
     }
@@ -1588,6 +1672,7 @@
     if (action === 'confirm-ok') { applyConfirm(); return; }
   }
   function onInput(e) {
+    if (e.target.id === 'taskPrompt') { e.target.classList.toggle('is-empty', !e.target.textContent.trim()); readForm(); if (!e.isComposing) showContextMenu(false); return; }
     var action = e.target.getAttribute && e.target.getAttribute('data-cap');
     if (action === 'task-query') {
       if (!e.target.isConnected || e.isComposing || ui.composing) return;
@@ -1607,11 +1692,16 @@
     var el = e.target;
     var action = el.getAttribute && el.getAttribute('data-cap');
     if (!action) return;
+    if (action === 'chat-run') {
+      var record = findRun(el.value);
+      if (record && record.taskId === ui.taskDetailId) { ui.runId = record.id; ui.taskPreview = null; ui.focus = { sel: '[data-cap="chat-run"]' }; rerender(); }
+      return;
+    }
     if (action === 'editor-repeat' || action === 'editor-output-type' || action === 'editor-output-enabled') {
       readForm();
       if (action === 'editor-output-enabled') {
-        ui.editor.draft.output = el.checked;
-        if (ui.editor.draft.output && !ui.editor.draft.outputs.length) ui.editor.draft.outputs.push({ type: '表', name: '', schema: '', format: 'Markdown' });
+        activeNode().output = el.checked;
+        if (activeNode().output && !activeNode().outputs.length) activeNode().outputs.push(blankOutput());
       }
       rerender();
       return;
@@ -1642,6 +1732,30 @@
     }
   }
   function onKey(e) {
+    var mention = document.getElementById('capMentionMenu');
+    if (mention && !mention.hidden) {
+      var options = Array.from(mention.querySelectorAll('button'));
+      if (e.key === 'Escape') { mention.hidden = true; document.getElementById('taskPrompt').focus(); e.preventDefault(); e.stopImmediatePropagation(); return; }
+      if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && options.length) { var at = options.indexOf(document.activeElement); options[(at + (e.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length].focus(); e.preventDefault(); return; }
+      if (e.key === 'Enter' && e.target.id === 'taskPrompt' && options.length) { e.preventDefault(); options[0].click(); return; }
+    }
+    if (e.target.id === 'taskPrompt' && !e.isComposing && (e.key === ' ' || e.key === 'Enter')) {
+      var selection = window.getSelection(), range = selection.rangeCount ? selection.getRangeAt(0) : null;
+      var editor = e.target, block = selection.anchorNode && (selection.anchorNode.nodeType === 3 ? selection.anchorNode.parentElement : selection.anchorNode).closest('p,div,h1,h2,h3,li');
+      if (range && block && editor.contains(block)) {
+        var before = range.cloneRange(); before.selectNodeContents(block); before.setEnd(range.startContainer,range.startOffset);
+        if (e.key === ' ' && /^#{1,3}$/.test(before.toString())) {
+          e.preventDefault(); var level = before.toString().length; before.deleteContents();
+          var heading = document.createElement('h' + level); heading.innerHTML = block === editor ? '<br>' : block.innerHTML || '<br>';
+          if (block === editor) before.insertNode(heading); else block.replaceWith(heading);
+          var caret = document.createRange(); caret.selectNodeContents(heading); caret.collapse(true); selection.removeAllRanges(); selection.addRange(caret); readForm(); return;
+        }
+        var after = range.cloneRange(); after.selectNodeContents(block); after.setStart(range.endContainer,range.endOffset);
+        if (e.key === 'Enter' && /^H[1-3]$/.test(block.tagName) && !after.toString()) {
+          e.preventDefault(); var paragraph = document.createElement('p'); paragraph.innerHTML = '<br>'; block.after(paragraph); var next = document.createRange(); next.selectNodeContents(paragraph); next.collapse(true); selection.removeAllRanges(); selection.addRange(next); readForm(); return;
+        }
+      }
+    }
     if (ui.artActionMenu) {
       if (e.key === 'Escape') { closeArtActionMenu(true); e.preventDefault(); e.stopImmediatePropagation(); return; }
       if (e.key === 'Tab') closeArtActionMenu(true);
@@ -1688,6 +1802,15 @@
   document.addEventListener('input', onInput);
   document.addEventListener('change', onChange);
   document.addEventListener('keydown', onKey);
+  document.addEventListener('mousedown', function (event) {
+    if (event.target.closest('[data-cap="editor-format"], [data-cap="editor-reference"], #capMentionMenu button')) event.preventDefault();
+  });
+  document.addEventListener('paste', function (event) {
+    if (event.target.id !== 'taskPrompt') return;
+    event.preventDefault();
+    document.execCommand('insertHTML', false, renderMd(event.clipboardData.getData('text/plain').replace(/\r\n/g,'\n')));
+    event.target.classList.toggle('is-empty', !event.target.textContent.trim()); readForm();
+  });
   document.addEventListener('compositionstart', function (e) {
     if (e.target && (e.target.id === 'capTaskSearch' || e.target.id === 'capArtSearch')) ui.composing = true;
   });
@@ -1752,7 +1875,8 @@
       var task = null;
       tasks.forEach(function (t) { if (t.name === pendingTask) task = t; });
       ui.taskDetailId = task ? task.id : null;
-      ui.runId = null;
+      ui.runOrigin = null;
+      ui.runId = task && taskRuns(task)[0] ? taskRuns(task)[0].id : null;
       ui.taskPreview = null;
       ui.editor = null;
     } else if (keep) {
@@ -1783,6 +1907,7 @@
     if (page !== '定时任务' && page !== '产出物') ui.confirm = ui.move = null;
   }
   function afterRender() {
+    if (ui.chatScroll) { var scroll = document.querySelector('.cui-scroll'); if (scroll) scroll.scrollTop = scroll.scrollHeight; ui.chatScroll = false; }
     if (ui.artActionMenu && !ui.artActionMenu.anchor.isConnected) closeArtActionMenu();
     positionArtColumnFilter();
     if (ui.focus) {
@@ -1811,6 +1936,9 @@
   }
 
   global.AIOpsCapability = {
+    isConversation: function () { return !!ui.runId; },
+    continueRun: continueRun,
+    setRunDraft: function (id, text) { var record = findRun(id); if (record) record.chatDraft = text; },
     bind: function (next) { if (next) host = next; },
     schedulesPage: schedulesPage,
     artifactsPage: artifactsPage,

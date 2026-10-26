@@ -147,7 +147,6 @@
     '空警告严重': { zh: '所选范围暂无严重事件', en: 'No critical events in range' },
     '空警告警告': { zh: '所选范围暂无警告事件', en: 'No warning events in range' },
     '警告共条': { zh: '共 {n} 条 · 展示最近 {m} 条', en: '{n} total · showing latest {m}' },
-    'Mock 注脚': { zh: '固定 Mock 警告记录，刷新后恢复初始数据。', en: 'Fixed mock warnings; refresh resets data.' },
     '环比说明': { zh: '对比 {from}{to}，上期值 {prev}。', en: 'Vs {from}{to}, prior {prev}. ' },
     '环比公式': { zh: '环比 =（本期值 − 上期值）/ 上期值 × 100%。', en: 'Change = (current − prior) / prior × 100%.' },
     '环比新增': { zh: '上期为 0，当前新增。', en: 'Prior was 0; this is new.' },
@@ -242,8 +241,8 @@ function analysisComparison(current,previous,better){
  const rounded=delta===null?null:Math.round(delta*10)/10;
  const text=rounded===null?t('新增'):rounded===0?'0%':(rounded>0?'+':'−')+Math.abs(rounded).toLocaleString(loc(),{maximumFractionDigits:1})+'%';
  const sign=rounded===null?1:Math.sign(rounded),tone=!sign||!better?'neutral':(better==='lower'?sign<0:sign>0)?'improved':'worsened';
- const dates=analysisWindowRows(state.range,true).map(row=>row[0]);
- const title=tf('环比说明',{from:dates[0],to:dates.length>1?' — '+dates.at(-1):'',prev:previous.toLocaleString(loc(),{maximumFractionDigits:2})})+(delta===null?t('环比新增'):t('环比公式'));
+ const dates=analysisWindowBounds(state.range,true);
+ const title=tf('环比说明',{from:dates.start,to:dates.start!==dates.end?' — '+dates.end:'',prev:previous.toLocaleString(loc(),{maximumFractionDigits:2})})+(delta===null?t('环比新增'):t('环比公式'));
  return `<div class="metric-comparison" title="${esc(title)}" data-current="${current}" data-previous="${previous}" data-comparison="${delta===null?'new':delta}"><span class="metric-change ${tone}">${text}</span><span>${esc(label)}</span></div>`;
 }
 function analysisMetric(name,value,note,formula,comparison){return `<div class="compact-stat" data-metric="${esc(name)}"><div class="metric-card-head">${metricHelp(name,formula||('help·'+name))}${analysisMetricSymbol(name)}</div><div class="metric-card-value"><strong title="${esc(note?t(note):'')}">${value}</strong>${note?`<small class="metric-unit">${esc(t(note))}</small>`:''}</div>${comparison?analysisComparison(comparison.current,comparison.previous,comparison.better):''}</div>`}
@@ -269,7 +268,27 @@ const analysisPreviousDailyMock=[
  ['2026-09-25',43,17,4,6.3,20,5],['2026-09-26',38,14,13,6.0,16,4],
  ['2026-09-27',36,13,21,5.7,15,3],['2026-09-28',34,14,29,5.8,14,4]
 ];
-function analysisWindowRows(range=state.range,previous=false){const rows=[...analysisPreviousDailyMock,...behaviorDailyMock];return previous?rows.slice(-range*2,-range):rows.slice(-range)}
+// Roll demo dates forward together, preserving all values and comparison windows.
+// The default "last 7 days" must include the seeded data on every preview date.
+const analysisMockToday=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+const analysisMockTimeline=[...analysisPreviousDailyMock,...behaviorDailyMock];
+analysisMockTimeline.forEach((row,index)=>{
+ const date=new Date(analysisMockToday+'T00:00:00Z');
+ date.setUTCDate(date.getUTCDate()-(analysisMockTimeline.length-1-index));
+ row[0]=date.toISOString().slice(0,10);
+});
+function analysisDateBounds(){return {start:analysisPreviousDailyMock[0][0],end:behaviorDailyMock.at(-1)[0]}}
+function analysisWindowBounds(range=state.range,previous=false){
+ const end=behaviorDailyMock.at(-1)[0];
+ const selected=host.getDateRange?(host.getDateRange()||analysisDateBounds()):{start:new Date(Date.parse(end)-(range-1)*86400000).toISOString().slice(0,10),end};
+ const shift=previous?range*86400000:0;
+ const start=new Date(Date.parse(selected.start)-shift).toISOString().slice(0,10);
+ return {start,end:new Date(Date.parse(selected.end)-shift).toISOString().slice(0,10)};
+}
+function analysisWindowRows(range=state.range,previous=false){
+ const rows=[...analysisPreviousDailyMock,...behaviorDailyMock],bounds=analysisWindowBounds(range,previous);
+ return rows.filter(row=>row[0]>=bounds.start&&row[0]<=bounds.end);
+}
 function behaviorData(range=state.range,previous=false){
  const chosen=new Set(analysisScopeChosen()),agents=analysisScopeCatalog().flatMap(scene=>scene.items.filter(item=>item.type==='Agent').map(item=>item.id));
  const users=new Set(),totals={sessions:0,turns:0,likes:0,dislikes:0};
@@ -535,7 +554,7 @@ function healthAggregate(sessions,alerts){
  return {sessions:sessions.length,turns:turns.length,errorSessions,errorTurns,slowTurns,tools:tools.length,failedTools:tools.filter(tool=>tool.status==='failed').length,completedTools:completedTools.length,warningEvents:alerts.length,affectedUsers:new Set(alerts.map(alert=>alert.userId)).size,anomalousRate:ratio(errorSessions,sessions.length),turnErrorRate:ratio(errorTurns,turns.length),toolFailureRate:ratio(tools.filter(tool=>tool.status==='failed').length,tools.length),slowRate:ratio(slowTurns,turns.length),sessionAvgMs:mean(sessions,'durationMs'),toolAvgMs:mean(completedTools,'durationMs'),ttftAvgMs:mean(ttfts,'ttftMs'),validTtfts:ttfts.length,durations:healthDurationTypes.map(type=>({...type,value:turns.reduce((sum,turn)=>sum+turn[type.key],0)/1000}))};
 }
 function healthData(range=state.range,previous=false){
- const records=healthMockRecords(),prior=previous?healthMockRecords(true):{sessions:[],alerts:[]},allSessions=[...prior.sessions,...records.sessions],allAlerts=[...prior.alerts,...records.alerts],dates=analysisWindowRows(range,previous).map(row=>row[0]),chosen=new Set(analysisScopeChosen());
+ const records=healthMockRecords(),prior=healthMockRecords(true),allSessions=[...prior.sessions,...records.sessions],allAlerts=[...prior.alerts,...records.alerts],dates=analysisWindowRows(range,previous).map(row=>row[0]),chosen=new Set(analysisScopeChosen());
  const sessions=allSessions.filter(session=>dates.includes(session.date)&&chosen.has(session.agent)),alerts=allAlerts.filter(alert=>dates.includes(alert.date)&&chosen.has(alert.agent));
  const buckets=range===1?Array.from({length:24},(_,hour)=>({date:dates[0],hour,label:String(hour).padStart(2,'0')+':00'})):dates.map(date=>({date,label:date.slice(5)}));
  return {dates,sessions,alerts,totals:healthAggregate(sessions,alerts),buckets:buckets.map(bucket=>{const matches=row=>row.date===bucket.date&&(range!==1||row.hour===bucket.hour);return {...bucket,...healthAggregate(sessions.filter(matches),alerts.filter(matches))}})};
@@ -555,23 +574,28 @@ function healthAlertChartSVG(data,width=600,height=250){
  const bars=counts.map((type,i)=>{const y=(i+.5)*row;return `<rect data-health-alert-type="${type.key}" x="0" y="${y-barH/2}" width="${type.count/max*width}" height="${barH}" rx="4" fill="#0d99ff"><title>${esc(t(type.name))}: ${type.count}</title></rect>`}).join('');
  return `<svg class="health-alert-chart" width="${width}" height="${height}" preserveAspectRatio="none" role="img" aria-label="${esc(t('警告分布'))}, ${counts.map(type=>t(type.name)+' '+type.count).join(', ')}">${grid}${bars}</svg>`;
 }
-function healthAlertDistribution(data){
+function healthAlertDistribution(data,aggregated=false){
  const {counts,max}=healthAlertCounts(data);
  const labels=counts.map(type=>`<div class="health-alert-ylabel"><span>${esc(t(type.name))}</span>${metricHelpIcon(type.name,type.formula)}</div>`).join('');
  const ticks=[0,1,2,3,4].map(i=>`<span>${max*i/4}</span>`).join('');
- return `<section class="panel health-alert-distribution"><div class="panelhead"><h2>${metricHelp('警告分布','help·警告分布')}</h2></div><div class="health-alert-chart-row"><div class="health-alert-ylabels">${labels}</div><div class="analysis-chart-host health-alert-plot" data-analysis-chart="health-alert">${healthAlertChartSVG(data)}</div><div class="health-alert-xaxis">${ticks}</div></div></section>`;
+ return `<section class="${aggregated?'widget-panel widget-health-distribution health-alert-distribution':'panel health-alert-distribution'}"><div class="panelhead"><h2>${metricHelp('警告分布','help·警告分布')}</h2></div><div class="health-alert-chart-row"><div class="health-alert-ylabels">${labels}</div><div class="analysis-chart-host health-alert-plot" data-analysis-chart="health-alert">${healthAlertChartSVG(data)}</div><div class="health-alert-xaxis">${ticks}</div></div></section>`;
 }
 function healthAlertList(data){
  const filter=state.healthAlertSeverity||'all',events=data.alerts.filter(alert=>filter==='all'||alert.severity===filter).sort((a,b)=>b.time.localeCompare(a.time)||b.id.localeCompare(a.id));
  const emptyKey=filter==='severe'?'空警告严重':filter==='warning'?'空警告警告':'空警告全部';
  const feed=events.slice(0,20).map(alert=>{const type=healthAlertTypes.find(item=>item.key===alert.type);return `<button class="health-alert-item" onclick="healthAlertDetail('${alert.id}')" aria-label="${esc(t('查看警告')+' '+alert.time+' '+t(type.name)+' '+t(alert.agentName))}"><span class="health-alert-copy"><span class="health-alert-name"><b>${esc(t(type.name))}</b><span>${esc(t(alert.agentName))}</span><span aria-hidden="true">›</span></span><span class="health-alert-message">${esc(t(alert.msgKey||type.msg))}</span></span><span class="health-alert-meta"><span class="health-alert-badge ${alert.severity}">${esc(t(alert.severity==='severe'?'严重':'警告'))}</span><time title="${alert.time}">${state.range===1?alert.time.slice(11,16):alert.time.slice(5,16)}</time></span></button>`}).join('')||`<div class="health-alert-empty">${esc(t(emptyKey))}</div>`;
- return `<div class="panelhead"><h2>${metricHelp('实时警告','help·实时警告')}</h2><div class="segments">${[['all','全部'],['severe','严重'],['warning','警告']].map(([key,label])=>`<button id="health-alert-filter-${key}" class="${filter===key?'selected':''}" aria-pressed="${filter===key}" onclick="healthSetAlertSeverity('${key}')">${esc(t(label))}</button>`).join('')}</div></div><div class="health-alert-list"><div class="health-alert-feed">${feed}</div><div class="health-alert-footer">${esc(tf('警告共条',{n:events.length,m:Math.min(20,events.length)}))}</div></div>`;
+ return `<div class="panelhead"><h2>${metricHelp('实时警告','help·实时警告')}</h2><div class="segments">${[['all','全部'],['severe','严重'],['warning','警告']].map(([key,label])=>`<button data-alert-severity="${key}" class="${filter===key?'selected':''}" aria-pressed="${filter===key}" onclick="healthSetAlertSeverity('${key}',this)">${esc(t(label))}</button>`).join('')}</div></div><div class="health-alert-list"><div class="health-alert-feed">${feed}</div><div class="health-alert-footer">${esc(tf('警告共条',{n:events.length,m:Math.min(20,events.length)}))}</div></div>`;
 }
-function healthSetAlertSeverity(value){state.healthAlertSeverity=value;$('#health-live-alerts').innerHTML=healthAlertList(healthData());$('#health-alert-filter-'+value)?.focus({preventScroll:true})}
+function healthSetAlertSeverity(value,button){
+ state.healthAlertSeverity=value;
+ const active=button?.closest('[data-health-alert-list]'),data=healthData();
+ document.querySelectorAll('[data-health-alert-list]').forEach(node=>{node.innerHTML=healthAlertList(data)});
+ active?.querySelector(`[data-alert-severity="${value}"]`)?.focus({preventScroll:true});
+}
 function healthAlertDetail(id){
  const alert=healthMockRecords().alerts.find(item=>item.id===id);if(!alert)return;
  const type=healthAlertTypes.find(item=>item.key===alert.type),statusKey={success:'最终成功返回',failed:'最终失败',no_return:'无返回',interrupted:'中断',returned_error:'返回错误'}[alert.status];
- modal(t('警告详情'),`<div class="health-alert-detail-title"><b>${esc(t(type.name))}</b><span class="health-alert-badge ${alert.severity}">${esc(t(alert.severity==='severe'?'严重':'警告'))}</span></div><p>${esc(t(alert.msgKey||type.msg))}</p><div class="lineage-fields">${[[t('事件时间'),alert.time],[t('识别来源'),t(alert.source)],['Agent',t(alert.agentName)],[t('用户'),alert.userId],[t('会话编号'),alert.sessionId],[t('对话轮次'),tf('第N轮',{n:alert.turn})],[t('轮次最终状态'),t(statusKey)],[t('首 Token 输出耗时'),alert.ttftMs===null?t('无首 Token 返回'):healthSeconds(alert.ttftMs)]].map(([name,value])=>`<div class="lineage-field"><span>${esc(name)}</span><b>${esc(value)}</b></div>`).join('')}</div><p class="note">${esc(t('Mock 注脚'))}</p>`);
+ modal(t('警告详情'),`<div class="health-alert-detail-title"><b>${esc(t(type.name))}</b><span class="health-alert-badge ${alert.severity}">${esc(t(alert.severity==='severe'?'严重':'警告'))}</span></div><p>${esc(t(alert.msgKey||type.msg))}</p><div class="lineage-fields">${[[t('事件时间'),alert.time],[t('识别来源'),t(alert.source)],['Agent',t(alert.agentName)],[t('用户'),alert.userId],[t('会话编号'),alert.sessionId],[t('对话轮次'),tf('第N轮',{n:alert.turn})],[t('轮次最终状态'),t(statusKey)],[t('首 Token 输出耗时'),alert.ttftMs===null?t('无首 Token 返回'):healthSeconds(alert.ttftMs)]].map(([name,value])=>`<div class="lineage-field"><span>${esc(name)}</span><b>${esc(value)}</b></div>`).join('')}</div>`);
 }
 function healthSlowChartSVG(data,width=1100,height=280){
  return analysisLineChartSVG({
@@ -590,9 +614,15 @@ function healthSlowTrend(data){
 }
 function healthTrendHover(node,index){node.dataset.lineIndex=index;node.dataset.lineHover='health-slow';analysisLineHover(node)}
 function healthTrendLeave(node){analysisLineLeave(node)}
-function healthDurationDistribution(totals){
+function healthDurationBars(totals){
  const max=Math.max(1,...totals.durations.map(type=>type.value));
- return `<section class="panel step-performance health-duration-panel"><div class="panelhead"><h2>${metricHelp('耗时分布','help·耗时分布')}</h2><small>${esc(t('累计耗时秒'))}</small></div><div class="step-bars">${totals.durations.map(type=>`<div class="step-row"><span><i style="background:${type.color}"></i>${esc(t(type.name))}</span><div class="step-track"><i style="width:${type.value/max*100}%;background:${type.color}"></i></div><b title="${type.value.toFixed(2)} ${esc(t('秒'))}">${type.value.toLocaleString(loc(),{maximumFractionDigits:1})}s</b></div>`).join('')}</div></section>`;
+ return `<div class="step-bars">${totals.durations.map(type=>`<div class="step-row"><span><i style="background:${type.color}"></i>${esc(t(type.name))}</span><div class="step-track"><i style="width:${type.value/max*100}%;background:${type.color}"></i></div><b title="${type.value.toFixed(2)} ${esc(t('秒'))}">${type.value.toLocaleString(loc(),{maximumFractionDigits:1})}s</b></div>`).join('')}</div>`;
+}
+function healthDurationDistribution(totals){
+ return `<section class="panel step-performance health-duration-panel"><div class="panelhead"><h2>${metricHelp('耗时分布','help·耗时分布')}</h2><small>${esc(t('累计耗时秒'))}</small></div>${healthDurationBars(totals)}</section>`;
+}
+function healthDurationWidget(){
+ return `<div class="widget-panel widget-duration"><div class="widget-duration-head"><div class="widget-trend-label">${metricHelp('耗时分布','help·耗时分布')}</div><small>${esc(t('累计耗时秒'))}</small></div>${healthDurationBars(healthData().totals)}</div>`;
 }
 function healthSectionTitle(label){
  return `<h2 class="health-section-title">${esc(t(label))}</h2>`;
@@ -605,7 +635,7 @@ function healthPage(){
  ['轮次错误率',healthPercent(d.turnErrorRate),'','help·轮次错误率'],
  ['警告事件数',number(d.warningEvents),'','help·警告事件数'],
  ['警告影响用户数',number(d.affectedUsers),'','help·警告影响用户数']
- ].map(item=>[...item,analysisMetricOptions(item[0],d,previous)]))+`</div><div class="health-section-panels"><div class="health-alert-panels">${healthAlertDistribution(data)}<section id="health-live-alerts" class="panel health-live-alerts">${healthAlertList(data)}</section></div></div></section><section class="analysis-section" id="performance-analysis">${healthSectionTitle('性能分析')}<div class="health-performance-metrics">`+analysisMetrics([
+ ].map(item=>[...item,analysisMetricOptions(item[0],d,previous)]))+`</div><div class="health-section-panels"><div class="health-alert-panels">${healthAlertDistribution(data)}<section id="health-live-alerts" class="panel health-live-alerts" data-health-alert-list>${healthAlertList(data)}</section></div></div></section><section class="analysis-section" id="performance-analysis">${healthSectionTitle('性能分析')}<div class="health-performance-metrics">`+analysisMetrics([
  ['会话平均耗时',healthSeconds(d.sessionAvgMs),'','help·会话平均耗时'],
  ['慢响应轮次率',healthPercent(d.slowRate),'','help·慢响应轮次率'],
  ['工具平均耗时',healthSeconds(d.toolAvgMs),'','help·工具平均耗时'],
@@ -742,7 +772,7 @@ function costPage(){
 
   var summaryKey = '', summaryValues = {};
   function metricSummary(id) {
-    var key = state.range + ':' + analysisScopeChosen().join(',');
+    var key = state.range + ':' + JSON.stringify(host.getDateRange ? host.getDateRange() : null) + ':' + analysisScopeChosen().join(',');
     if (key !== summaryKey) {
       summaryKey = key; summaryValues = {};
       var pairs = [[costData().totals, costData(state.range, true).totals, ['total','input','output','calls','perTurn','perSession']], [behaviorData().totals, behaviorData(state.range,true).totals, ['sessions','users','sessionsPerUser','averageTurns','likes','dislikes']], [healthData().totals,healthData(state.range,true).totals,['anomalousRate','toolFailureRate','turnErrorRate','warningEvents','affectedUsers','sessionAvgMs','slowRate','toolAvgMs','ttftAvgMs']]];
@@ -758,10 +788,14 @@ function costPage(){
   }
 
   global.AIOpsBoards = {
+    dateBounds: analysisDateBounds,
     configure: function (opts) {
       Object.assign(host, opts || {});
     },
     metricSummary: metricSummary,
+    healthDurationWidget: healthDurationWidget,
+    healthWarningWidget: function () { return healthAlertDistribution(healthData(), true); },
+    healthAlertsWidget: function () { return '<div class="widget-panel widget-health-alerts health-live-alerts" data-health-alert-list>' + healthAlertList(healthData()) + '</div>'; },
     costPage: costBoard,
     healthPage: healthBoard,
     behaviorPage: behaviorBoard,

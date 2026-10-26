@@ -4,6 +4,7 @@
   var state = {
     page: '工作台',
     range: 7,
+    monitoringDateRange: undefined,
     notifyType: 'all',
     newOpen: false,
     lang: 'zh',
@@ -40,7 +41,6 @@
     cuiModel: 'Auto',
     cuiIntensity: 'Default',
     configId: null,
-    configPos: null,
     deleteAsk: null,
     drag: null,
     /* Demo-only: Figma widget visual skins — border | raised | inset. Default: 白底灰卡 */
@@ -334,7 +334,7 @@
   }
 
   function updatedLabel() {
-    return '2026-10-21 00:00 ' + t('更新后缀');
+    return window.AIOpsBoards.dateBounds().end + ' 00:00 ' + t('更新后缀');
   }
 
   var NAV_PRIMARY = [
@@ -478,17 +478,7 @@
   }
 
   function rangeSegment() {
-    var segs = [1, 7, 14]
-      .map(function (x) {
-        var label = x === 1 ? t('今日') : daysLabel(x);
-        return (
-          '<button type="button" data-range="' + x + '" class="' + (state.range === x ? 'is-active' : '') + '">' +
-            label +
-          '</button>'
-        );
-      })
-      .join('');
-    return '<div class="ov-segment" role="group" aria-label="' + esc(t('统计时间')) + '">' + segs + '</div>';
+    return sessionDateControl('monitoring');
   }
 
   function rangeActions(updated) {
@@ -1382,8 +1372,8 @@
       esc(chartKind) +
       '">' +
         '<div class="widget-trend-head">' +
-          '<div class="widget-trend-label">' +
-          esc(title) +
+          '<div class="widget-trend-label"><span class="widget-trend-label-text" title="' + esc(title) + '">' +
+          esc(title) + '</span>' +
           (helpHtml || '') +
           '</div>' +
           widgetTrendLegend(chartKind) +
@@ -1396,19 +1386,9 @@
     );
   }
 
-  function barDist() {
-    return (
-      '<div class="widget-bars" aria-hidden="true">' +
-        '<div class="widget-bar"><span>' + esc(t('报错分析')) + '</span><i style="width:62%"></i></div>' +
-        '<div class="widget-bar"><span>' + esc(t('性能分析')) + '</span><i style="width:38%;background:#f59e0b"></i></div>' +
-      '</div>'
-    );
-  }
-
   function metricCompareLabel() {
-    if (state.range === 14) return t('14天环比');
-    if (state.range === 7) return t('7天环比');
-    return t('日环比');
+    if (state.range === 1) return t('日环比');
+    return state.lang === 'en' ? state.range + 'd comparison' : state.range + '天环比';
   }
 
   function metricStatHtml(metricId) {
@@ -1432,7 +1412,7 @@
       : '';
     return (
       '<div class="widget-metric">' +
-        '<span class="widget-metric-label">' +
+        '<span class="widget-metric-label" title="' + esc(label) + '">' +
         esc(label) +
         '</span><strong>' +
         esc(mock[0]) +
@@ -1570,28 +1550,11 @@
       for (var i = 0; i < type.metrics.length; i++) {
         if (type.metrics[i].id === id) chartTitle = t(type.metrics[i].label);
       }
-      if (id === 'warningDist' || id === 'durationDist') html += barDist();
+      if (id === 'durationDist') html += window.AIOpsBoards.healthDurationWidget();
+      else if (id === 'warningDist') html += window.AIOpsBoards.healthWarningWidget();
       else if (WIDGET_CHART_KIND[id]) html += trendPanelHtml(chartTitle, WIDGET_CHART_KIND[id]);
     });
-    if (lists.indexOf('liveAlerts') >= 0) {
-      html +=
-        '<ul class="widget-list is-compact">' +
-          [
-            [t('采购 Agent 连续失败'), '18:21'],
-            [t('慢响应轮次率'), '17:58']
-          ]
-            .map(function (r) {
-              return (
-                '<li class="is-unread"><div><b>' +
-                esc(r[0]) +
-                '</b></div><time>' +
-                esc(r[1]) +
-                '</time></li>'
-              );
-            })
-            .join('') +
-        '</ul>';
-    }
+    if (lists.indexOf('liveAlerts') >= 0) html += window.AIOpsBoards.healthAlertsWidget();
     return html;
   }
 
@@ -1622,7 +1585,7 @@
         (type.configurable
           ? '<button type="button" class="widget-tool" data-widget-config="' +
             esc(inst.id) +
-            '" title="' +
+            '" aria-haspopup="menu" aria-expanded="' + (state.configId === inst.id) + '" aria-controls="widgetConfigMenu" title="' +
             esc(t('配置')) +
             '" aria-label="' +
             esc(t('配置')) +
@@ -1714,7 +1677,7 @@
       '<span class="widget-ico" aria-hidden="true">' +
       ico +
       '</span>' +
-      '<strong>' +
+      '<strong title="' + esc(t(type.title)) + '">' +
       esc(t(type.title)) +
       '</strong>' +
       '</div>' +
@@ -1761,56 +1724,24 @@
     );
   }
 
-  function bindConfigPopoverDrag(panel) {
-    var head = panel.querySelector('.wg-config-head');
-    if (!head || head.dataset.dragBound === '1') return;
-    head.dataset.dragBound = '1';
-    var dragging = false;
-    var ox = 0;
-    var oy = 0;
+  function closeConfigMenu(restoreFocus) {
+    var id = state.configId;
+    var trigger = id && document.querySelector('[data-widget-config="' + id + '"]');
+    // Focus the still-visible trigger before clearing the menu's active styling.
+    if (restoreFocus && trigger) trigger.focus({ preventScroll: true });
+    state.configId = null;
+    renderConfigPopover();
+  }
 
-    function clampPos(left, top) {
-      var maxL = Math.max(8, window.innerWidth - panel.offsetWidth - 8);
-      var maxT = Math.max(8, window.innerHeight - panel.offsetHeight - 8);
-      return {
-        left: Math.max(8, Math.min(maxL, left)),
-        top: Math.max(8, Math.min(maxT, top))
-      };
-    }
-
-    head.addEventListener('pointerdown', function (e) {
-      if (e.button !== 0) return;
-      if (e.target.closest('button, a, input, label')) return;
-      dragging = true;
-      head.classList.add('is-dragging');
-      var rect = panel.getBoundingClientRect();
-      ox = e.clientX - rect.left;
-      oy = e.clientY - rect.top;
-      try {
-        head.setPointerCapture(e.pointerId);
-      } catch (err) {}
-      e.preventDefault();
-    });
-
-    head.addEventListener('pointermove', function (e) {
-      if (!dragging) return;
-      var pos = clampPos(e.clientX - ox, e.clientY - oy);
-      panel.style.left = pos.left + 'px';
-      panel.style.top = pos.top + 'px';
-      state.configPos = pos;
-    });
-
-    function endDrag(e) {
-      if (!dragging) return;
-      dragging = false;
-      head.classList.remove('is-dragging');
-      try {
-        head.releasePointerCapture(e.pointerId);
-      } catch (err) {}
-    }
-
-    head.addEventListener('pointerup', endDrag);
-    head.addEventListener('pointercancel', endDrag);
+  function positionConfigMenu(panel, trigger) {
+    var rect = trigger.getBoundingClientRect();
+    var below = window.innerHeight - rect.bottom - 14, above = rect.top - 14;
+    var down = below >= Math.min(420, panel.scrollHeight) || below >= above;
+    panel.style.maxHeight = Math.max(96, Math.min(420, down ? below : above)) + 'px';
+    var left = Math.max(8, Math.min(rect.right - panel.offsetWidth, window.innerWidth - panel.offsetWidth - 8));
+    var top = down ? rect.bottom + 6 : rect.top - panel.offsetHeight - 6;
+    panel.style.left = Math.round(left) + 'px';
+    panel.style.top = Math.round(Math.max(8, top)) + 'px';
   }
 
   function applyWidgetConfigLive(id) {
@@ -1818,7 +1749,7 @@
     if (!host) return;
     var checked = [];
     host.querySelectorAll('[data-config-metric]').forEach(function (input) {
-      if (input.checked) checked.push(input.getAttribute('data-config-metric'));
+      if (input.getAttribute('aria-checked') === 'true') checked.push(input.getAttribute('data-config-metric'));
     });
     var inst = null;
     ensureHomeWidgets().forEach(function (w) {
@@ -1844,101 +1775,35 @@
   function renderConfigPopover() {
     var host = document.getElementById('widgetConfigHost');
     if (!host) return;
-    if (!state.configId) {
-      host.innerHTML = '';
-      host.hidden = true;
-      state.configPos = null;
-      return;
-    }
-    var inst = null;
-    ensureHomeWidgets().forEach(function (w) {
-      if (w.id === state.configId) inst = w;
+    document.querySelectorAll('[data-widget-config]').forEach(function (button) {
+      var on = button.getAttribute('data-widget-config') === state.configId;
+      button.setAttribute('aria-haspopup', 'menu');
+      button.setAttribute('aria-controls', 'widgetConfigMenu');
+      button.setAttribute('aria-expanded', String(on));
+      button.closest('.widget').classList.toggle('is-configuring', on);
     });
+    if (!state.configId) { host.innerHTML = ''; host.hidden = true; return; }
+    var inst = ensureHomeWidgets().filter(function (w) { return w.id === state.configId; })[0];
     var type = inst && widgetType(inst.type);
-    if (!inst || !type) {
-      state.configId = null;
-      state.configPos = null;
-      host.innerHTML = '';
-      host.hidden = true;
-      return;
-    }
-
-    var bodyHtml = '';
-    if (type.configurable && type.metrics && type.metrics.length) {
-      var selected = {};
-      (inst.metrics || []).forEach(function (id) { selected[id] = true; });
-
-      var sections = {};
-      var order = [];
-      type.metrics.forEach(function (m) {
-        var sec = m.section || '';
-        if (order.indexOf(sec) < 0) order.push(sec);
-        if (!sections[sec]) sections[sec] = [];
-        sections[sec].push(m);
-      });
-
-      bodyHtml =
-        '<p class="wg-config-hint">' +
-        esc(t('显示指标')) +
-        '</p>' +
-        order
-          .map(function (sec) {
-            var items = sections[sec]
-              .map(function (m) {
-                return (
-                  '<label class="wg-check">' +
-                    '<input type="checkbox" data-config-metric="' + esc(m.id) + '" data-config-live="' + esc(inst.id) + '"' + (selected[m.id] ? ' checked' : '') + ' />' +
-                    '<span>' + esc(t(m.label)) + '</span>' +
-                  '</label>'
-                );
-              })
-              .join('');
-            return (
-              (sec ? '<div class="wg-config-sec">' + esc(t(sec)) + '</div>' : '') +
-              '<div class="wg-check-grid">' + items + '</div>'
-            );
-          })
-          .join('');
-    } else {
-      bodyHtml = '<p class="wg-config-hint">' + esc(t('此组件无可配置指标')) + '</p>';
-    }
-
+    var trigger = document.querySelector('[data-widget-config="' + state.configId + '"]');
+    if (!inst || !type || !trigger) { closeConfigMenu(false); return; }
+    var selected = {}, sections = {}, order = [];
+    (inst.metrics || []).forEach(function (id) { selected[id] = true; });
+    (type.metrics || []).forEach(function (m) {
+      var section = m.section || '';
+      if (!sections[section]) { sections[section] = []; order.push(section); }
+      sections[section].push(m);
+    });
+    var check = '<svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="m2.5 6 2.2 2.2 4.8-4.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    var body = order.map(function (section) {
+      return (section ? '<div class="wg-config-sec" role="presentation">' + esc(t(section)) + '</div>' : '') + sections[section].map(function (m) {
+        return '<button type="button" class="acct-item wg-config-option" role="menuitemcheckbox" tabindex="-1" aria-checked="' + !!selected[m.id] + '" data-config-metric="' + esc(m.id) + '" data-config-live="' + esc(inst.id) + '"><span class="wg-config-check" aria-hidden="true">' + check + '</span><span class="wg-config-option-label" title="' + esc(t(m.label)) + '">' + esc(t(m.label)) + '</span></button>';
+      }).join('');
+    }).join('');
     host.hidden = false;
-    host.innerHTML =
-      '<div class="wg-config-card" role="dialog" aria-label="' + esc(t('配置')) + '">' +
-        '<div class="wg-config-head" title="' + esc(t('拖拽')) + '">' +
-          '<strong>' + esc(t(type.title)) + ' · ' + esc(t('配置')) + '</strong>' +
-          '<button type="button" class="wg-config-close" data-config-close="1" aria-label="' + esc(t('关闭')) + '">' +
-            configCloseSvg() +
-          '</button>' +
-        '</div>' +
-        '<div class="wg-config-body">' + bodyHtml + '</div>' +
-        '<div class="wg-config-foot">' +
-          '<button type="button" class="btn-soft is-danger" data-widget-delete="' +
-          esc(inst.id) +
-          '">' +
-          esc(t('删除')) +
-          '</button>' +
-        '</div>' +
-      '</div>';
-
-    var panel = host.querySelector('.wg-config-card');
-    if (panel) {
-      if (state.configPos) {
-        panel.style.left = state.configPos.left + 'px';
-        panel.style.top = state.configPos.top + 'px';
-      } else {
-        var card = document.querySelector('.widget[data-widget-id="' + inst.id + '"]');
-        if (card) {
-          var rect = card.getBoundingClientRect();
-          var top = Math.min(rect.bottom + 8, window.innerHeight - (panel.offsetHeight + 16));
-          var left = Math.min(Math.max(16, rect.left), window.innerWidth - 360);
-          panel.style.top = Math.max(16, top) + 'px';
-          panel.style.left = left + 'px';
-        }
-      }
-      bindConfigPopoverDrag(panel);
-    }
+    host.innerHTML = '<div class="cap-menu wg-config-card" id="widgetConfigMenu" role="menu" aria-label="' + esc(t(type.title) + ' · ' + t('配置')) + '"><div class="wg-config-menu-label" role="presentation">' + esc(t('显示指标')) + '</div><div class="wg-config-body" role="presentation">' + body + '</div><div class="wg-config-foot" role="presentation"><button type="button" role="menuitem" tabindex="-1" class="acct-item is-danger" data-widget-delete="' + esc(inst.id) + '">' + lucideIcon('trash-2') + '<span>' + esc(t('删除')) + '</span></button></div></div>';
+    positionConfigMenu(host.querySelector('.wg-config-card'), trigger);
+    paintIcons();
   }
 
   function galleryTypeList(filter) {
@@ -2262,7 +2127,7 @@
     state.homeWidgets = next;
     if (state.configId === id) {
       state.configId = null;
-      state.configPos = null;
+
     }
     persistHomeWidgets();
     render();
@@ -2412,16 +2277,6 @@
 
   function pageHome() {
     ensureHomeWidgets();
-    var rangeSegs = [1, 7, 14]
-      .map(function (x) {
-        var label = x === 1 ? t('今日') : daysLabel(x);
-        return (
-          '<button type="button" data-range="' + x + '" class="' + (state.range === x ? 'is-active' : '') + '">' +
-            label +
-          '</button>'
-        );
-      })
-      .join('');
 
     var cards = state.homeWidgets
       .map(function (inst) {
@@ -2441,11 +2296,7 @@
           esc(t('工作台')) +
           '</h1></div>' +
           '<div class="home-top-actions">' +
-            '<div class="ov-segment" role="group" aria-label="' +
-            esc(t('统计时间')) +
-            '">' +
-            rangeSegs +
-            '</div>' +
+            rangeSegment() +
             scopeButton() +
             '<button type="button" class="btn-soft" id="btnWidgetSkin" title="' +
             esc(t('皮肤切换') + ' · Demo') +
@@ -2688,10 +2539,40 @@
     return { start: start.toISOString().slice(0, 10), end: end };
   }
 
-  function sessionDateControl() {
-    var range = state.sessionDateRange;
-    var label = range ? range.start + ' – ' + range.end : (state.lang === 'en' ? 'Date range' : '时间范围');
-    return '<div class="session-date-control"><button type="button" class="session-date-trigger" data-session-date-open aria-haspopup="dialog" aria-expanded="false" aria-label="' + (state.lang === 'en' ? 'Select date range' : '选择时间范围') + '">' + lucideIcon('calendar-days') + '<span>' + esc(label) + '</span>' + lucideIcon('chevron-down') + '</button>' + (range ? '<button type="button" class="session-date-clear" data-session-date-clear aria-label="' + (state.lang === 'en' ? 'Clear date range' : '清空时间范围') + '">' + lucideIcon('x') + '</button>' : '') + '</div>';
+  function monitoringDateRange() {
+    if (state.monitoringDateRange !== undefined) return state.monitoringDateRange;
+    return sessionPresetRange(state.range);
+  }
+
+  function dateRangeFor(context) {
+    return context === 'monitoring' ? monitoringDateRange() : state.sessionDateRange;
+  }
+
+  function dateRangeDays(range) {
+    return Math.round((Date.parse(range.end) - Date.parse(range.start)) / 86400000) + 1;
+  }
+
+  function sessionPresetLabel(days) {
+    return state.lang === 'en' ? days === 1 ? 'Today' : 'Last ' + days + ' days' : days === 1 ? '今天' : '最近 ' + days + ' 天';
+  }
+
+  function sessionPresetDays(range) {
+    return range && [1, 7, 14].find(function (days) {
+      var preset = sessionPresetRange(days);
+      return range.start === preset.start && range.end === preset.end;
+    });
+  }
+
+  function sessionDateControl(context) {
+    context = context || 'sessions';
+    var range = dateRangeFor(context);
+    var days = sessionPresetDays(range);
+    var dates = range ? range.start + ' – ' + range.end : '';
+    var emptyLabel = context === 'sessions' ? (state.lang === 'en' ? 'Any time' : '不限时间范围') : (state.lang === 'en' ? 'Date range' : '时间范围');
+    var label = days ? sessionPresetLabel(days) : dates || emptyLabel;
+    var clearable = context === 'sessions' && range;
+    var clearLabel = state.lang === 'en' ? 'Clear date range' : '清空时间范围';
+    return '<div class="session-date-control' + (clearable ? ' is-clearable' : '') + '"><button type="button" class="session-date-trigger" data-session-date-open data-date-context="' + context + '" aria-haspopup="dialog" aria-expanded="false" aria-label="' + (state.lang === 'en' ? 'Select date range' : '选择时间范围') + '" title="' + esc(dates || label) + '">' + lucideIcon('calendar-days') + '<span>' + esc(label) + '</span>' + lucideIcon('chevron-down') + '</button>' + (clearable ? '<button type="button" class="session-date-inline-clear" data-session-date-clear aria-label="' + clearLabel + '" title="' + clearLabel + '">' + lucideIcon('x') + '</button>' : '') + '</div>';
   }
 
   function closeSessionDate(restoreFocus) {
@@ -2709,23 +2590,92 @@
     var same = !!state.sessionDateMenu;
     closeSessionDate(); closeSessionFilter(); closeSessionMark();
     if (same) return;
-    state.sessionDateMenu = { anchor: anchor };
-    var range = state.sessionDateRange || { start: '', end: '' };
+    var context = anchor.getAttribute('data-date-context') || 'sessions';
+    state.sessionDateMenu = { anchor: anchor, context: context };
+    var selectedRange = dateRangeFor(context);
+    var range = selectedRange || { start: '', end: '' };
     var en = state.lang === 'en';
     var panel = document.createElement('div');
     panel.id = 'sessionDatePicker'; panel.className = 'session-date-picker';
     panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', en ? 'Date range' : '时间范围');
-    panel.innerHTML = '<header class="session-column-filter-header"><span>' + (en ? 'Date range' : '时间范围') + '</span><button type="button" class="session-filter-clear" data-session-date-clear' + (state.sessionDateRange ? '' : ' disabled') + '>' + (en ? 'Clear' : '清空') + '</button></header><div class="session-date-presets">' + [1, 7, 14].map(function (days) {
+    panel.innerHTML = '<header class="session-column-filter-header"><span>' + (en ? 'Date range' : '时间范围') + '</span><button type="button" class="session-date-clear" data-session-date-clear aria-label="' + (en ? 'Clear date range' : '清空时间范围') + '" title="' + (en ? 'Clear date range' : '清空时间范围') + '"' + (selectedRange ? '' : ' disabled') + '>' + lucideIcon('x') + '</button></header><div class="session-date-presets">' + [1, 7, 14].map(function (days) {
       var preset = sessionPresetRange(days);
       var active = range.start === preset.start && range.end === preset.end;
-      return '<button type="button" data-session-date-preset="' + days + '" class="' + (active ? 'is-active' : '') + '">' + (en ? days === 1 ? 'Today' : 'Last ' + days + ' days' : days === 1 ? '今天' : '最近 ' + days + ' 天') + '</button>';
-    }).join('') + '</div><div class="session-date-fields"><label>' + (en ? 'Start date' : '开始日期') + '<input type="date" data-session-date-start aria-label="' + (en ? 'Start date' : '开始日期') + '" value="' + esc(range.start) + '"></label><span aria-hidden="true">–</span><label>' + (en ? 'End date' : '结束日期') + '<input type="date" data-session-date-end aria-label="' + (en ? 'End date' : '结束日期') + '" value="' + esc(range.end) + '"></label></div><p class="session-date-error" role="alert" hidden></p><footer><button type="button" class="btn-soft" data-session-date-cancel>' + esc(t('取消')) + '</button><button type="button" class="btn-ink" data-session-date-apply>' + (en ? 'Apply' : '确定') + '</button></footer>';
+      return '<button type="button" data-session-date-preset="' + days + '" class="' + (active ? 'is-active' : '') + '">' + sessionPresetLabel(days) + '</button>';
+    }).join('') + '</div><div class="session-date-fields">' + ['start', 'end'].map(function (field) {
+      var label = en ? field === 'start' ? 'Start date' : 'End date' : field === 'start' ? '开始日期' : '结束日期';
+      return (field === 'end' ? '<span aria-hidden="true">–</span>' : '') + '<div class="session-date-field-group"><span>' + label + '</span><input type="hidden" data-session-date-' + field + ' value="' + esc(range[field]) + '"><button type="button" class="session-date-field" data-session-date-field="' + field + '" aria-label="' + label + '" aria-expanded="false" aria-controls="sessionDateCalendar"><span>' + esc(range[field] || (en ? 'Select date' : '选择日期')) + '</span>' + lucideIcon('calendar-days') + '</button></div>';
+    }).join('') + '</div><div id="sessionDateCalendar" class="session-date-calendar" role="group" hidden></div><p class="session-date-error" role="alert" hidden></p><footer><button type="button" class="btn-soft" data-session-date-cancel>' + esc(t('取消')) + '</button><button type="button" class="btn-ink" data-session-date-apply>' + (en ? 'Apply' : '确定') + '</button></footer>';
     document.body.appendChild(panel);
+    paintIcons();
     positionSessionPopover(panel, anchor);
     anchor.setAttribute('aria-expanded', 'true');
   }
 
+  function renderSessionCalendar() {
+    var menu = state.sessionDateMenu, panel = document.getElementById('sessionDatePicker');
+    if (!menu || !panel) return;
+    var calendar = panel.querySelector('.session-date-calendar'), field = menu.calendarField;
+    calendar.hidden = !field;
+    panel.querySelectorAll('[data-session-date-field]').forEach(function (button) {
+      button.setAttribute('aria-expanded', button.getAttribute('data-session-date-field') === field ? 'true' : 'false');
+    });
+    if (!field) { positionSessionPopover(panel, menu.anchor); return; }
+    var month = new Date(menu.calendarMonth + '-01T00:00:00Z');
+    var start = panel.querySelector('[data-session-date-start]').value;
+    var end = panel.querySelector('[data-session-date-end]').value;
+    var first = new Date(month); first.setUTCDate(1 - (month.getUTCDay() + 6) % 7);
+    var en = state.lang === 'en', today = sessionToday();
+    var monthLabel = new Intl.DateTimeFormat(en ? 'en-US' : 'zh-CN', { year: 'numeric', month: 'long', timeZone: 'UTC' }).format(month);
+    calendar.setAttribute('aria-label', en ? 'Choose ' + field + ' date' : field === 'start' ? '选择开始日期' : '选择结束日期');
+    calendar.innerHTML = '<div class="session-calendar-heading"><button type="button" data-session-date-month="-1" aria-label="' + (en ? 'Previous month' : '上个月') + '">' + lucideIcon('chevron-left') + '</button><span aria-live="polite">' + esc(monthLabel) + '</span><button type="button" data-session-date-month="1" aria-label="' + (en ? 'Next month' : '下个月') + '">' + lucideIcon('chevron-right') + '</button></div><div class="session-calendar-weekdays" aria-hidden="true">' + (en ? ['Mo','Tu','We','Th','Fr','Sa','Su'] : ['一','二','三','四','五','六','日']).map(function (day) { return '<span>' + day + '</span>'; }).join('') + '</div><div class="session-calendar-days">' + Array.from({ length: 42 }, function (_, i) {
+      var day = new Date(first); day.setUTCDate(first.getUTCDate() + i);
+      var date = day.toISOString().slice(0, 10), selected = date === start || date === end;
+      var disabled = field === 'end' && start && date < start;
+      var classes = (date.slice(0, 7) !== menu.calendarMonth ? ' is-other-month' : '') + (start && end && date > start && date < end ? ' is-in-range' : '') + (selected ? ' is-selected' : '') + (date === today ? ' is-today' : '');
+      return '<button type="button" class="session-calendar-day' + classes + '" data-session-date-day="' + date + '" aria-label="' + date + '" aria-pressed="' + selected + '"' + (date === today ? ' aria-current="date"' : '') + (disabled ? ' disabled' : '') + '>' + day.getUTCDate() + '</button>';
+    }).join('') + '</div>';
+    paintIcons(); positionSessionPopover(panel, menu.anchor);
+  }
+
+  function openSessionCalendar(field) {
+    var menu = state.sessionDateMenu, panel = document.getElementById('sessionDatePicker');
+    if (!menu || !panel) return;
+    var value = panel.querySelector('[data-session-date-' + field + ']').value || panel.querySelector('[data-session-date-start]').value || sessionToday();
+    menu.calendarField = field; menu.calendarMonth = value.slice(0, 7);
+    renderSessionCalendar();
+  }
+
+  function selectSessionCalendarDay(date) {
+    var menu = state.sessionDateMenu, panel = document.getElementById('sessionDatePicker');
+    if (!menu || !panel) return;
+    var field = menu.calendarField, input = panel.querySelector('[data-session-date-' + field + ']');
+    input.value = date;
+    if (field === 'start' && panel.querySelector('[data-session-date-end]').value < date) panel.querySelector('[data-session-date-end]').value = '';
+    panel.querySelectorAll('[data-session-date-field]').forEach(function (button) {
+      var value = panel.querySelector('[data-session-date-' + button.getAttribute('data-session-date-field') + ']').value;
+      button.querySelector('span').textContent = value || (state.lang === 'en' ? 'Select date' : '选择日期');
+    });
+    panel.querySelector('.session-date-error').hidden = true;
+    panel.querySelectorAll('[data-session-date-preset]').forEach(function (button) { button.classList.remove('is-active'); });
+    if (field === 'start') {
+      menu.calendarField = 'end'; menu.calendarMonth = date.slice(0, 7);
+    } else menu.calendarField = null;
+    renderSessionCalendar();
+    if (field === 'end') panel.querySelector('[data-session-date-field="end"]').focus({ preventScroll: true });
+    else {
+      var next = panel.querySelector('[data-session-date-day="' + date + '"]'); if (next) next.focus({ preventScroll: true });
+    }
+  }
+
   function applySessionDate(range) {
+    var context = state.sessionDateMenu ? state.sessionDateMenu.context : 'sessions';
+    if (context === 'monitoring') {
+      state.monitoringDateRange = range;
+      state.range = dateRangeDays(range || window.AIOpsBoards.dateBounds());
+      render();
+      return;
+    }
     state.sessionDateRange = range;
     state.sessionPage = 1; state.sessionSelected = {};
     rerenderSessions(true);
@@ -2872,12 +2822,14 @@
     var page = Math.min(Math.max(state.sessionPage || 1, 1), pages);
     state.sessionPage = page;
     var visible = rows.slice((page - 1) * pageSize, page * pageSize);
-    return (
-      '<div class="page-heading has-actions session-list-head"><h1>' + esc(t('线上会话')) + '</h1>' +
+    var header = '<div class="page-heading has-actions session-list-head"><h1>' + esc(t('线上会话')) + '</h1>' +
         '<div class="session-heading-actions">' +
           sessionSearchControl() +
           '<div class="session-filters">' + sessionDateControl() + scopeButton() + '</div>' +
-        '</div></div>' +
+        '</div></div>';
+    if (!rows.length) return header + '<div class="session-list-empty" role="status"><p>' + (state.lang === 'en' ? 'No matching sessions' : '没有匹配的会话') + '</p><button type="button" class="btn-soft" data-session-filters-clear>' + (state.lang === 'en' ? 'Reset filters' : '重置筛选') + '</button></div>';
+    return (
+      header +
       '<div class="table-wrap">' +
         '<div class="table-body">' +
           '<table class="data-table"><colgroup><col style="width:3%"><col style="width:17%"><col style="width:12%"><col style="width:11%"><col style="width:8%"><col style="width:4.5%"><col style="width:8%"><col style="width:4.5%"><col style="width:6%"><col style="width:7%"><col style="width:10%"><col style="width:9%"></colgroup>' +
@@ -2889,7 +2841,7 @@
               sessionColumnHeading('by', true) + sessionColumnHeading('markedAt', false) + '<th scope="col">' + esc(t('操作')) +
                 '<span class="session-col-shade is-right" aria-hidden="true"></span></th>' +
             '</tr></thead>' +
-            '<tbody>' + (visible.length ? visible.map(sessionRowHtml).join('') : '<tr><td colspan="12" class="session-empty"><p>' + (state.lang === 'en' ? 'No matching sessions' : '没有匹配的会话') + '</p><button type="button" class="btn-soft" data-session-filters-clear>' + (state.lang === 'en' ? 'Reset filters' : '重置筛选') + '</button></td></tr>') + '</tbody>' +
+            '<tbody>' + visible.map(sessionRowHtml).join('') + '</tbody>' +
           '</table>' +
         '</div>' +
         sessionPager(page, pages, rows.length) +
@@ -3457,9 +3409,9 @@
     return !!inPicker;
   }
 
-  function cuiComposer(page) {
+  function cuiComposer(page, draft) {
     var seed = state.cuiSeed && state.cuiSeed.page === page ? state.cuiSeed : null;
-    var prompt = seed ? seed.prompt : '';
+    var prompt = draft != null ? draft : seed ? seed.prompt : '';
     var skill = seed && seed.skill ? seed.skill : '';
     var refs = seed && seed.sessionRefs ? seed.sessionRefs : [];
     return (
@@ -3521,10 +3473,11 @@
     return '<div class="cui-hero"><h1>' + line + '</h1></div>';
   }
 
-  function cuiShell(page, started, threadHtml) {
+  function cuiShell(page, started, threadHtml, options) {
+    options = options || {};
     return (
       '<div class="cui">' +
-        '<header class="cui-head"><h1 class="cui-head-title">' + esc(spaceName()) + '</h1>' +
+        '<header class="cui-head">' + (options.back || '') + '<h1 class="cui-head-title">' + esc(options.title || spaceName()) + '</h1>' +
           '<button type="button" class="ws-btn" id="toggle-right-rail" aria-label="Open agent panel" aria-pressed="false">' +
             '<svg class="ws-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M15 4.5v15"/></svg>' +
           '</button></header>' +
@@ -3532,7 +3485,7 @@
           '<div class="cui-wrap">' +
             cuiHero() +
             '<div class="cui-thread"><div class="cui-scroll"><div class="chat-thread">' + threadHtml + '</div></div></div>' +
-            cuiComposer(page) +
+            cuiComposer(page, options.draft) +
             '<div class="cui-spacer" aria-hidden="true"></div>' +
           '</div>' +
         '</div>' +
@@ -3812,7 +3765,9 @@
       }
     }
     if (rail) {
-      rail.hidden = !open;
+      rail.hidden = !open && !(window.AIOpsColumns && window.AIOpsColumns.isAnimating());
+      rail.inert = !open;
+      rail.setAttribute('aria-hidden', String(!open));
       if (open) paintRail();
     }
     var btn = document.getElementById('toggle-right-rail');
@@ -3918,7 +3873,7 @@
       '<div class="page' +
       (state.page === '工作台' ? ' is-home' : '') +
       (state.page === '线上会话' ? ' is-sessions' : '') +
-      (state.page === '分析任务' || isWsSession(state.page) ? ' is-cui' : '') +
+      (state.page === '分析任务' || isWsSession(state.page) || (state.page === '定时任务' && window.AIOpsCapability.isConversation()) ? ' is-cui' : '') +
       (isAnalysisPage(state.page) ? ' is-analysis' : '') +
       '">' +
       content +
@@ -4144,11 +4099,19 @@
       return;
     }
 
+    var configMetric = e.target.closest('[data-config-metric]');
+    if (configMetric) {
+      e.preventDefault(); e.stopPropagation();
+      configMetric.setAttribute('aria-checked', String(configMetric.getAttribute('aria-checked') !== 'true'));
+      applyWidgetConfigLive(configMetric.getAttribute('data-config-live'));
+      return;
+    }
+
     var configClose = e.target.closest('[data-config-close]');
     if (configClose) {
       e.stopPropagation();
       state.configId = null;
-      state.configPos = null;
+
       renderConfigPopover();
       return;
     }
@@ -4156,11 +4119,14 @@
     var widgetConfig = e.target.closest('[data-widget-config]');
     if (widgetConfig) {
       e.stopPropagation();
-      state.configId = widgetConfig.getAttribute('data-widget-config');
-      state.configPos = null;
+      var configId = widgetConfig.getAttribute('data-widget-config');
+      if (state.configId === configId) { closeConfigMenu(false); return; }
+      state.configId = configId;
+
       state.galleryOpen = false;
       renderGallery();
       renderConfigPopover();
+      document.querySelector('#widgetConfigMenu [role="menuitemcheckbox"]')?.focus({ preventScroll: true });
       return;
     }
 
@@ -4168,6 +4134,7 @@
     if (widgetDelete) {
       e.stopPropagation();
       openDeleteConfirm(widgetDelete.getAttribute('data-widget-delete'), widgetDelete);
+      closeConfigMenu(false);
       return;
     }
 
@@ -4177,7 +4144,7 @@
       !e.target.closest('[data-widget-config]')
     ) {
       state.configId = null;
-      state.configPos = null;
+
       renderConfigPopover();
     }
 
@@ -4214,6 +4181,19 @@
     if (dateOpen) { openSessionDate(dateOpen); return; }
     var datePreset = e.target.closest('[data-session-date-preset]');
     if (datePreset) { applySessionDate(sessionPresetRange(Number(datePreset.getAttribute('data-session-date-preset')))); return; }
+    var dateField = e.target.closest('[data-session-date-field]');
+    if (dateField) { openSessionCalendar(dateField.getAttribute('data-session-date-field')); return; }
+    var dateMonth = e.target.closest('[data-session-date-month]');
+    if (dateMonth && state.sessionDateMenu) {
+      var month = new Date(state.sessionDateMenu.calendarMonth + '-01T00:00:00Z');
+      month.setUTCMonth(month.getUTCMonth() + Number(dateMonth.getAttribute('data-session-date-month')));
+      state.sessionDateMenu.calendarMonth = month.toISOString().slice(0, 7);
+      renderSessionCalendar();
+      document.querySelector('[data-session-date-month="' + dateMonth.getAttribute('data-session-date-month') + '"]').focus({ preventScroll: true });
+      return;
+    }
+    var dateDay = e.target.closest('[data-session-date-day]');
+    if (dateDay && !dateDay.disabled) { selectSessionCalendarDay(dateDay.getAttribute('data-session-date-day')); return; }
     if (e.target.closest('[data-session-date-cancel]')) { closeSessionDate(true); return; }
     if (e.target.closest('[data-session-date-apply]')) {
       var datePanel = document.getElementById('sessionDatePicker');
@@ -4380,6 +4360,8 @@
     }
     var field = e.target && e.target.closest && e.target.closest('.cui-input');
     if (!field) return;
+    var runPage = field.closest('[data-cui-page]');
+    if (runPage && runPage.getAttribute('data-cui-page').indexOf('schedule-run:') === 0) window.AIOpsCapability.setRunDraft(runPage.getAttribute('data-cui-page').slice(13), field.value);
     if (state.cuiSeed && field.closest('[data-cui-page="分析任务"]')) state.cuiSeed.prompt = field.value;
     var card = field.closest('.cui-card');
     if (card) card.classList.toggle('has-text', field.value.trim().length > 0 || !!(state.cuiSeed && state.cuiSeed.sessionRefs && state.cuiSeed.sessionRefs.length));
@@ -4417,6 +4399,22 @@
     }, 0);
   });
 
+  document.addEventListener('pointerdown', function (e) {
+    if (state.configId && !e.target.closest('#widgetConfigHost, [data-widget-config]')) closeConfigMenu(false);
+  }, true);
+  document.addEventListener('keydown', function (e) {
+    var menu = document.getElementById('widgetConfigMenu');
+    if (!menu || !menu.contains(e.target)) return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); closeConfigMenu(true); return; }
+    if (e.key === 'Tab') { closeConfigMenu(true); return; }
+    if (['ArrowDown', 'ArrowUp', 'Home', 'End'].indexOf(e.key) < 0) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    var items = Array.from(menu.querySelectorAll('[role="menuitemcheckbox"], [role="menuitem"]'));
+    var index = items.indexOf(e.target);
+    var next = e.key === 'Home' ? 0 : e.key === 'End' ? items.length - 1 : (index + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+    items[next].focus();
+  });
+
   document.addEventListener('keydown', function (e) {
     if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-session-view]')) {
       e.preventDefault(); openSessionDetail(e.target.getAttribute('data-session-view')); return;
@@ -4424,6 +4422,20 @@
     var actions = document.getElementById('sessionActionsMenu');
     if (actions && e.key === 'Escape') { actions.remove(); e.preventDefault(); return; }
     if (actions && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { var buttons = Array.from(actions.querySelectorAll('button')); var at = buttons.indexOf(document.activeElement); buttons[(at + (e.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length].focus(); e.preventDefault(); return; }
+    var calendarDay = e.target.closest('[data-session-date-day]');
+    var dayStep = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key];
+    if (calendarDay && state.sessionDateMenu && dayStep) {
+      e.preventDefault();
+      var nextDay = new Date(calendarDay.getAttribute('data-session-date-day') + 'T00:00:00Z');
+      nextDay.setUTCDate(nextDay.getUTCDate() + dayStep);
+      var nextDate = nextDay.toISOString().slice(0, 10);
+      var startDate = document.querySelector('[data-session-date-start]').value;
+      if (state.sessionDateMenu.calendarField === 'end' && startDate && nextDate < startDate) return;
+      state.sessionDateMenu.calendarMonth = nextDate.slice(0, 7);
+      renderSessionCalendar();
+      document.querySelector('[data-session-date-day="' + nextDate + '"]').focus({ preventScroll: true });
+      return;
+    }
     if (state.sessionDateMenu && e.key === 'Escape') { closeSessionDate(true); e.preventDefault(); return; }
     if (state.sessionFilterMenu && e.key === 'Escape') { closeSessionFilter(true); e.preventDefault(); return; }
     var markMenu = document.getElementById('sessionMarkMenu');
@@ -4459,6 +4471,7 @@
     if (!text && !(state.cuiSeed && state.cuiSeed.sessionRefs && state.cuiSeed.sessionRefs.length)) return;
     if (!text) text = state.lang === 'en' ? 'Analyze the referenced content.' : '分析引用的内容。';
     var page = form.getAttribute('data-cui-page');
+    if (page.indexOf('schedule-run:') === 0) { window.AIOpsCapability.continueRun(page.slice(13), text); return; }
     if (page === '分析任务') startTask(text);
     else appendTurn(page, text);
   });
@@ -4472,9 +4485,6 @@
       applySessionFilter(key, values);
       return;
     }
-    var metric = e.target && e.target.closest('[data-config-live]');
-    if (!metric) return;
-    applyWidgetConfigLive(metric.getAttribute('data-config-live'));
   });
 
   /* Drag: gallery → canvas · canvas reorder (live placeholder) · corner resize */
@@ -5013,7 +5023,7 @@
       closeNewMenu();
       if (state.configId) {
         state.configId = null;
-        state.configPos = null;
+
         renderConfigPopover();
       } else if (state.galleryOpen) {
         closeGallery();
@@ -5030,9 +5040,15 @@
     }
     if (e.target.closest('#toggle-right-rail') || e.target.closest('#cuiRailClose')) {
       e.preventDefault();
-      state.railOpen = !state.railOpen;
-      if (!state.railOpen) state.railMax = false;
-      syncRail();
+      var toggleRail = function () {
+        state.railOpen = !state.railOpen;
+        if (!state.railOpen) state.railMax = false;
+        syncRail();
+        var focus = document.getElementById(state.railOpen ? 'cuiRailClose' : 'toggle-right-rail');
+        if (focus) focus.focus({ preventScroll: true });
+      };
+      if (window.AIOpsColumns) window.AIOpsColumns.animate(toggleRail);
+      else toggleRail();
       return;
     }
     if (!e.target.closest('#cuiRail')) return;
@@ -5070,6 +5086,7 @@
     if (state.deleteAsk) closeDeleteConfirm();
     if (state.galleryOpen) fitGalleryPreview();
     if (cuiModelMenu && !cuiModelMenu.hidden) alignCuiModelMenu();
+    if (state.configId) closeConfigMenu(false);
   });
   document.addEventListener('scroll', function () {
     if (cuiModelMenu && !cuiModelMenu.hidden) alignCuiModelMenu();
@@ -5087,6 +5104,7 @@
 
   document.addEventListener('scroll', function (e) {
     if (e.target.isConnected === false) return;
+    if (state.configId && !e.target.closest?.('#widgetConfigHost')) closeConfigMenu(false);
     if (state.sessionFilterMenu && !e.target.closest?.('#sessionColumnFilter')) {
       if (e.target.matches?.('.page.is-sessions .table-body')) positionSessionPopover(document.getElementById('sessionColumnFilter'), state.sessionFilterMenu.anchor);
       else closeSessionFilter();
@@ -5113,6 +5131,7 @@
       getRange: function () {
         return state.range;
       },
+      getDateRange: monitoringDateRange,
       setRange: function (v) {
         state.range = Number(v) || 1;
       },
@@ -5178,6 +5197,7 @@
       toast: showToast,
       taskSaved: function (task) { window.AIOpsWorkspaces.syncTask(task); },
       taskDeleted: function (task) { window.AIOpsWorkspaces.removeTask(task); },
+      conversationShell: function (task, record, thread, back) { return cuiShell('schedule-run:' + (record ? record.id : task.id), true, thread, { title: task.name, back: back, draft: record && record.chatDraft || '' }); },
       rerender: function (opts) { render(opts); },
       openScheduleChat: openScheduleChat,
       referenceArtifacts: function (refs) { state.cuiSeed = { page: '分析任务', skill: '', sessionRefs: refs, prompt: '' }; state.cuiFocus = true; go('分析任务'); },
