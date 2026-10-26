@@ -39,6 +39,7 @@
     var split = document.querySelector('.resource-split');
     var controls = split && split.querySelector('.resource-list-controls');
     if (!controls) return;
+    if (controls.querySelector('.session-search-field, .cap-search-field')) return;
     var width = Array.from(controls.children).reduce(function (n, item) { return n + item.getBoundingClientRect().width; }, 0) + Math.max(0, controls.children.length - 1) * 8 + 40;
     var kind = split.dataset.kind, data = dock(kind);
     data.minWidth = Math.max(kind === 'session' ? 300 : 260, Math.ceil(width));

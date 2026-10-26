@@ -4063,3 +4063,11 @@ body.aiops-body .session-date-field[aria-expanded="true"] { border-color: var(--
 .session-submenu-arrow { display: inline-flex; margin-left: auto; }
 .session-submenu-arrow svg { width: 14px; height: 14px; }
 #sessionActionsMenu [aria-expanded="true"] { background: var(--hover); }
+
+/* Match the Workbench form focus treatment. */
+.aiops-body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea):not(.cui-input):not(.search-field input):focus {
+  outline: none; border-color: #0d99ff; box-shadow: 0 0 0 3px rgba(13,153,255,.15);
+}
+.aiops-body .search-field input:focus { border-color: transparent; box-shadow: none; }
+:is(.aiops-back,.cap-chat-back,[data-sd="back"],.detail-back) { border: 1px solid var(--control-border,#dedede); background: #fff; border-radius: 8px; }
+#aiopsCollapsedHome { display: none; }

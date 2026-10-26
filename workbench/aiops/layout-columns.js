@@ -61,6 +61,7 @@
     if (header && collapsedNav.parentNode !== header) header.insertBefore(collapsedNav, header.firstChild);
     collapsedNav.hidden = visible || !header;
     var home = document.getElementById('aiopsCollapsedHome');
+    home.hidden = true;
     home.setAttribute('aria-label', tr('回到首页', 'Back to Workbench')); home.title = home.getAttribute('aria-label');
     var close = document.getElementById('aiopsNavToggle'), open = document.getElementById('aiopsNavOpen');
     if (close) { close.setAttribute('aria-label', tr('收起左侧边栏', 'Collapse sidebar')); close.title = close.getAttribute('aria-label'); close.setAttribute('aria-expanded', String(visible)); }

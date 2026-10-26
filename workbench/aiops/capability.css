@@ -786,30 +786,25 @@
 .cap-full-data-modal .cap-dialog-body { display: flex; flex-direction: column; gap: 16px; flex: 1; min-height: 0; padding: 24px; overflow: hidden; }
 .cap-full-data-toolbar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; flex-shrink: 0; }
 .cap-full-data-toolbar input { width: min(320px, 100%); min-width: 0; height: 36px; border: 1px solid var(--control-border); border-radius: 8px; padding: 0 12px; color: var(--text); background: #fff; font: inherit; font-size: 13px; }
-.cap-full-data-toolbar > span { font-size: 12px; color: var(--text-secondary); }
 .cap-full-data-toolbar > button { margin-left: auto; }
-#capFullDataResults { display: flex; flex-direction: column; gap: 16px; min-height: 0; flex: 1; }
-.cap-full-data-table.table-wrap { flex: 1; min-height: 0; margin: 0; overflow: auto; }
-.cap-full-data-table table { min-width: 100%; width: max-content; table-layout: auto; }
-.cap-full-data-table th { position: sticky; top: 0; z-index: 1; background: #f7f8fa; }
-.cap-full-data-table :is(th,td) { min-width: 160px; max-width: 440px; padding: 12px 16px; text-align: left; vertical-align: top; white-space: normal; overflow-wrap: anywhere; border-right: 1px solid var(--divider); }
+#capFullDataResults { display: flex; flex-direction: column; min-height: 0; flex: 1; margin: 0; overflow: hidden; border-radius: 12px; background: #fff; }
+.cap-full-data-table.table-body { flex: 1; min-height: 0; margin: 0; overflow: auto; }
+.cap-full-data-table table { min-width: 100%; width: max-content; table-layout: auto; border-collapse: separate; border-spacing: 0; }
+.cap-full-data-table th { position: sticky; top: 0; z-index: 1; }
+.cap-full-data-table :is(th,td) { min-width: 160px; text-align: left; vertical-align: middle; }
 .cap-full-data-table :is(th,td):first-child { min-width: 64px; width: 64px; color: var(--text-secondary); }
-.cap-full-data-table :is(th,td):last-child { border-right: 0; }
-.cap-full-data-table tbody tr:last-child td { border-bottom: 1px solid var(--divider); }
 .cap-full-data-table .cap-full-data-empty { height: 100px; text-align: center; }
-.cap-full-data-pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--text-secondary); flex-shrink: 0; }
-.cap-full-data-pages { display: flex; align-items: center; gap: 10px; margin-left: auto; white-space: nowrap; }
+.cap-full-data-pages { display: flex; align-items: center; gap: 8px; margin-left: auto; white-space: nowrap; }
 .cap-full-data-size { position: relative; }
-.cap-full-data-size > button { min-width: 72px; justify-content: space-between; gap: 12px; }
+.table-pager .cap-full-data-size > button { width: auto; min-width: 64px; padding: 0 8px; justify-content: space-between; gap: 12px; }
 .cap-full-data-size svg { width: 12px; height: 12px; }
 .cap-full-data-size .cui-model-menu { position: absolute; min-width: 88px; right: 0; bottom: calc(100% + 4px); z-index: 1; }
-.cap-full-data-size .cui-model-option { font-size: 12px; }
-.cap-full-data-modal .cap-dialog-foot { padding: 16px 24px; flex-shrink: 0; }
-.cap-full-data-modal button:disabled { opacity: .4; cursor: default; }
+.table-pager .cap-full-data-size .cui-model-option { width: 100%; border: 0; border-radius: 4px; padding: 0 8px; justify-content: space-between; font-size: 12px; }
+.cap-page-ellipsis { width: 28px; text-align: center; }
 @media (max-width: 650px) {
   .cap-full-data-overlay { padding: 12px; }
   .cap-full-data-modal.cap-dialog { height: calc(100dvh - 24px); }
-  .cap-full-data-modal :is(.cap-dialog-head,.cap-dialog-body,.cap-dialog-foot) { padding: 16px; }
+  .cap-full-data-modal :is(.cap-dialog-head,.cap-dialog-body) { padding: 16px; }
   .cap-full-data-toolbar { gap: 10px; }
   .cap-full-data-toolbar input { width: 100%; }
   .cap-full-data-pages { gap: 6px; }
@@ -908,10 +903,9 @@
 }
 
 /* Schedule definitions and execution conversations have separate layouts. */
-.cap-definition-head { gap: 8px; margin-bottom: 14px; }
-.cap-definition-head h1 { flex: 1; min-width: 0; }
-.cap-definition-description { color: var(--text-secondary); font-size: 13px; line-height: 1.8; margin: 0 0 12px; }
-.cap-definition-meta { display: flex; gap: 20px; color: var(--text-secondary); font-size: 12px; margin-bottom: 24px; }
+.page-heading.has-actions.cap-definition-head { display: flex; flex-wrap: nowrap; gap: 8px; margin-bottom: 14px; }
+.cap-definition-head h1 { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cap-definition-head .cap-detail-actions { flex: 0 0 auto; flex-wrap: nowrap; }
 .cap-definition-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 32%); gap: 20px; align-items: start; }
 .cap-definition-main, .cap-definition-artifacts { min-width: 0; border: 1px solid var(--border); border-radius: 12px; background: #fff; overflow: hidden; }
 .cap-definition-main > .cap-tabs { height: 44px; box-sizing: border-box; padding: 0 20px; }
@@ -933,7 +927,7 @@
 .cap-definition-artifacts > header { display: flex; gap: 8px; align-items: center; height: 44px; box-sizing: border-box; padding: 0 16px; border-bottom: 1px solid var(--border); }
 .cap-definition-artifacts h2 { margin: 0; font-size: 13px; }
 .cap-definition-artifacts > header span { color: var(--text-secondary); font-size: 12px; }
-.cap-definition-artifacts > div { padding: 8px; max-height: 560px; overflow: auto; }
+.cap-definition-artifacts > div { padding: 4px; max-height: 560px; overflow: auto; }
 .cap-definition-artifacts > div > button { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 12px 8px; border-radius: 8px; }
 .cap-definition-artifacts > div > button:hover { background: var(--hover); }
 .cap-definition-artifacts button > span:nth-child(2) { flex: 1; min-width: 0; }
@@ -1008,10 +1002,136 @@ body.aiops-body:has(.cap-execution-chat) { min-width: 0; }
 .cap-node-editor .cap-output textarea { width: 100%; resize: vertical; font: 12px/1.7 ui-monospace,monospace; }
 .cap-node-editor .cap-output .cap-field { margin-bottom: 8px; }
 @media(max-width:900px) { .cap-definition-layout { grid-template-columns: minmax(0,1fr); } .cap-definition-artifacts > div { max-height: none; } .cap-config-summary dl { grid-template-columns: minmax(0,1fr); } }
-@media(max-width:650px) { .cap-node-workspace { grid-template-columns: minmax(0,1fr); } .cap-definition-head { flex-wrap: wrap; } .cap-definition-head .cap-detail-actions { flex-basis: 100%; justify-content: flex-end; } .cap-task-editor .cap-dialog-body { padding: 14px; } }
+@media(max-width:650px) { .cap-node-workspace { grid-template-columns: minmax(0,1fr); } .cap-task-editor .cap-dialog-body { padding: 14px; } }
 
 .cap-definition-artifacts button > span:first-child { flex: 0 0 auto; }
 .cap-editor-basics { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); column-gap: 16px; }
 .cap-editor-basics > :not(.cap-field):not(.cap-form-row) { grid-column: 1 / -1; }
 .cap-task-editor .cap-editor-basics .cap-field { min-width: 0; }
 @media(max-width:650px) { .cap-editor-basics { display: block; } }
+
+.cap-definition-main:has(> .cap-definition-content.is-runs) > .cap-tabs { margin-bottom: 0; }
+.cap-definition-content.is-runs { padding: 4px; }
+.cap-definition-content.is-runs .cap-runs { border: 0; border-radius: 0; margin: 0; }
+.cap-definition-content.is-runs .cap-run-row { border: 0; border-radius: 8px; }
+.cap-artifact-separator, .cap-run-separator { padding: 4px 8px; }
+.cap-artifact-separator::after, .cap-run-separator::after { content: ''; display: block; border-top: 1px solid var(--divider); }
+.cap-definition-artifacts > div { display: flex; flex-direction: column; gap: 0; }
+
+.cap-history-dialog.cap-dialog { width: min(1040px, 100%); height: min(720px, calc(100dvh - 48px)); }
+.cap-history-dialog .cap-dialog-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 216px minmax(0, 1fr); padding: 0; overflow: hidden; }
+.cap-history-list { padding: 8px; overflow: auto; border-right: 1px solid var(--divider); }
+.cap-history-version { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 12px; border: 0; border-radius: 8px; background: transparent; text-align: left; color: var(--text); cursor: pointer; }
+.cap-history-version:hover { background: var(--bg-subtle); }
+.cap-history-version.is-active { background: var(--selected-bg, #e6f4ff); }
+.cap-history-version strong { font-size: 13px; font-weight: 500; }
+.cap-history-version :is(span,small) { font-size: 12px; color: var(--text-secondary); }
+.cap-history-preview { min-width: 0; padding: 20px; overflow: auto; }
+.cap-history-preview :is(.cap-code,.cap-doc) { padding: 0; margin: 0; border: 0; border-radius: 0; background: transparent; }
+.cap-history-preview .cap-doc > :first-child { margin-top: 0; }
+@media (max-width: 650px) { .cap-history-dialog .cap-dialog-body { grid-template-columns: 156px minmax(0, 1fr); } .cap-history-preview { padding: 16px; } }
+
+body.aiops-body:has(.cap-definition-layout) { min-width: 0; }
+
+/* Schedule details and editor follow the supplied task configuration designs. */
+body.aiops-body:has(.cap-task-editor) { min-width: 0; }
+.cap-definition-main > .cap-tabs { margin-bottom: 0; }
+.cap-definition-content:not(.is-runs) { padding: 12px; }
+.cap-config-summary dl { display: block; margin: 0; padding: 0 12px; border: 1px solid var(--border); border-radius: 12px; }
+.cap-config-summary dl > div { display: grid; grid-template-columns: minmax(96px, 22%) minmax(0, 1fr); align-items: start; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--divider); font-size: 13px; line-height: 20px; }
+.cap-config-summary dl > div:last-child { border-bottom: 0; }
+.cap-config-summary dt { margin: 0; font-size: 12px; }
+.cap-config-summary dd { font-size: 13px; }
+.cap-definition-node { margin-top: 12px; padding: 0; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.cap-definition-node > header { min-height: 44px; margin: 0; padding: 12px; border-bottom: 1px solid var(--divider); }
+:is(.cap-definition-node,.cap-task-editor) .cap-node-number { width: 18px; height: 18px; border: 0; border-radius: 4px; background: #202020; color: #fff; font-size: 11px; line-height: 18px; }
+.cap-definition-node-body { padding: 8px; }
+.cap-definition-node-body > h4 { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--bg-subtle); color: #666; font-size: 12px; font-weight: 400; }
+.cap-config-content { padding: 12px 8px; }
+.cap-config-content:last-child { padding-bottom: 0; }
+.cap-definition-node .cap-doc { border: 0; border-radius: 0; margin: 0; font-size: 13px; }
+.cap-definition-node .cap-doc > :first-child { margin-top: 0; }
+.cap-definition-node .cap-doc > :last-child { margin-bottom: 0; }
+.cap-config-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.cap-config-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: 28px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 20px; background: var(--bg-subtle); color: var(--text); font-size: 12px; text-align: left; }
+.cap-config-chip > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.cap-config-chip > svg { width: 14px; height: 14px; flex-shrink: 0; }
+.cap-config-chip > .widget-file-chip { width: 18px; height: 18px; border-radius: 4px; font-size: 9px; flex-shrink: 0; }
+.cap-config-chip:has(.lucide-table-2) > svg { color: #27881c; }
+button.cap-config-chip:hover { background: var(--hover); }
+
+.cap-dialog.cap-task-editor { width: min(960px, 100%); height: min(800px, calc(100dvh - 48px)); max-height: calc(100dvh - 48px); overflow: hidden; }
+.cap-task-editor > .cap-dialog-head { min-height: 56px; padding: 16px 20px; border-bottom: 0; flex-shrink: 0; }
+.cap-task-editor > .cap-editor-tabs { height: 40px; margin: 0 20px; flex-shrink: 0; }
+.cap-editor-tabs > button { height: 40px; }
+.cap-task-editor > .cap-dialog-body { flex: 1; min-height: 0; padding: 16px 20px; overflow: auto; }
+.cap-task-editor > .cap-dialog-foot { padding: 12px 20px; flex-shrink: 0; }
+.cap-task-editor .cap-editor-basics { display: block; margin: 0 0 16px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; }
+.cap-task-editor .cap-editor-basics > .cap-form-row:last-child .cap-field { margin-bottom: 0; }
+.cap-task-editor .cap-counted-field { position: relative; display: block; }
+.cap-counted-field > textarea { display: block; width: 100%; min-height: 80px; padding-bottom: 24px; }
+.cap-char-count { position: absolute; right: 10px; bottom: 6px; font-size: 11px; line-height: 16px; color: var(--text-secondary); pointer-events: none; }
+.cap-char-count.is-over { color: #d93025; }
+.cap-task-editor .cap-node-workspace { grid-template-columns: 220px minmax(0, 1fr); gap: 16px; }
+.cap-task-editor .cap-node-list { position: sticky; top: 0; padding: 16px; background: #fff; }
+.cap-task-editor .cap-node-list > header { padding: 0; margin-bottom: 6px; font-size: 13px; }
+.cap-task-editor .cap-node-list > .cap-note { margin: 0 0 16px; font-size: 12px; line-height: 18px; color: var(--text-secondary); }
+.cap-task-editor .cap-node-card { align-items: center; padding: 10px 12px; gap: 8px; }
+.cap-task-editor .cap-node-card.is-active { border-color: var(--border-strong); background: var(--bg-subtle); }
+.cap-task-editor .cap-node-card > strong { min-width: 0; flex: 1; line-height: 18px; }
+.cap-task-editor .cap-node-add { height: 40px; border-style: dashed; color: #666; }
+.cap-node-editors { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.cap-task-editor .cap-node-editor { border: 1px solid var(--border); border-radius: 12px; overflow: visible; }
+.cap-task-editor .cap-node-editor > header { min-height: 44px; margin: 0; padding: 10px 16px; border-bottom: 1px solid var(--divider); }
+.cap-node-editor > header > strong { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.cap-node-editor-body { padding: 16px; }
+.cap-task-editor .cap-node-name { width: 100%; height: 32px; padding: 0 10px; border: 1px solid var(--control-border); border-radius: 8px; background: #fff; color: var(--text); font: inherit; font-size: 12px; }
+.cap-node-editor-body > h3 { margin: 20px 0 12px; font-size: 13px; }
+.cap-input-configuration { padding: 12px; border-radius: 12px; background: var(--bg-subtle); }
+.cap-task-editor .cap-input-configuration .cap-field { margin: 0; }
+.cap-task-editor .cap-rich-prompt { min-height: 160px; max-height: 320px; padding: 8px 10px 24px; font-size: 12px; line-height: 20px; }
+.cap-task-editor .cap-context-chips { margin: 8px 0 0; }
+.cap-task-editor .cap-context-chips:empty { display: none; }
+.cap-task-editor .cap-output-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 20px 0 12px; }
+.cap-task-editor .cap-output-head h3 { margin: 0; font-size: 13px; }
+.cap-task-editor .cap-output-head > button { height: 26px; padding: 0 8px; font-size: 11px; }
+.cap-task-editor .cap-node-editor .cap-output { margin-bottom: 12px; padding: 12px; border: 0; border-radius: 12px; }
+.cap-task-editor .cap-output:last-child { margin-bottom: 0; }
+.cap-task-editor .cap-output-fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.cap-task-editor .cap-node-editor .cap-output textarea { font: inherit; font-size: 12px; }
+@media (max-width: 650px) {
+  .cap-task-editor > .cap-dialog-head { padding: 12px 16px; }
+  .cap-task-editor > .cap-editor-tabs { margin: 0 16px; }
+  .cap-task-editor > .cap-dialog-body { padding: 12px 16px; }
+  .cap-task-editor .cap-node-workspace { grid-template-columns: minmax(0, 1fr); }
+  .cap-task-editor .cap-node-list { position: static; }
+  .cap-task-editor .cap-form-row { grid-template-columns: minmax(0, 1fr); }
+  .cap-task-editor .cap-editor-basics > .cap-form-row:last-child .cap-field { margin-bottom: 16px; }
+  .cap-task-editor .cap-editor-basics > .cap-form-row:last-child .cap-field:last-child { margin-bottom: 0; }
+}
+
+/* Keep task details readable beside an artifact opened in the shared rail. */
+.aiops-app.is-rail-open .cap-definition-layout { grid-template-columns: minmax(0, 1fr); }
+
+.cap-data-preview-toolbar { flex-wrap: wrap; }
+.cap-data-preview-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.cap-schema-dialog.cap-dialog { width: min(840px, 100%); overflow: hidden; }
+.cap-schema-dialog .cap-dialog-head { flex-shrink: 0; }
+.cap-schema-dialog .cap-dialog-head h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cap-schema-dialog .cap-dialog-body { min-height: 0; }
+.cap-schema-dialog .table-wrap { overflow: auto; }
+
+.cap-definition-more.btn-soft { display: none; width: 28px; height: 28px; padding: 0; justify-content: center; }
+.aiops-app.is-rail-open .cap-definition-more { display: inline-flex; }
+.aiops-app.is-rail-open .cap-definition-action { display: none; }
+
+.cap-task-editor .cap-node-editor textarea[data-out-schema] { min-height: 220px; }
+.cap-editor-select { display: block; width: 100%; min-width: 0; }
+.cap-task-editor .cap-editor-select > select[hidden] { display: none; }
+.cap-task-editor .cap-editor-select-trigger { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; height: 32px; padding: 0 10px; border-color: var(--control-border); background: #fff; font-size: 12px; text-align: left; }
+.cap-editor-select-trigger > span { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.cap-editor-select-trigger > svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--text-secondary); }
+.cap-editor-select-menu.cui-model-menu { z-index: 100; min-width: 0; }
+.cap-editor-select-menu .cui-model-option { flex-shrink: 0; }
+.cap-editor-select-menu .cui-model-option:focus-visible { outline: none; background: var(--hover); }
+.cap-editor-select-menu .cui-model-option > svg { width: 14px; height: 14px; flex-shrink: 0; }

@@ -37,7 +37,7 @@
 .resource-panel-body { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; padding: 16px; overflow: hidden; }
 .resource-panel-body .sd-tab-content { padding: 12px; }
 .resource-panel-body .sd-card-heading { padding: 0 12px; }
-.resource-panel-body .sd-panel-heading { padding: 10px; }
+.resource-panel-body .sd-panel-heading { padding: 7px 10px; }
 .resource-panel-body .sd-conversation-scroll { padding: 12px; }
 .resource-panel-body .sd-message > header { padding: 0; }
 .resource-panel-body .sd-message-body { padding: 0; }
@@ -137,8 +137,7 @@ body.aiops-body:has(.resource-art-preview) { min-width: 0; }
 .resource-art-detail .cap-doc > :first-child { margin-top: 0; }
 .cap-art-title-actions > :is(.btn-soft, .btn-ink) { height: 28px; padding: 0 10px; font-size: 12px; }
 .cap-art-editor { display: flex; flex-direction: column; min-height: 100%; }
-.cap-art-editor .cap-field:last-child { flex: 1; margin-bottom: 0; }
-.cap-art-editor textarea { flex: 1; min-height: 260px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
 .resource-split:is([data-kind="session"], [data-kind="artifact"]) .resource-list-item { height: 36px; min-height: 36px; box-sizing: border-box; padding-top: 4px; padding-bottom: 4px; margin-bottom: 4px; }
 @container resource (max-width:680px) {
  .resource-panel-body .sd-tabs { gap: 16px; }
@@ -148,3 +147,11 @@ body.aiops-body:has(.resource-art-preview) { min-width: 0; }
 
 .aiops-scroll:has(> .page > .resource-split) { display: flex; flex-direction: column; overflow: hidden; scrollbar-gutter: auto; }
 .page:has(> .resource-split) { display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%; }
+
+.resource-art-detail .cap-code { background: transparent; border: 0; border-radius: 0; padding: 0; margin: 0; }
+.cap-art-editor .cap-content-edit { flex: 1; min-height: 100%; outline: none; padding: 0; margin: 0; background: transparent; border: 0; }
+.cap-art-editor .cap-content-edit > :first-child { margin-top: 0; }
+.resource-list-controls { position: relative; min-height: 44px; box-sizing: border-box; }
+.resource-list-controls:has(.session-search-field,.cap-search-field) > :not(.session-search-field,.cap-search-field) { visibility: hidden; pointer-events: none; }
+.resource-split[data-kind] .resource-list-controls :is(.session-search-field,.cap-search-field) { position: absolute; left: 8px; right: 8px; top: 0; width: auto; height: 32px; flex: none; z-index: 2; }
+.session-actions-group { width: max-content; }

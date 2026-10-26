@@ -109,7 +109,7 @@
     var actor = input ? row.user : row.agent;
     var attachment = input && turn.attachment ? '<span class="cui-session-ref sd-attachment" title="' + esc(turn.attachment) + '"><span class="cui-session-ref-icon">' + ico('file-spreadsheet') + '</span><span class="cui-session-ref-label">' + esc(turn.attachment) + '</span></span>' : '';
     var at = input ? turn.inputAt : turn.outputAt;
-    return '<article class="sd-message' + (input ? ' is-user' : '') + '" aria-label="' + esc(actor + (input ? tr('的输入', ' input') : tr('的回复', ' response'))) + '"><header><div class="sd-message-source"><span class="sd-speaker-avatar' + (input ? '' : ' is-agent') + '" aria-hidden="true">' + (input ? esc(actor.slice(0, 1).toUpperCase()) : ico('bot')) + '</span><span class="sd-muted" title="' + esc(actor) + '">' + esc(actor) + '</span></div><div class="sd-message-meta"><time datetime="' + esc(at) + '">' + esc(clock(at).slice(0, 8)) + '</time><span aria-hidden="true">·</span><code class="sd-message-id">' + esc(id) + '</code><span aria-hidden="true">·</span>' + iconButton('copy-message', tr('复制消息', 'Copy message'), 'copy', ' data-round="' + turn.n + '" data-role="' + (input ? 'user' : 'assistant') + '"') + '</div></header><div class="sd-message-body">' + messageBody(input ? turn.input : turn.output) + attachment + (!input ? feedbackHtml(turn.feedback) : '') + '</div></article>';
+    return '<article class="sd-message' + (input ? ' is-user' : '') + '" aria-label="' + esc(actor + (input ? tr('的输入', ' input') : tr('的回复', ' response'))) + '"><header><div class="sd-message-source"><span class="sd-speaker-avatar' + (input ? '' : ' is-agent') + '" aria-hidden="true">' + (input ? esc(actor.slice(0, 1).toUpperCase()) : ico('bot')) + '</span><span class="sd-muted" title="' + esc(actor) + '">' + esc(actor) + '</span></div><div class="sd-message-meta"><time datetime="' + esc(at) + '">' + esc(clock(at).slice(0, 8)) + '</time><span aria-hidden="true">·</span><code class="sd-message-id" title="' + esc(id) + '">' + esc(id) + '</code><span aria-hidden="true">·</span>' + iconButton('copy-message', tr('复制消息', 'Copy message'), 'copy', ' data-round="' + turn.n + '" data-role="' + (input ? 'user' : 'assistant') + '"') + '</div></header><div class="sd-message-body">' + messageBody(input ? turn.input : turn.output) + attachment + (!input ? feedbackHtml(turn.feedback) : '') + '</div></article>';
   }
   function overviewHtml(row, data) {
     var metrics = [
@@ -127,7 +127,7 @@
       return '<button type="button" data-sd="round" data-round="' + turn.n + '" aria-label="' + esc(label) + '" title="' + esc(label) + '" class="' + (ui.round === turn.n ? 'is-active' : '') + '"' + (ui.round === turn.n ? ' aria-current="true"' : '') + '><span class="sd-round-number">' + turn.n + '</span><span class="sd-round-prompt">' + esc(turn.input) + '</span></button>';
     }).join('<div class="sd-round-separator" aria-hidden="true"><hr></div>');
     var content = ui.format === 'json' ? '<pre class="sd-json">' + esc(JSON.stringify(rawMessages(row, data), null, 2)) + '</pre>' : data.rounds.map(function (turn) {
-      return '<section class="sd-turn" id="sd-turn-' + turn.n + '"><header><button type="button" class="sd-turn-link" data-sd="round-trace" data-round="' + turn.n + '" aria-label="' + tr('查看第 ' + turn.n + ' 轮 Trace', 'View trace for turn ' + turn.n) + '" title="' + tr('查看本轮第一个执行步骤', 'View the first step in this turn') + '"><strong>' + tr('第 ' + turn.n + ' 轮', 'Turn ' + turn.n) + '</strong><span>' + tr('查看 ', 'View ') + turn.steps + tr(' 个执行步骤', ' steps') + '</span>' + ico('chevron-right') + '</button></header>' + messageHtml(row, turn, true) + (turn.hasOutput ? messageHtml(row, turn, false) : '<p class="sd-muted">' + tr('尚无后续输出', 'No response yet') + '</p>') + '</section>';
+      return '<section class="sd-turn" id="sd-turn-' + turn.n + '"><header><button type="button" class="sd-turn-link" data-sd="round-trace" data-round="' + turn.n + '" aria-label="' + tr('查看第 ' + turn.n + ' 轮 Trace', 'View trace for turn ' + turn.n) + '" title="' + tr('查看本轮第一条记录', 'View the first record in this turn') + '"><strong>' + tr('第 ' + turn.n + ' 轮', 'Turn ' + turn.n) + '</strong><span>' + tr('查看 ', 'View ') + turn.steps + tr(' 个执行步骤', ' steps') + '</span>' + ico('chevron-right') + '</button></header>' + messageHtml(row, turn, true) + (turn.hasOutput ? messageHtml(row, turn, false) : '<p class="sd-muted">' + tr('尚无后续输出', 'No response yet') + '</p>') + '</section>';
     }).join('');
     return '<div class="sd-conversation-view">' + overviewHtml(row, data) +
       '<section class="sd-conversation-section" aria-labelledby="sd-conversation-title"><h2 id="sd-conversation-title">' + tr('会话详情', 'Conversation details') + '</h2>' +
@@ -145,7 +145,7 @@
   }
   function timelineHtml(data) {
     var legend = ['user', 'memory', 'other', 'model', 'tool', 'ontology', 'agent', 'guard'];
-    return '<section class="sd-timeline"><header><strong>' + tr('全程轨迹', 'Full trace') + '</strong><div class="sd-timeline-legend">' + legend.map(function (type) { return '<span class="sd-track-' + type + '"><i></i>' + esc(typeLabel(type)) + '</span>'; }).join('') + '</div></header><div class="sd-timeline-scroll">' + TRACE_LANES.map(function (lane) {
+    return '<section class="sd-timeline"><header><strong>' + tr('全程轨迹', 'Full trace') + '</strong><div class="sd-timeline-legend">' + legend.map(function (type) { return '<span class="sd-track-' + type + '"><i></i>' + esc(typeLabel(type)) + '</span>'; }).join('') + '</div></header><div class="sd-timeline-scroll" style="--trace-count:' + data.records.length + '">' + TRACE_LANES.map(function (lane) {
       return '<div class="sd-track"><span>' + esc(lane[1]) + '</span><div>' + data.records.map(function (record, index) {
         if (lane[2].indexOf(record.type) < 0) return '';
         var label = typeLabel(record.type) + ' · ' + record.name + (record.round ? ' · 第 ' + record.round + ' 轮' : '');
@@ -271,7 +271,7 @@
     if (action === 'tab') { ui.tab = value; ui.jump = value === 'conversation'; }
     if (action === 'format') { ui.format = value; ui.jump = true; }
     if (action === 'round') { ui.round = Number(value) || round; ui.format = 'conversation'; ui.jump = true; }
-    if (action === 'round-trace') { ui.tab = 'trace'; ui.round = round; ui.type = ''; ui.query = ''; ui.abnormal = false; var first = data.records.filter(function (item) { return item.round === round && item.step; })[0]; ui.traceId = first.id; ui.inspectorOpen = true; ui.jump = true; }
+    if (action === 'round-trace') { ui.tab = 'trace'; ui.round = round; ui.type = ''; ui.query = ''; ui.abnormal = false; var first = data.records.filter(function (item) { return item.round === round; })[0]; ui.traceId = first.id; ui.inspectorOpen = true; ui.jump = true; }
     if (action === 'trace-record' || action === 'trace-point') { ui.traceId = control.getAttribute('data-id'); ui.inspectorOpen = true; ui.jump = action === 'trace-point'; if (action === 'trace-point') { ui.query = ''; ui.type = ''; ui.abnormal = false; } }
     if (action === 'inspector-close') ui.inspectorOpen = false;
     if (action === 'inspector-tab') ui.inspectorTab = value;

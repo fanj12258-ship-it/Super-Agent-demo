@@ -17,6 +17,7 @@
     return found;
   }
   function label(c) { return c.label || host.t(c.id); }
+  function displayLabel(c) { return c.kind === 'schedule' && host.scheduleLabel ? host.scheduleLabel(c) || label(c) : label(c); }
   function scopeItems() {
     var out = [];
     scopes.forEach(function (s) {
@@ -33,8 +34,9 @@
   }
   function childRow(c) {
     var active = host.page() === c.id;
-    return '<div class="ws-nav-row is-child-row"><button type="button" class="aiops-nav-item is-child' + (active ? ' is-active' : '') + '" data-page="' + esc(c.id) + '" title="' + esc(label(c)) + '"' + (active ? ' aria-current="page"' : '') + '><span class="aiops-nav-label">' + esc(label(c)) + '</span>' +
-      (c.kind === 'schedule' ? '<span class="ws-nav-clock" title="' + text('定时任务', 'Schedule') + '">' + icon('clock') + '</span>' : '') + '</button><div class="ws-nav-actions">' + actionButton('task-menu', c.id, text('任务更多操作：', 'Task actions: ') + label(c), 'ellipsis') + '</div></div>';
+    var name = displayLabel(c);
+    return '<div class="ws-nav-row is-child-row"><button type="button" class="aiops-nav-item is-child' + (active ? ' is-active' : '') + '" data-page="' + esc(c.id) + '" title="' + esc(name) + '"' + (active ? ' aria-current="page"' : '') + '><span class="aiops-nav-label">' + esc(name) + '</span>' +
+      (c.kind === 'schedule' ? '<span class="ws-nav-clock" title="' + text('定时任务', 'Schedule') + '">' + icon('clock') + '</span>' : '') + '</button><div class="ws-nav-actions">' + actionButton('task-menu', c.id, text('任务更多操作：', 'Task actions: ') + name, 'ellipsis') + '</div></div>';
   }
   function markup() {
     return spaces.map(function (w) {
@@ -297,6 +299,6 @@
       target.items.push(c);
     },
     removeTask: function (task) { spaces.forEach(function (w) { w.items = w.items.filter(function (item) { return item.taskId !== task.id && !(item.kind === 'schedule' && item.id === task.name); }); }); },
-    taskName: function (id) { var c = child(id); return c && c.item.kind === 'schedule' ? label(c.item) : id; }
+    taskName: function (id) { var c = child(id); return c && c.item.kind === 'schedule' ? c.item.label || c.item.id : id; }
   };
 })(window);

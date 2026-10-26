@@ -3,6 +3,7 @@
 (function () {
   var state = {
     page: '工作台',
+    workspaceSchedulePage: null,
     range: 7,
     monitoringDateRange: undefined,
     notifyType: 'all',
@@ -423,8 +424,13 @@
       .replace(/"/g, '&quot;');
   }
 
+  function navigationPage() {
+    return state.page === '定时任务' && state.workspaceSchedulePage && window.AIOpsCapability && window.AIOpsCapability.isConversation()
+      ? state.workspaceSchedulePage : state.page;
+  }
   function navItem(item) {
-    var active = state.page === item.id || (item.id === '产出物' && state.page === '产出物详情');
+    var page = navigationPage();
+    var active = page === item.id || (item.id === '产出物' && page === '产出物详情');
     return (
       '<button class="aiops-nav-item' + (active ? ' is-active' : '') + '" type="button" data-page="' + esc(item.id) + '"' +
         (active ? ' aria-current="page"' : '') + '>' +
@@ -445,6 +451,14 @@
     });
   }
 
+  function syncSessionActionWidth(root) {
+    var table = root.querySelector('.page.is-sessions .table-body > .data-table');
+    var cell = table && table.querySelector('td.session-actions');
+    if (!cell) return;
+    var group = cell.querySelector('.session-actions-group'), style = getComputedStyle(cell);
+    var width = Math.ceil(group.getBoundingClientRect().width + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight));
+    table.querySelector('col:last-child').style.width = width + 'px';
+  }
   function renderNav() {
     var nav = document.getElementById('aiopsNav');
     if (!nav) return;
@@ -1468,7 +1482,7 @@
               scheduleRuns().map(function (r) {
                 return (
                   '<li>' +
-                    '<button type="button" class="widget-row"' + (r.tone === 'pending' ? ' disabled' : ' data-page="' + esc(r.page) + '"') + ' data-schedule-run="' + esc(r.id) + '">' +
+                    '<button type="button" class="widget-row" data-page="' + esc(r.page) + '" data-schedule-run="' + esc(r.id) + '">' +
                       '<div class="widget-mission-main">' +
                         '<b>' + esc(t(r.page)) + '</b>' +
                         '<span class="widget-mission-meta">' +
@@ -1476,7 +1490,7 @@
                           '<span class="widget-pill is-' + r.tone + '"><span class="dot" aria-hidden="true"></span>' + esc(t(r.status)) + '</span>' +
                         '</span>' +
                       '</div>' +
-                      (r.tone === 'pending' ? '' : widgetRowGo()) +
+                      widgetRowGo() +
                     '</button>' +
                   '</li>'
                 );
@@ -3697,6 +3711,10 @@
     return state.page === '分析任务' || isWsSession(state.page) || (state.page === '定时任务' && window.AIOpsCapability.isConversation());
   }
 
+  function canOpenArtifactRail() {
+    return isCuiPage() || (state.page === '定时任务' && window.AIOpsCapability.isTaskDefinition());
+  }
+
   function railHasDirectory() { return isCuiPage(); }
 
   function paintRail(keepBody) {
@@ -3763,7 +3781,7 @@
   }
 
   function syncRail(keepBody) {
-    var cui = isCuiPage();
+    var cui = canOpenArtifactRail();
     var catalog = railCatalog();
     var hasContent = railHasDirectory() || state.railTabs.some(function (id) { return !!catalog[id]; });
     var open = !!(state.railOpen && cui && hasContent && !state.sessionDockInTask);
@@ -3923,6 +3941,7 @@
         }
       });
     }
+    syncSessionActionWidth(root);
     syncSessionSelectAll(root);
     if (state.sessionFocus) {
       var sessionFocus = state.sessionFocus;
@@ -3976,6 +3995,7 @@
     if (state.cuiSeed && state.cuiSeed.page !== page) state.cuiSeed = null;
     if (window.AIOpsCapability) window.AIOpsCapability.onNavigate(page);
     state.page = page;
+    state.workspaceSchedulePage = opts.workspaceSchedulePage || null;
     if (!keepDetail) state.sessionViewId = null;
     state.newOpen = false;
     if (page !== '工作台') {
@@ -4191,8 +4211,9 @@
       var scheduleName = window.AIOpsWorkspaces.taskName(nextPage);
       if (window.AIOpsCapability && window.AIOpsCapability.isTaskName(scheduleName)) {
         if (scheduleRun) { state.railOpen = false; state.railMax = false; }
-        window.AIOpsCapability.focusTask(scheduleName);
-        go('定时任务');
+        var widgetRun = scheduleRun && scheduleRuns().filter(function (run) { return run.id === scheduleRun; })[0];
+        window.AIOpsCapability.focusTask(scheduleName, widgetRun && widgetRun.tone === 'pending');
+        go('定时任务', { workspaceSchedulePage: pageBtn.matches('#aiopsNav .aiops-nav-item.is-child') ? nextPage : null });
         return;
       }
       go(nextPage);
@@ -5195,9 +5216,10 @@
     }
   } catch (e) {}
   window.AIOpsWorkspaces.configure({
-    lang: function () { return state.lang; }, t: t, page: function () { return state.page; },
+    lang: function () { return state.lang; }, t: t, page: navigationPage,
     render: render, renderNav: function () { renderNav(); paintIcons(); }, icons: paintIcons,
     toast: showToast, currentWorkspace: function () { return state.cuiWs; },
+    scheduleLabel: function (item) { return window.AIOpsCapability && window.AIOpsCapability.workspaceTaskLabel(item.taskId); },
     pickWorkspace: function (id) { state.cuiWs = id; },
     newTask: function () { state.cuiSeed = null; go('分析任务'); },
     goHome: function () { state.page = '工作台'; },
@@ -5227,7 +5249,7 @@
       taskSaved: function (task) { if ((task.history || []).length) window.AIOpsWorkspaces.syncTask(task); else window.AIOpsWorkspaces.removeTask(task); },
       taskDeleted: function (task) { window.AIOpsWorkspaces.removeTask(task); },
       openConversationArtifact: function (id) {
-        if (!isCuiPage()) return false;
+        if (!canOpenArtifactRail()) return false;
         var open = function () { state.railOpen = true; railOpenDoc('art:' + id); syncRail(); };
         if (!state.railOpen && window.AIOpsColumns) window.AIOpsColumns.animate(open);
         else open();
