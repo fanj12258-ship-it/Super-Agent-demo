@@ -179,6 +179,9 @@
     'help·人均会话数': { zh: '所选周期的活跃会话数 ÷ 同周期去重活跃用户数。', en: 'Active sessions ÷ distinct active users.' },
     'help·平均会话轮次': { zh: '所选周期内活跃会话的用户交互轮次总数 ÷ 活跃会话数；一次用户输入及对应回复为一轮。', en: 'User turns ÷ active sessions.' },
     'help·点赞点踩次数': { zh: '所选周期内记录的点赞事件数和点踩事件数，分别统计，按反馈发生日期归属；不合并为净值或反馈率。', en: 'Likes and dislikes counted separately by feedback date.' },
+    'help·活跃会话趋势': { zh: '各时间点至少发生一次用户交互的会话数，按 session_id 去重。今日按小时统计，7 天和 14 天按日统计。', en: 'Distinct sessions with interaction per bucket. Hourly today; daily for 7d/14d.' },
+    'help·活跃用户趋势': { zh: '各时间点发生用户交互的用户数，按 user_id 在该时间点内去重。今日按小时统计，7 天和 14 天按日统计。', en: 'Distinct users with interaction per bucket. Hourly today; daily for 7d/14d.' },
+    'help·点赞点踩趋势': { zh: '各时间点的点赞次数和点踩次数，分别统计，按反馈发生时间归属。今日按小时统计，7 天和 14 天按日统计。', en: 'Likes and dislikes per bucket, counted separately. Hourly today; daily for 7d/14d.' },
     'help·警告分布': { zh: '按警告类型统计筛选范围内的事件数，与警告事件数使用同一批 Mock 记录。', en: 'Events by warning type; same mock set as warning count.' },
     'help·实时警告': { zh: '展示所选场景与时间范围内最近的 20 条 Mock 警告记录，按事件时间倒序排列。', en: 'Latest 20 mock warnings in scope, newest first.' },
     'help·慢响应轮次率趋势': { zh: '最终成功返回，但首 Token 输出耗时超过体验阈值的轮次数 / 总轮次数。按各时间点的分子与分母计算，不对百分比取平均。慢响应判定使用固定 Mock 标记。', en: 'Slow successful turns ÷ turns per bucket; mock slow flags.' },
@@ -213,26 +216,13 @@
   }
 
 // Shared scene / asset selector for the four operational analysis dashboards.
-const analysisScopes=[{id:'sales',name:'销售',items:[{id:'sales-leads',name:'销售线索 Agent',type:'Agent'},{id:'sales-orders',name:'销售订单 Agent',type:'Agent'},{id:'sales-allocation',name:'销售分货 Agent',type:'Agent'},{id:'sales-customers',name:'客户对象集',type:'本体对象集'},{id:'sales-order-set',name:'销售订单对象集',type:'本体对象集'}]},{id:'procurement',name:'采购',items:[{id:'procurement-plan',name:'采购计划 Agent',type:'Agent'},{id:'procurement-supplier',name:'供应商评估 Agent',type:'Agent'},{id:'procurement-supplier-set',name:'供应商对象集',type:'本体对象集'},{id:'procurement-order-set',name:'采购订单对象集',type:'本体对象集'}]}];
-const analysisScopeState={scopeSelection:analysisScopes.flatMap(s=>s.items.map(x=>x.id)),scopeScene:'sales',menu:''};
-function isOnlineSessionPage(){return false}
-function analysisScopeCatalog(){return analysisScopes}
-function analysisScopeChosen(){return analysisScopeState.scopeSelection}
-function analysisScopeCheck(ids){const count=ids.filter(id=>analysisScopeChosen().includes(id)).length;return count===ids.length?'true':count?'mixed':'false'}
-function analysisScopeSet(ids){analysisScopeState.scopeSelection=ids;render()}
-function analysisScopeToggle(ids){const remove=analysisScopeCheck(ids)==='true';analysisScopeSet(remove?analysisScopeChosen().filter(id=>!ids.includes(id)):[...new Set([...analysisScopeChosen(),...ids])])}
-function analysisScopeBulk(all){analysisScopeSet(all?analysisScopeCatalog().flatMap(scene=>scene.items.map(item=>item.id)):[])}
-function analysisScopeScene(id){analysisScopeState.scopeScene=id;render()}
-function analysisScopeMenu(){analysisScopeState.menu=analysisScopeState.menu?'':'scope';render()}
-function analysisScopeClose(){analysisScopeState.menu='';render()}
-function analysisScopeBox(ids,label){const checked=analysisScopeCheck(ids);return `<button class="analysis-scope-check ${checked}" role="checkbox" aria-checked="${checked}" aria-label="${esc(label)}" onclick="analysisScopeToggle(${esc(JSON.stringify(ids))})"><span aria-hidden="true">${checked==='true'?'✓':checked==='mixed'?'−':''}</span></button>`}
-function analysisScopeChevron(){
-  return '<svg class="analysis-scope-chev" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-}
-function analysisScopePicker(){let catalog=analysisScopeCatalog(),all=catalog.flatMap(s=>s.items.map(x=>x.id)),chosen=analysisScopeChosen(),scene=catalog.find(s=>s.id===analysisScopeState.scopeScene)||catalog[0],count=catalog.filter(s=>s.items.some(x=>chosen.includes(x.id))).length,title=chosen.length===all.length?t('全部'):chosen.length?tf('已选场景项',{scenes:count,items:chosen.length}):t('未选择');return `<div class="analysis-scope"><button id="analysis-picker-scope" class="analysis-scope-trigger" aria-label="${esc(t('场景筛选'))}" aria-haspopup="dialog" aria-expanded="${analysisScopeState.menu==='scope'}" onclick="analysisScopeMenu()"><span class="analysis-scope-label">${esc(title)}</span>${analysisScopeChevron()}</button>${analysisScopeState.menu==='scope'?`<div class="analysis-scope-panel" role="dialog" aria-label="${esc(t('场景多选'))}"><div class="analysis-scope-tools"><div><button onclick="analysisScopeBulk(true)">${esc(t('全选'))}</button><button onclick="analysisScopeBulk(false)">${esc(t('清空'))}</button></div></div><div class="analysis-scope-columns"><div class="analysis-scope-scenes"><div class="analysis-scope-caption">${esc(t('场景'))}</div>${catalog.map(s=>`<div class="analysis-scope-row ${s.id===scene.id?'active':''}">${analysisScopeBox(s.items.map(x=>x.id),t('选择场景')+' '+t(s.name))}<button class="analysis-scope-name" aria-label="${esc(t('展开场景')+' '+t(s.name))}" aria-pressed="${s.id===scene.id}" onclick="analysisScopeScene('${s.id}')">${esc(t(s.name))}<span>›</span></button></div>`).join('')}</div><div class="analysis-scope-assets"><div class="analysis-scope-caption">${esc(t(scene.name))}</div>${scene.items.map(x=>`<div class="analysis-scope-row">${analysisScopeBox([x.id],t('选择')+' '+t(x.type)+' '+t(x.name))}<button class="analysis-scope-asset-name" onclick="analysisScopeToggle(${esc(JSON.stringify([x.id]))})">${esc(t(x.name))}<small>${esc(t(x.type))}</small></button></div>`).join('')}</div></div><div class="analysis-scope-foot"><span>${esc(tf('已选底部',{scenes:count,items:chosen.length}))}</span><button onclick="analysisScopeClose()">${esc(t('完成'))}</button></div></div>`:''}</div>`}
+function analysisScopeCatalog(){return global.AIOpsWorkspaces.scopeCatalog()}
+function analysisScopeChosen(){return global.AIOpsResources.scopeIds()}
+function analysisScopePicker(){return global.AIOpsResources.scopeTrigger(true)}
 function toolbar(updated="2026-10-13 00:00"){return `<div class="toolbar"><span class="updated-time">${esc(t('更新时间：'))}${updated}</span><div class="row toolbar-actions"><div class="segments">${[1,7,14].map(x=>`<button class="${state.range===x?'selected':''}" onclick="state.range=${x};render()">${x===1?esc(t('今日')):(lang()==='en'?x+'d':x+' '+t('天'))}</button>`).join('')}</div>${analysisScopePicker()}</div></div>`}
 function heading(title,sub){return `<div class="heading"><div><h1>${esc(t(title))}</h1>${sub?`<small>${esc(t(sub))}</small>`:''}</div></div>`}
-function metricHelp(name,formula){var label=t(name),tip=t(formula||('help·'+name));return `<span class="metric-label"><span class="metric-label-text" title="${esc(label)}">${esc(label)}</span><span class="metric-help" tabindex="0" aria-label="${esc(label+' · '+t('计算口径'))}"><svg class="icon" width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor"/><path d="M8 7v4M8 4.5v1" stroke="currentColor" stroke-width="1.2"/></svg><span class="metric-tooltip" role="tooltip">${esc(tip)}</span></span></span>`}
+function metricHelpIcon(name,formula){var label=t(name),tip=t(formula||('help·'+name));return `<span class="metric-help" tabindex="0" aria-label="${esc(label+' · '+t('计算口径'))}"><svg class="icon" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor"/><path d="M8 7v4M8 4.5v1" stroke="currentColor" stroke-width="1.2"/></svg><span class="metric-tooltip" role="tooltip">${esc(tip)}</span></span>`}
+function metricHelp(name,formula){var label=t(name);return `<span class="metric-label"><span class="metric-label-text" title="${esc(label)}">${esc(label)}</span>${metricHelpIcon(name,formula)}</span>`}
 const analysisMetricDefinitions={
  '总 Token':{key:'total',icon:'tokens'},'输入 Token':{key:'input',icon:'tokens'},'输出 Token':{key:'output',icon:'tokens'},'模型调用次数':{key:'calls',icon:'model'},'平均每轮 Token 消耗':{key:'perTurn',icon:'tokens'},'平均每会话 Token 消耗':{key:'perSession',icon:'tokens'},
  '异常会话率':{key:'anomalousRate',icon:'error',better:'lower'},'工具调用失败率':{key:'toolFailureRate',icon:'error',better:'lower'},'轮次错误率':{key:'turnErrorRate',icon:'error',better:'lower'},'警告事件数':{key:'warningEvents',icon:'warning',better:'lower'},'警告影响用户数':{key:'affectedUsers',icon:'affected',better:'lower'},
@@ -248,7 +238,7 @@ function analysisMetricOptions(name,current,previous){
  return {current:raw(current),previous:raw(previous),better:definition.better};
 }
 function analysisComparison(current,previous,better){
- const label=state.range===1?t('日环比'):(lang()==='en'?state.range+'d '+t('天环比'):state.range+' '+t('天环比')),delta=previous?(current-previous)/Math.abs(previous)*100:current?null:0;
+ const label=state.range===1?t('日环比'):(lang()==='en'?state.range+'d '+t('天环比'):state.range+t('天环比')),delta=previous?(current-previous)/Math.abs(previous)*100:current?null:0;
  const rounded=delta===null?null:Math.round(delta*10)/10;
  const text=rounded===null?t('新增'):rounded===0?'0%':(rounded>0?'+':'−')+Math.abs(rounded).toLocaleString(loc(),{maximumFractionDigits:1})+'%';
  const sign=rounded===null?1:Math.sign(rounded),tone=!sign||!better?'neutral':(better==='lower'?sign<0:sign>0)?'improved':'worsened';
@@ -281,7 +271,7 @@ const analysisPreviousDailyMock=[
 ];
 function analysisWindowRows(range=state.range,previous=false){const rows=[...analysisPreviousDailyMock,...behaviorDailyMock];return previous?rows.slice(-range*2,-range):rows.slice(-range)}
 function behaviorData(range=state.range,previous=false){
- const chosen=new Set(analysisScopeChosen()),agents=analysisScopes.flatMap(scene=>scene.items.filter(item=>item.type==='Agent').map(item=>item.id));
+ const chosen=new Set(analysisScopeChosen()),agents=analysisScopeCatalog().flatMap(scene=>scene.items.filter(item=>item.type==='Agent').map(item=>item.id));
  const users=new Set(),totals={sessions:0,turns:0,likes:0,dislikes:0};
  const days=analysisWindowRows(range,previous).map(([date,count,userCount,userOffset,averageTurns,likes,dislikes])=>{
   const dayUsers=new Set(),row={date,label:date.slice(5).replace('-','/'),sessions:0,turns:0,likes:0,dislikes:0};
@@ -369,11 +359,33 @@ function syncAnalysisCharts(){
  hosts.forEach(host=>{drawAnalysisChart(host);analysisChartObserver?.observe(host)});
 }
 
-// Straight segments between points (reference: Cumulative Spend style — no smooth curves).
+/* Monotone cubic through each point, so the line stays smooth without inventing peaks. */
 function analysisCurvePath(points){
  if(!points.length)return '';
  const n=value=>Number(value.toFixed(3));
- return `M ${n(points[0][0])} ${n(points[0][1])}`+points.slice(1).map(point=>` L ${n(point[0])} ${n(point[1])}`).join('');
+ const move=`M ${n(points[0][0])} ${n(points[0][1])}`;
+ if(points.length<3)return move+points.slice(1).map(point=>` L ${n(point[0])} ${n(point[1])}`).join('');
+ const dx=[],slope=[];
+ for(let i=0;i<points.length-1;i++){
+  const gap=points[i+1][0]-points[i][0]||1;
+  dx.push(gap);
+  slope.push((points[i+1][1]-points[i][1])/gap);
+ }
+ const m=new Array(points.length);
+ m[0]=slope[0];
+ m[points.length-1]=slope[slope.length-1];
+ for(let i=1;i<points.length-1;i++)m[i]=slope[i-1]*slope[i]<=0?0:(slope[i-1]+slope[i])/2;
+ for(let i=0;i<slope.length;i++){
+  if(!slope[i]){m[i]=0;m[i+1]=0;continue}
+  const a=m[i]/slope[i],b=m[i+1]/slope[i],h=a*a+b*b;
+  if(h>9){const t=3/Math.sqrt(h);m[i]=t*a*slope[i];m[i+1]=t*b*slope[i]}
+ }
+ let d=move;
+ for(let i=0;i<points.length-1;i++){
+  const gap=dx[i];
+  d+=` C ${n(points[i][0]+gap/3)} ${n(points[i][1]+m[i]*gap/3)} ${n(points[i+1][0]-gap/3)} ${n(points[i+1][1]-m[i+1]*gap/3)} ${n(points[i+1][0])} ${n(points[i+1][1])}`;
+ }
+ return d;
 }
 function analysisNiceMax(peak,mode,levels=5){
  const divs=Math.max(1,levels-1);
@@ -399,7 +411,7 @@ function analysisLineChartSVG({width=1100,height=280,rows=[],series=[],ariaLabel
  const x=i=>left+i*(right-left)/(rows.length-1||1),y=v=>bottom-v/yMax*(bottom-top);
  const fmt=typeof formatY==='function'?formatY:v=>Number(v).toLocaleString(loc(),{maximumFractionDigits:2});
  const grid=Array.from({length:yTicks},(_,i)=>{const py=bottom-i/yDivs*(bottom-top);return `<line x1="${left}" y1="${py}" x2="${right}" y2="${py}" stroke="#e8edf3"/><text x="${left-12}" y="${py+4}" text-anchor="end">${esc(fmt(yMax*i/yDivs))}</text>`;}).join('');
- const lines=series.map(item=>`<path class="analysis-series" data-series="${item.key}" d="${analysisCurvePath(rows.map((row,i)=>[x(i),y(Number(row[item.key])||0)]))}" fill="none" stroke="${item.color}" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>`).join('');
+ const lines=series.map(item=>`<path class="analysis-series" data-series="${item.key}" d="${analysisCurvePath(rows.map((row,i)=>[x(i),y(Number(row[item.key])||0)]))}" fill="none" stroke="${item.color}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>`).join('');
  const dates=rows.map((row,i)=>`<text data-line-label="${esc(row.label)}" x="${x(i)}" y="${labelY}" text-anchor="${analysisAxisAnchor(i,rows.length)}"${visibleTicks.has(i)?'':' visibility="hidden"'}>${esc(row.label)}</text>`).join('');
  const hits=rows.map((row,i)=>{
   const start=i?(x(i-1)+x(i))/2:left,end=i===rows.length-1?right:(x(i)+x(i+1))/2;
@@ -454,6 +466,11 @@ function behaviorChart(days,metric){
  return `<div class="behavior-chart-scroll analysis-chart-host" data-analysis-chart="behavior-${metric}">${behaviorChartSVG(days,metric)}</div><div class="analysis-line-tooltip behavior-chart-tooltip" hidden></div>`;
 }
 function behaviorTrendPanel(metric,days){
+ if(window.AIOpsWidget){
+  const id=metric==='feedback'?'trendFeedback':metric==='sessions'?'trendSessions':'trendUsers';
+  const helpName=metric==='feedback'?'点赞点踩趋势':metric==='sessions'?'活跃会话趋势':'活跃用户趋势';
+  return window.AIOpsWidget.panel('behavior',id,metric==='feedback'?'is-span-full':'',metricHelpIcon(helpName,'help·'+helpName));
+ }
  const title=metric==='feedback'?'点赞点踩趋势':metric==='sessions'?'活跃会话趋势':'活跃用户趋势';
  const unit=metric==='feedback'?t('单位次'):metric==='sessions'?t('单位个'):t('单位人');
  const rangeUnit=state.range===1?t('今日'):t('按日');
@@ -490,7 +507,7 @@ const healthAlertTypes=[
 const healthDurationTypes=[{key:'modelMs',name:'模型请求',color:'#4d8eff'},{key:'toolMs',name:'工具调用',color:'#18b99b'},{key:'retrievalMs',name:'知识检索',color:'#9b7aed'},{key:'ontologyMs',name:'本体操作',color:'#f0a142'}];
 function healthMockRecords(previous=false){
  if(previous?healthPreviousMockCache:healthMockCache)return previous?healthPreviousMockCache:healthMockCache;
- const agents=analysisScopes.flatMap(scene=>scene.items),sessions=[],alerts=[];
+ const agents=analysisScopeCatalog().flatMap(scene=>scene.items),sessions=[],alerts=[];
  (previous?costPreviousSessions:costMockSessions).forEach((record,sessionIndex)=>{
   const session={id:(previous?'HP-':'HS-')+String(sessionIndex+1).padStart(4,'0'),date:record.date,hour:record.hour,agent:record.agent,agentName:agents.find(agent=>agent.id===record.agent).name,userId:'user-'+(sessionIndex%24+1),turns:[]};
   for(let index=0;index<record.turns;index++){
@@ -525,19 +542,30 @@ function healthData(range=state.range,previous=false){
 }
 function healthPercent(value){return value.toFixed(2)+'%'}
 function healthSeconds(value){return (value/1000).toFixed(2)+'s'}
+function healthAlertCounts(data){
+ const counts=healthAlertTypes.map(type=>({...type,count:data.alerts.filter(alert=>alert.type===type.key).length}));
+ const peak=Math.max(1,...counts.map(type=>type.count));
+ const max=Math.max(4,Math.ceil(peak/4)*4);
+ return {counts,max};
+}
 function healthAlertChartSVG(data,width=600,height=250){
- const counts=healthAlertTypes.map(type=>({...type,count:data.alerts.filter(alert=>alert.type===type.key).length})),peak=Math.max(1,...counts.map(type=>type.count));
- const max=Math.max(4,Math.ceil(peak/4)*4),left=140,right=width-16,top=12,bottom=height-28;
- const row=(bottom-top)/4,barH=Math.max(10,Math.min(24,row*0.45));
- return `<svg class="health-alert-chart" width="${width}" height="${height}" role="img" aria-label="${esc(t('警告分布'))}, ${counts.map(type=>t(type.name)+' '+type.count).join(', ')}">${[0,1,2,3,4].map(i=>{const x=left+(right-left)*i/4;return `<line x1="${x}" y1="${top}" x2="${x}" y2="${bottom}" stroke="#e8eef8" stroke-dasharray="3 3"/><text x="${x}" y="${height-8}" text-anchor="middle">${max*i/4}</text>`}).join('')}${counts.map((type,i)=>{const y=top+(i+.5)*row,label=t(type.name);return `<g><text x="3" y="${y+4}">${esc(label)} ⓘ<title>${esc(t(type.formula))}</title></text><rect data-health-alert-type="${type.key}" x="${left}" y="${y-barH/2}" width="${type.count/max*(right-left)}" height="${barH}" rx="${Math.min(6,barH/2)}" fill="#4d8eff"><title>${esc(label)}: ${type.count}</title></rect></g>`}).join('')}</svg>`;
+ const {counts,max}=healthAlertCounts(data);
+ const row=height/Math.max(1,counts.length),barH=Math.max(8,Math.min(16,row*0.42));
+ const grid=[0,1,2,3,4].map(i=>{const x=width*i/4;return `<line x1="${x}" y1="0" x2="${x}" y2="${height}" stroke="#e8edf3"/>`}).join('');
+ const bars=counts.map((type,i)=>{const y=(i+.5)*row;return `<rect data-health-alert-type="${type.key}" x="0" y="${y-barH/2}" width="${type.count/max*width}" height="${barH}" rx="4" fill="#0d99ff"><title>${esc(t(type.name))}: ${type.count}</title></rect>`}).join('');
+ return `<svg class="health-alert-chart" width="${width}" height="${height}" preserveAspectRatio="none" role="img" aria-label="${esc(t('警告分布'))}, ${counts.map(type=>t(type.name)+' '+type.count).join(', ')}">${grid}${bars}</svg>`;
 }
 function healthAlertDistribution(data){
- return `<section class="panel health-alert-distribution"><div class="panelhead"><h2>${metricHelp('警告分布','help·警告分布')}</h2></div><div class="analysis-chart-host health-alert-plot" data-analysis-chart="health-alert">${healthAlertChartSVG(data)}</div></section>`;
+ const {counts,max}=healthAlertCounts(data);
+ const labels=counts.map(type=>`<div class="health-alert-ylabel"><span>${esc(t(type.name))}</span>${metricHelpIcon(type.name,type.formula)}</div>`).join('');
+ const ticks=[0,1,2,3,4].map(i=>`<span>${max*i/4}</span>`).join('');
+ return `<section class="panel health-alert-distribution"><div class="panelhead"><h2>${metricHelp('警告分布','help·警告分布')}</h2></div><div class="health-alert-chart-row"><div class="health-alert-ylabels">${labels}</div><div class="analysis-chart-host health-alert-plot" data-analysis-chart="health-alert">${healthAlertChartSVG(data)}</div><div class="health-alert-xaxis">${ticks}</div></div></section>`;
 }
 function healthAlertList(data){
  const filter=state.healthAlertSeverity||'all',events=data.alerts.filter(alert=>filter==='all'||alert.severity===filter).sort((a,b)=>b.time.localeCompare(a.time)||b.id.localeCompare(a.id));
  const emptyKey=filter==='severe'?'空警告严重':filter==='warning'?'空警告警告':'空警告全部';
- return `<div class="panelhead"><h2>${metricHelp('实时警告','help·实时警告')}</h2><div class="segments">${[['all','全部'],['severe','严重'],['warning','警告']].map(([key,label])=>`<button id="health-alert-filter-${key}" class="${filter===key?'selected':''}" aria-pressed="${filter===key}" onclick="healthSetAlertSeverity('${key}')">${esc(t(label))}</button>`).join('')}</div></div><div class="health-alert-feed">${events.slice(0,20).map(alert=>{const type=healthAlertTypes.find(item=>item.key===alert.type);return `<button class="health-alert-item" onclick="healthAlertDetail('${alert.id}')" aria-label="${esc(t('查看警告')+' '+alert.time+' '+t(type.name)+' '+t(alert.agentName))}"><span class="health-alert-copy"><span class="health-alert-name"><b>${esc(t(type.name))}</b><span>${esc(t(alert.agentName))}</span><span aria-hidden="true">›</span></span><span class="health-alert-message">${esc(t(alert.msgKey||type.msg))}</span></span><span class="health-alert-meta"><span class="health-alert-badge ${alert.severity}">${esc(t(alert.severity==='severe'?'严重':'警告'))}</span><time title="${alert.time}">${state.range===1?alert.time.slice(11,16):alert.time.slice(5,16)}</time></span></button>`}).join('')||`<div class="health-alert-empty">${esc(t(emptyKey))}</div>`}</div><div class="health-alert-footer">${esc(tf('警告共条',{n:events.length,m:Math.min(20,events.length)}))}</div>`;
+ const feed=events.slice(0,20).map(alert=>{const type=healthAlertTypes.find(item=>item.key===alert.type);return `<button class="health-alert-item" onclick="healthAlertDetail('${alert.id}')" aria-label="${esc(t('查看警告')+' '+alert.time+' '+t(type.name)+' '+t(alert.agentName))}"><span class="health-alert-copy"><span class="health-alert-name"><b>${esc(t(type.name))}</b><span>${esc(t(alert.agentName))}</span><span aria-hidden="true">›</span></span><span class="health-alert-message">${esc(t(alert.msgKey||type.msg))}</span></span><span class="health-alert-meta"><span class="health-alert-badge ${alert.severity}">${esc(t(alert.severity==='severe'?'严重':'警告'))}</span><time title="${alert.time}">${state.range===1?alert.time.slice(11,16):alert.time.slice(5,16)}</time></span></button>`}).join('')||`<div class="health-alert-empty">${esc(t(emptyKey))}</div>`;
+ return `<div class="panelhead"><h2>${metricHelp('实时警告','help·实时警告')}</h2><div class="segments">${[['all','全部'],['severe','严重'],['warning','警告']].map(([key,label])=>`<button id="health-alert-filter-${key}" class="${filter===key?'selected':''}" aria-pressed="${filter===key}" onclick="healthSetAlertSeverity('${key}')">${esc(t(label))}</button>`).join('')}</div></div><div class="health-alert-list"><div class="health-alert-feed">${feed}</div><div class="health-alert-footer">${esc(tf('警告共条',{n:events.length,m:Math.min(20,events.length)}))}</div></div>`;
 }
 function healthSetAlertSeverity(value){state.healthAlertSeverity=value;$('#health-live-alerts').innerHTML=healthAlertList(healthData());$('#health-alert-filter-'+value)?.focus({preventScroll:true})}
 function healthAlertDetail(id){
@@ -557,6 +585,7 @@ function healthSlowChartSVG(data,width=1100,height=280){
  });
 }
 function healthSlowTrend(data){
+ if(window.AIOpsWidget)return window.AIOpsWidget.panel('health','slowTrend','',metricHelpIcon('慢响应轮次率趋势','help·慢响应轮次率趋势'));
  return `<section class="panel health-slow-panel analysis-line-panel" data-line-chart="health-slow"><div class="panelhead cost-trend-head"><h2>${metricHelp('慢响应轮次率趋势','help·慢响应轮次率趋势')}</h2><div class="health-slow-legend analysis-line-legend"><span><i style="background:#f0a142"></i>${esc(t('慢响应轮次率'))}</span></div></div><div class="health-trend-scroll analysis-chart-host" data-analysis-chart="health-slow">${healthSlowChartSVG(data)}</div>${data.totals.turns?'':'<div class="health-trend-empty">'+esc(t('所选范围暂无对话轮次数据'))+'</div>'}<div class="analysis-line-tooltip health-trend-tooltip" hidden></div></section>`;
 }
 function healthTrendHover(node,index){node.dataset.lineIndex=index;node.dataset.lineHover='health-slow';analysisLineHover(node)}
@@ -565,94 +594,18 @@ function healthDurationDistribution(totals){
  const max=Math.max(1,...totals.durations.map(type=>type.value));
  return `<section class="panel step-performance health-duration-panel"><div class="panelhead"><h2>${metricHelp('耗时分布','help·耗时分布')}</h2><small>${esc(t('累计耗时秒'))}</small></div><div class="step-bars">${totals.durations.map(type=>`<div class="step-row"><span><i style="background:${type.color}"></i>${esc(t(type.name))}</span><div class="step-track"><i style="width:${type.value/max*100}%;background:${type.color}"></i></div><b title="${type.value.toFixed(2)} ${esc(t('秒'))}">${type.value.toLocaleString(loc(),{maximumFractionDigits:1})}s</b></div>`).join('')}</div></section>`;
 }
-function healthSectionTabs(active){
- const current=active||'error-analysis';
- const tabs=[['error-analysis','报错分析'],['performance-analysis','性能分析']];
- return `<nav class="health-section-tabs" role="tablist" aria-label="${esc(t('健康度分析'))}">${tabs.map(([id,label])=>`<a role="tab" class="health-section-tab${current===id?' is-active':''}" href="#${id}" data-health-section="${id}" aria-selected="${current===id}" id="${id}-tab">${esc(t(label))}</a>`).join('')}</nav>`;
-}
-function healthActiveSection(){
- const hash=(typeof location!=='undefined'&&location.hash||'').replace(/^#/,'');
- return hash==='performance-analysis'?'performance-analysis':'error-analysis';
-}
-function bindHealthSectionTabs(){
- const root=host.getPageRoot&&host.getPageRoot();
- if(!root)return;
- const tabs=root.querySelector('.health-section-tabs');
- const dash=root.querySelector('.health-dashboard');
- if(!tabs||!dash||tabs.dataset.bound==='1')return;
- tabs.dataset.bound='1';
- const chrome=root.querySelector('.analysis-sticky-chrome');
- const stickyOffset=()=>{
-  const h=chrome?chrome.getBoundingClientRect().height:0;
-  return Math.round(h+8);
- };
- const ensureAnchorRoom=()=>{
-  const offset=stickyOffset();
-  dash.style.setProperty('--health-sticky-offset',offset+'px');
-  const last=dash.querySelector('.analysis-section:last-child');
-  if(!last){
-   dash.style.paddingBottom='';
-   return;
-  }
-  // Only enough bottom blank for the last section top to meet Tabs — no extra scroll void.
-  dash.style.paddingBottom='0px';
-  const room=Math.max(0,root.clientHeight-offset-last.offsetHeight);
-  dash.style.paddingBottom=room?room+'px':'';
- };
- const setActive=id=>{
-  tabs.querySelectorAll('[data-health-section]').forEach(node=>{
-   const on=node.getAttribute('data-health-section')===id;
-   node.classList.toggle('is-active',on);
-   node.setAttribute('aria-selected',on?'true':'false');
-  });
- };
- const scrollToSection=id=>{
-  const target=document.getElementById(id);
-  if(!target||!root.contains(target))return;
-  setActive(id);
-  ensureAnchorRoom();
-  const offset=stickyOffset();
-  const top=target.getBoundingClientRect().top-root.getBoundingClientRect().top+root.scrollTop-offset;
-  const maxTop=Math.max(0,root.scrollHeight-root.clientHeight);
-  root.scrollTo({top:Math.min(Math.max(0,top),maxTop),behavior:'smooth'});
- };
- tabs.addEventListener('click',e=>{
-  const a=e.target.closest('[data-health-section]');
-  if(!a)return;
-  e.preventDefault();
-  const id=a.getAttribute('data-health-section');
-  scrollToSection(id);
-  try{history.replaceState(null,'','#'+id)}catch(_){}
- });
- const sections=[...root.querySelectorAll('.health-dashboard > .analysis-section[id]')];
- if(sections.length&&typeof IntersectionObserver==='function'){
-  const spy=new IntersectionObserver(entries=>{
-   const visible=entries.filter(en=>en.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
-   if(visible&&visible.target&&visible.target.id)setActive(visible.target.id);
-  },{root:root,rootMargin:'-28% 0px -55% 0px',threshold:[0.1,0.25,0.5]});
-  sections.forEach(section=>spy.observe(section));
- }
- ensureAnchorRoom();
- if(typeof ResizeObserver==='function'){
-  const ro=new ResizeObserver(()=>ensureAnchorRoom());
-  ro.observe(root);
-  ro.observe(dash);
-  if(chrome)ro.observe(chrome);
- }
- const initial=healthActiveSection();
- if(initial==='performance-analysis'){
-  requestAnimationFrame(()=>scrollToSection(initial));
- }
+function healthSectionTitle(label){
+ return `<h2 class="health-section-title">${esc(t(label))}</h2>`;
 }
 function healthPage(){
  const data=healthData(),d=data.totals,previous=healthData(state.range,true).totals,number=value=>value.toLocaleString(loc());
- return heading('健康度分析','')+toolbar()+`<div class="health-dashboard"><section class="analysis-section" id="error-analysis" role="tabpanel" aria-labelledby="error-analysis-tab"><div class="health-error-metrics">`+analysisMetrics([
+ return heading('健康度分析','')+toolbar()+`<div class="health-dashboard"><section class="analysis-section" id="error-analysis">${healthSectionTitle('报错分析')}<div class="health-error-metrics">`+analysisMetrics([
  ['异常会话率',healthPercent(d.anomalousRate),'','help·异常会话率'],
  ['工具调用失败率',healthPercent(d.toolFailureRate),'','help·工具调用失败率'],
  ['轮次错误率',healthPercent(d.turnErrorRate),'','help·轮次错误率'],
  ['警告事件数',number(d.warningEvents),'','help·警告事件数'],
  ['警告影响用户数',number(d.affectedUsers),'','help·警告影响用户数']
- ].map(item=>[...item,analysisMetricOptions(item[0],d,previous)]))+`</div><div class="health-section-panels"><div class="health-alert-panels">${healthAlertDistribution(data)}<section id="health-live-alerts" class="panel health-live-alerts">${healthAlertList(data)}</section></div></div></section><section class="analysis-section" id="performance-analysis" role="tabpanel" aria-labelledby="performance-analysis-tab"><div class="health-performance-metrics">`+analysisMetrics([
+ ].map(item=>[...item,analysisMetricOptions(item[0],d,previous)]))+`</div><div class="health-section-panels"><div class="health-alert-panels">${healthAlertDistribution(data)}<section id="health-live-alerts" class="panel health-live-alerts">${healthAlertList(data)}</section></div></div></section><section class="analysis-section" id="performance-analysis">${healthSectionTitle('性能分析')}<div class="health-performance-metrics">`+analysisMetrics([
  ['会话平均耗时',healthSeconds(d.sessionAvgMs),'','help·会话平均耗时'],
  ['慢响应轮次率',healthPercent(d.slowRate),'','help·慢响应轮次率'],
  ['工具平均耗时',healthSeconds(d.toolAvgMs),'','help·工具平均耗时'],
@@ -671,7 +624,7 @@ const costMetricDefinitions=[
  {key:'perSession',name:'平均每会话 Token 消耗',color:'#f29b38',formula:'help·平均每会话 Token 消耗'}
 ];
 function costMockDay([date,count,,,averageTurns],dayIndex,dailyTokens){
- const agents=analysisScopes.flatMap(scene=>scene.items.filter(item=>item.type==='Agent'));
+ const agents=analysisScopeCatalog().flatMap(scene=>scene.items.filter(item=>item.type==='Agent'));
  const weights=Array.from({length:count},(_,i)=>7+(i*7+dayIndex*3)%11),sum=weights.reduce((a,b)=>a+b,0);
  let consumed=0;
  return weights.map((weight,index)=>{
@@ -725,6 +678,10 @@ function costChartHover(node,index){
 }
 function costChartLeave(node){analysisLineLeave(node)}
 function costTrendPanel(group,buckets,totals){
+ if(window.AIOpsWidget){
+  const helpName=group.key==='average'?'平均 Token 消耗趋势':'Token 用量趋势';
+  return window.AIOpsWidget.panel('cost',group.key==='average'?'trendAvg':'trendUsage','',metricHelpIcon(helpName,'help·'+helpName));
+ }
  const series=costChartSeries(group.key);
  return `<section class="panel cost-trend-panel analysis-line-panel" data-line-chart="cost-${group.key}" data-cost-chart="${group.key}"><div class="panelhead cost-trend-head"><h2>${metricHelp(group.title,group.formula)}</h2><div class="cost-trend-legend analysis-line-legend">${series.map(item=>`<span><i style="background:${item.color}"></i>${esc(t(item.name))}</span>`).join('')}</div></div><div class="cost-chart-scroll analysis-chart-host" data-analysis-chart="cost-${group.key}">${costChart(buckets,1100,280,group.key)}</div>${totals.calls?'':'<div class="cost-chart-empty">'+esc(t('所选范围暂无模型调用数据'))+'</div>'}<div class="analysis-line-tooltip cost-chart-tooltip" hidden></div></section>`;
 }
@@ -783,31 +740,73 @@ function costPage(){
     return stripEnhanceChrome(behaviorPage(), '用户行为分析');
   }
 
+  var summaryKey = '', summaryValues = {};
+  function metricSummary(id) {
+    var key = state.range + ':' + analysisScopeChosen().join(',');
+    if (key !== summaryKey) {
+      summaryKey = key; summaryValues = {};
+      var pairs = [[costData().totals, costData(state.range, true).totals, ['total','input','output','calls','perTurn','perSession']], [behaviorData().totals, behaviorData(state.range,true).totals, ['sessions','users','sessionsPerUser','averageTurns','likes','dislikes']], [healthData().totals,healthData(state.range,true).totals,['anomalousRate','toolFailureRate','turnErrorRate','warningEvents','affectedUsers','sessionAvgMs','slowRate','toolAvgMs','ttftAvgMs']]];
+      pairs.forEach(function (pair) { pair[2].forEach(function (name) {
+        var now = Number(pair[0][name] || 0), before = Number(pair[1][name] || 0), delta = before ? (now - before) / Math.abs(before) * 100 : now ? null : 0;
+        var value = /Rate$/.test(name) ? healthPercent(now) : /Ms$/.test(name) ? healthSeconds(now) : ['sessionsPerUser','averageTurns'].indexOf(name) >= 0 ? now.toFixed(1) : costNumber(now);
+        summaryValues[name] = [value, delta === null ? t('新增') : (delta > 0 ? '+' : delta < 0 ? '−' : '') + Math.abs(delta).toLocaleString(loc(), {maximumFractionDigits:1}) + '%', delta < 0 && /Rate$|Ms$/.test(name) ? 'good' : ''];
+      }); });
+      summaryValues.avgTurns = summaryValues.averageTurns; summaryValues.ttft = summaryValues.ttftAvgMs;
+      summaryValues.feedback = [summaryValues.likes[0] + ' / ' + summaryValues.dislikes[0], ''];
+    }
+    return summaryValues[id];
+  }
+
   global.AIOpsBoards = {
     configure: function (opts) {
       Object.assign(host, opts || {});
     },
+    metricSummary: metricSummary,
     costPage: costBoard,
     healthPage: healthBoard,
     behaviorPage: behaviorBoard,
     syncCharts: function () {
       syncAnalysisCharts();
-      bindHealthSectionTabs();
     },
     scopePicker: function () {
       return analysisScopePicker();
-    },
-    healthSectionTabs: function () {
-      return healthSectionTabs(healthActiveSection());
     }
   };
 
+  /* Keep help tips inside the content pane so the sidebar cannot cover them. */
+  function clampMetricTooltip(help) {
+    var tip = help.querySelector('.metric-tooltip');
+    var pane = help.closest('.aiops-scroll');
+    if (!tip || !pane) return;
+    tip.style.transform = '';
+    tip.style.removeProperty('--tip-shift');
+    var pad = 12;
+    var paneBox = pane.getBoundingClientRect();
+    var tipBox = tip.getBoundingClientRect();
+    var shift = 0;
+    if (tipBox.left < paneBox.left + pad) shift = paneBox.left + pad - tipBox.left;
+    else if (tipBox.right > paneBox.right - pad) shift = paneBox.right - pad - tipBox.right;
+    if (Math.abs(shift) < 1) return;
+    var base = 0;
+    var matrix = getComputedStyle(tip).transform;
+    if (matrix && matrix !== 'none') {
+      var parts = matrix.slice(matrix.indexOf('(') + 1, matrix.lastIndexOf(')')).split(',');
+      base = parseFloat(parts[4]) || 0;
+    }
+    tip.style.transform = 'translateX(' + (base + shift) + 'px)';
+    tip.style.setProperty('--tip-shift', shift + 'px');
+  }
+  document.addEventListener('mouseover', function (event) {
+    var help = event.target.closest && event.target.closest('.metric-help');
+    if (!help || (event.relatedTarget && help.contains(event.relatedTarget))) return;
+    clampMetricTooltip(help);
+  });
+  document.addEventListener('focusin', function (event) {
+    var help = event.target.closest && event.target.closest('.metric-help');
+    if (help) clampMetricTooltip(help);
+  });
+
   Object.assign(global, {
-    analysisScopeMenu: analysisScopeMenu,
-    analysisScopeBulk: analysisScopeBulk,
-    analysisScopeScene: analysisScopeScene,
-    analysisScopeToggle: analysisScopeToggle,
-    analysisScopeClose: analysisScopeClose,
     healthSetAlertSeverity: healthSetAlertSeverity,
     healthAlertDetail: healthAlertDetail,
     healthTrendHover: healthTrendHover,

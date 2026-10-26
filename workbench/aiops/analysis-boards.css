@@ -240,7 +240,7 @@
 
 .metric-tooltip{position:absolute;bottom:calc(100% + 9px);left:50%;transform:translateX(-50%);width:240px;max-width:65vw;padding:9px 12px;border-radius:6px;background:#30343b;color:#fff;font-size:11px;font-weight:400;line-height:1.7;white-space:normal;text-align:left;box-shadow:0 4px 14px #1823331a;visibility:hidden;opacity:0;pointer-events:none;z-index:50;transition:opacity .12s}
 
-.metric-tooltip:after{content:'';position:absolute;top:100%;left:50%;margin-left:-4px;border:4px solid transparent;border-top-color:#30343b}
+.metric-tooltip:after{content:'';position:absolute;top:100%;left:50%;margin-left:-4px;border:4px solid transparent;border-top-color:#30343b;translate:calc(var(--tip-shift, 0px) * -1) 0}
 
 .metric-help:hover .metric-tooltip,.metric-help:focus .metric-tooltip{visibility:visible;opacity:1}
 
@@ -906,7 +906,7 @@
 
 .page.is-analysis :is(.analysis-line-chart,.cost-trend-chart,.health-slow-chart,.health-alert-chart,.behavior-chart) line{stroke:#e5ebf3;vector-effect:non-scaling-stroke}
 
-.page.is-analysis .analysis-series{stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.page.is-analysis .analysis-series{stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 
 .page.is-analysis :is(.analysis-line-chart,.cost-trend-chart,.health-slow-chart){height:280px}
 
@@ -936,8 +936,6 @@
 
 .page.is-analysis .heading h1{font-size:24px;line-height:32px}
 
-.page.is-analysis .health-section-tab{font-size:13px;line-height:20px}
-
 .page.is-analysis .cost-metric-picker summary{font-size:14px;line-height:22px;font-weight:600}
 
 .page.is-analysis .panelhead h2>.metric-label{font-size:12px;line-height:16px;font-weight:400;color:var(--text-secondary,#8c8c8c)}
@@ -963,7 +961,7 @@
 
 .page.is-analysis .analysis-chart-host>svg{display:block;width:100%!important;height:100%!important;min-width:0!important;max-width:none;overflow:visible;font-family:inherit}
 
-.page.is-analysis .analysis-chart-host>svg text{font-family:inherit;font-size:12px;letter-spacing:0;fill:#8998ae}
+.page.is-analysis .analysis-chart-host>svg text{font-family:inherit;font-size:12px;letter-spacing:0;fill:var(--text-45)}
 
 .page.is-analysis [data-analysis-chart="health-alert"]{flex:1 1 auto;min-height:0;height:auto!important}
 
@@ -1229,12 +1227,6 @@
   border: 1px solid var(--border, #ececec);
   border-radius: var(--radius-card, 12px);
   background: #fff;
-  transition: border-color 0.14s ease, box-shadow 0.14s ease;
-}
-
-.page.is-analysis .analysis-metrics .compact-stat:hover {
-  border-color: #ddd;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
 }
 
 .page.is-analysis .analysis-metrics .metric-card-head {
@@ -1435,7 +1427,7 @@
   margin-bottom: 0;
 }
 
-/* Sticky page title + health section tabs */
+/* Sticky page title */
 .page.is-analysis .analysis-sticky-chrome {
   position: sticky;
   top: 0;
@@ -1449,50 +1441,12 @@
   padding: 0 0 12px;
 }
 
-.page.is-analysis .health-section-tabs {
-  display: flex;
-  align-items: stretch;
-  gap: 20px;
+.page.is-analysis .health-section-title {
   margin: 0;
-  padding: 0;
-  border-bottom: 1px solid var(--divider, #e6e6e6);
-}
-
-.page.is-analysis .health-section-tab {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  height: 36px;
-  padding: 0;
-  margin: 0;
-  border: 0;
-  background: transparent;
   font-size: 13px;
-  line-height: 20px;
-  font-weight: 500;
-  color: var(--text-secondary, #8c8c8c);
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.page.is-analysis .health-section-tab:hover {
-  color: var(--text-primary, rgba(0, 0, 0, 0.88));
-}
-
-.page.is-analysis .health-section-tab.is-active {
-  color: var(--text-primary, rgba(0, 0, 0, 0.88));
   font-weight: 600;
-}
-
-.page.is-analysis .health-section-tab.is-active::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 2px;
-  background: var(--ink, #111);
-  border-radius: 2px 2px 0 0;
+  line-height: 20px;
+  color: var(--text-88, rgba(0, 0, 0, 0.88));
 }
 
 /* Chart panel titles match metric-card labels (via metricHelp) */
@@ -1621,4 +1575,258 @@
   .page.is-analysis .health-alert-panels {
     grid-template-columns: 1fr;
   }
+}
+
+/* Beat the shared :is() panel rule (its .behavior-trends > .panel argument raises specificity). */
+.page.is-analysis .health-alert-panels > .health-alert-distribution,
+.page.is-analysis .health-alert-panels > .health-live-alerts,
+.page.is-analysis .health-perf-panels > .health-duration-panel {
+  border: 1px solid #f0f0f0 !important;
+  border-radius: 12px !important;
+  background: #fff;
+  padding: 12px !important;
+  box-shadow: none;
+  margin: 0 !important;
+  gap: 8px;
+}
+
+.page.is-analysis .health-alert-chart-row {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) 16px;
+  column-gap: 8px;
+  row-gap: 6px;
+}
+
+.page.is-analysis .health-alert-ylabels {
+  grid-column: 1;
+  grid-row: 1;
+  display: grid;
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  align-items: center;
+  min-width: 0;
+}
+
+.page.is-analysis .health-alert-ylabel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-45);
+  white-space: nowrap;
+}
+
+.page.is-analysis .health-alert-chart-row > .health-alert-plot {
+  grid-column: 2;
+  grid-row: 1;
+  height: 100% !important;
+  min-width: 0;
+  min-height: 0;
+}
+
+.page.is-analysis .health-alert-chart-row .health-alert-chart {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.page.is-analysis .health-alert-xaxis {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--text-45);
+}
+
+.page.is-analysis .health-alert-panels > .panel > .panelhead,
+.page.is-analysis .health-perf-panels > .health-duration-panel > .panelhead {
+  margin: 0;
+  min-height: 0;
+  gap: 8px;
+}
+
+.page.is-analysis .health-duration-panel > .panelhead {
+  justify-content: space-between;
+}
+
+.page.is-analysis .health-alert-panels > .panel > .panelhead h2,
+.page.is-analysis .health-perf-panels > .health-duration-panel > .panelhead h2,
+.page.is-analysis .health-alert-panels > .panel > .panelhead h2 > .metric-label,
+.page.is-analysis .health-perf-panels > .health-duration-panel > .panelhead h2 > .metric-label {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  color: var(--text-45);
+}
+
+.page.is-analysis .health-duration-panel > .panelhead small {
+  margin-left: auto;
+  font-size: 11px;
+  line-height: 16px;
+  color: #92969e;
+}
+
+.page.is-analysis .health-alert-chart text {
+  fill: var(--text-45);
+  font-size: 12px;
+}
+
+.page.is-analysis .health-alert-chart line {
+  stroke: #e8edf3;
+}
+
+.page.is-analysis .health-live-alerts .segments {
+  margin-left: auto;
+  padding: 2px;
+  background: var(--fill-03, rgba(0, 0, 0, 0.03));
+  border-radius: 6px;
+  gap: 0;
+}
+
+.page.is-analysis .health-live-alerts .segments button {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-45);
+}
+
+.page.is-analysis .health-live-alerts .segments .selected {
+  background: #fff;
+  color: var(--text-88);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.page.is-analysis .health-alert-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /* Item padding is 8px. Pull the list out so that text lines up with the title. */
+  margin-left: -8px;
+  margin-right: -8px;
+}
+
+.page.is-analysis .health-alert-list > .health-alert-feed {
+  flex: 1 1 auto;
+  padding-right: 0;
+}
+
+.page.is-analysis .health-alert-list > .health-alert-footer {
+  padding: 0 8px;
+}
+
+.page.is-analysis .health-alert-item {
+  position: relative;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 0;
+  margin: 0;
+  padding: 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.page.is-analysis .health-alert-item + .health-alert-item {
+  margin-top: 9px;
+}
+
+.page.is-analysis .health-alert-item + .health-alert-item::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: -5px;
+  height: 1px;
+  background: #f0f0f0;
+}
+
+.page.is-analysis .health-alert-item:hover {
+  background: var(--hover, #f5f5f5);
+  border-color: transparent;
+  border-radius: 8px;
+}
+
+.page.is-analysis .health-alert-name {
+  gap: 6px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-45);
+}
+
+.page.is-analysis .health-alert-name > b {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--text-88);
+}
+
+.page.is-analysis .health-alert-name > span:last-child {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-45);
+}
+
+.page.is-analysis .health-alert-message,
+.page.is-analysis .health-alert-meta time,
+.page.is-analysis .health-alert-footer {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-secondary, #8c8c8c);
+}
+
+.page.is-analysis .health-alert-footer {
+  margin-top: 0;
+}
+
+.page.is-analysis .health-alert-badge {
+  border: 0;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.page.is-analysis .health-duration-panel .step-bars {
+  gap: 8px;
+  padding: 0;
+}
+
+.page.is-analysis .health-duration-panel .step-row {
+  grid-template-columns: 88px minmax(0, 1fr) 72px;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-45);
+}
+
+.page.is-analysis .health-duration-panel .step-row > span > i {
+  width: 12px;
+  height: 2px;
+  border-radius: 1px;
+}
+
+.page.is-analysis .health-duration-panel .step-row > b {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--text-88);
+}
+
+.page.is-analysis .health-duration-panel .step-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--fill-03, rgba(0, 0, 0, 0.03));
+}
+
+.page.is-analysis .health-duration-panel .step-track > i {
+  border-radius: 4px;
 }

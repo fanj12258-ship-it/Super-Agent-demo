@@ -129,7 +129,7 @@
 | Agent demo 文件行 | 非 md；出现「本体对象集 / Agent 调试」入口时写入 Deliverables；点击同「Agent 调试」打开试玩面板；图标用 `#ws-agent`（nav 锁定资产） | Journey 2 已接 | `js/journey-two.js`、`js/fast-agent-panel.js`、`js/fast-files.js`、`js/file-type-icons.js` |
 | Journey 定位提示 | 无额外图标；13px；hover Journey 按钮后立即显示路线说明，移出立即关闭；键盘聚焦立即显示；Journey 1 / 2 / 3 已挂文案（J3 关键特征【Demo 转生产】） | 可直接复用；文案归各故事线 | `workshop/fragments/fast-route.html`、`css/fast-overrides.css` |
 | 附件上传 | 选择、附件条、取消、完成 | 可直接复用 | `js/fast-upload.js` |
-| 模型选择 | Popover、子菜单、Esc / 外点 | 可直接复用 | `js/composer-model-picker.js` |
+| 模型选择 | Popover、子菜单、Esc / 外点 | 可直接复用 | `js/composer-model-picker.js`；AIOps 输入栏同一交互 `workbench/aiops/aiops.js` |
 | Token 用量 | 小型 Popover | 可直接复用 | `js/composer-token-usage.js` |
 | Slash Skill 面板 | 输入 `/` 后在 Composer 上方展示可调用 Skill；支持输入筛选、↑↓、Enter / Tab 插入、Esc / 失焦关闭 | 可直接复用；Skill 清单为演示占位 | `js/composer-slash-skills.js`、`css/chat-composer.css` |
 | 多会话 Tab | 新建、切换、stash / restore | 可直接复用 | `js/fast-conversations.js` |
