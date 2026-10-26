@@ -388,3 +388,5 @@
 - Fixed review chrome: company title, tabs, and review row are moved into `.ea-fixed-chrome`, a nonshrinking sibling before `.ea-article-scroll`. This replaces sticky descendants so scrolling to the end cannot move or compress review rows.
 
 Enterprise Profile section navigation uses the ontology segmented control style: gray rounded group, black selected segment, and aria-pressed state; section anchor scrolling is preserved.
+
+Navigation icons now use original 16px SVG assets from Figma 219:30061. Enterprise file tree and tab icons use File component variants from 266:109807; interactions are unchanged.

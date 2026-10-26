@@ -255,3 +255,8 @@ a.nav-item { text-decoration: none; color: inherit; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .team-row .chev { margin-left: 1px; flex-shrink: 0; }
+
+.nav-item .ico img { display:block; flex:none; width:16px; height:16px; }
+
+/* Figma book glyph bounds are centered at x=6.667 in its 16px canvas. */
+.nav-item[data-view="knowledge"] .ico img { transform:translateX(1.333px); }

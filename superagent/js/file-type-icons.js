@@ -119,8 +119,15 @@
     return i >= 0 ? String(name).slice(i + 1).toLowerCase() : '';
   }
 
+  var figmaIconBase = new URL('../assets/figma-icons/', document.currentScript.src).href;
+  ['documents','landscape','planning'].forEach(function(type){ICONS['enterprise-'+type]='<img src="'+figmaIconBase+'file-'+type+'.svg" width="16" height="16" alt="" />';});
+
   function typeOf(name) {
     var raw = String(name || '');
+    var enterpriseName=raw.replace(/\.[^.]+$/, '').toLowerCase();
+    if(enterpriseName==='enterprise documents')return 'enterprise-documents';
+    if(enterpriseName==='business landscape')return 'enterprise-landscape';
+    if(enterpriseName==='scenario planning')return 'enterprise-planning';
     var base = raw.replace(/\.[^.]+$/, '');
     var compact = base.replace(/\s+/g, '');
     /* Agent / 机器人 — Agent demo · Agent v3 · Agentv4 · *.agent */

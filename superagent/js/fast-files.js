@@ -82,6 +82,7 @@
     var mark = marks[name];
     var icon = !mark ? '' : (typeof mark === 'string' ? mark : (mark.icon || ''));
     var tag = mark && typeof mark === 'object' ? mark.tag : '';
+    if(opts.openAsset&&FTI){icon='<span class="dossier-mark" aria-hidden="true">'+FTI.forName(name)+'</span>';}
     var node = document.createElement('div');
     node.className = 'node' + (open ? ' is-open' : '') + (collapsible ? '' : ' is-static-folder') +
       (opts.animate === false ? '' : ' is-new') + (icon ? ' is-dossier' : '');
