@@ -781,7 +781,7 @@
     if (!MODS[key] || !FD()) return;
     if (!registered[key]) {
       var ico = '<svg class="ws-ico" width="14" height="14" aria-hidden="true"><use href="#' + ICON[key] + '"/></svg>';
-      FD().register({ name: NAMES[key], kind: 'agent', build: function () { return build(key); }, iconHtml: ico });
+      FD().register({ name: NAMES[key], kind: 'agent', launchType: key, build: function () { return build(key); }, iconHtml: ico });
       registered[key] = true;
     }
     MODS[key].stack = [];

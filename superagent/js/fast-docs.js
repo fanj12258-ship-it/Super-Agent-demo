@@ -12,6 +12,7 @@
   'use strict';
   var DOCS = window.FastDocsData || [];
   var FTI = window.FileTypeIcons;
+  var launchIconBase = new URL('../assets/figma-icons/', document.currentScript.src).href;
   var byName = {};
   // uploaded materials only — generated deliverables and the Agent pane are opened by name
   function mats() { return DOCS.filter(function (d) { return !d.deliverable && d.kind !== 'agent'; }); }
@@ -199,7 +200,9 @@
       t.setAttribute('aria-selected', n === current ? 'true' : 'false');
       t.title = n;
       var dd = byName[n.toLowerCase()];
-      t.innerHTML = (dd && dd.iconHtml ? dd.iconHtml : icon(n, 14)) + '<span class="fd-tab-name">' + esc(n) + '</span>' +
+      var launchType=dd&&dd.launchType;
+      var tabIcon=/^(ontology|agent|skill|mcp|data|knowledge|scenario|test)$/.test(launchType||'')?'<img src="'+launchIconBase+'launch-'+launchType+'.svg" width="16" height="16" alt="" />':icon(n,16);
+      t.innerHTML = tabIcon + '<span class="fd-tab-name">' + esc(n) + '</span>' +
         '<button type="button" class="fd-tab-x" aria-label="Close ' + esc(n) + '"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>';
       t.addEventListener('click', function (e) {
         if (e.target.closest('.fd-tab-x')) { close(n); return; }

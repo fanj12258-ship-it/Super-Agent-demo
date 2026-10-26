@@ -343,3 +343,6 @@
 .fd-view,.right-panel-inner:has(.fd-view:not([hidden])) .right-panel-head { background:#f7f7f9; }
 .fd-meta { padding:12px 12px 10px; line-height:18px; }
 .fd-scroll { background:#f7f7f9; padding-left:12px; padding-right:12px; }
+
+.rp-launch-item .rp-launch-icon { display:block; flex:none; }
+.fd-tab > .ft-type-icon { width:16px; height:16px; }

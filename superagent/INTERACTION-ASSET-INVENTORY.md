@@ -390,3 +390,5 @@
 Enterprise Profile section navigation uses the ontology segmented control style: gray rounded group, black selected segment, and aria-pressed state; section anchor scrolling is preserved.
 
 Navigation icons now use original 16px SVG assets from Figma 219:30061. Enterprise file tree and tab icons use File component variants from 266:109807; interactions are unchanged.
+
+Right-panel launch menu uses the eight original SVGs from Figma 219:34540. File tabs resolve every file icon through the File component variants from 266:109807, preserving menu actions and tab behavior.

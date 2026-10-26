@@ -120,7 +120,8 @@
   }
 
   var figmaIconBase = new URL('../assets/figma-icons/', document.currentScript.src).href;
-  ['documents','landscape','planning'].forEach(function(type){ICONS['enterprise-'+type]='<img src="'+figmaIconBase+'file-'+type+'.svg" width="16" height="16" alt="" />';});
+  var figmaTypes={file:'asset',agent:'asset',xls:'excel',csv:'csv',md:'md',pdf:'pdf',doc:'word',ppt:'ppt',txt:'txt',json:'json',xml:'xml',html:'html',py:'code',sh:'code',code:'code',img:'image',video:'video',audio:'audio',zip:'zip','enterprise-documents':'documents','enterprise-landscape':'landscape','enterprise-planning':'planning','enterprise-canvas':'canvas'};
+  Object.keys(figmaTypes).forEach(function(type){ICONS[type]='<img src="'+figmaIconBase+'file-'+figmaTypes[type]+'.svg" width="16" height="16" alt="" />';});
 
   function typeOf(name) {
     var raw = String(name || '');
@@ -138,6 +139,12 @@
       return 'agent';
     }
     var e = extOf(name);
+    if(/scenario definition canvas/i.test(base))return 'enterprise-canvas';
+    if(e==='pdf')return 'pdf';
+    if(e==='xml')return 'xml';
+    if(/^(zip|tar|gz|rar|7z)$/.test(e))return 'zip';
+    if(/^(mp4|mov|webm)$/.test(e))return 'video';
+    if(/^(mp3|wav|m4a|ogg)$/.test(e))return 'audio';
     if (e === 'csv') return 'csv';
     if (e === 'xlsx' || e === 'xls') return 'xls';
     if (e === 'py') return 'py';

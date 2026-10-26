@@ -240,7 +240,8 @@
   overflow: visible;
   background: transparent;
 }
-.files-scroll .tree .file .file-icon svg {
+.files-scroll .tree .file .file-icon svg,
+.files-scroll .tree .file .file-icon img {
   width: 16px;
   height: 16px;
   display: block;
