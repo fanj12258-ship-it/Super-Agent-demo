@@ -27,6 +27,9 @@ body.is-col-resizing iframe { pointer-events: none; }
 #pageRoot { grid-column: 2; grid-row: 1; }
 .cui-rail { grid-column: 3; grid-row: 1; }
 .aiops-app.is-rail-max .cui-rail { grid-column: 2; }
+/* The navigation already draws the boundary beside a maximized detail panel. */
+.aiops-app:not(.is-nav-collapsed) .resource-split.is-max > .resource-panel,
+.aiops-app.is-rail-max:not(.is-nav-collapsed) > .cui-rail { border-left: 0; }
 @media(max-width:760px) { .aiops-app, .aiops-app.is-rail-open:not(.is-rail-max), .aiops-app.is-rail-open.is-rail-max { grid-template-columns: 1fr; } #pageRoot { grid-column: 1; } }
 @media(max-width:760px) {
   .aiops-app.is-mobile-nav-open .aiops-side { display: flex; position: fixed; inset: 0 auto 0 0; width: var(--sidebar-w); z-index: 90; box-shadow: var(--popover-shadow); }

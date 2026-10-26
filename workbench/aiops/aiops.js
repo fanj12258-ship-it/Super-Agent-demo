@@ -29,6 +29,7 @@
     sessionSelected: {},
     sessionMarks: {},
     sessionMarkIds: [],
+    sessionMarkAnchor: null,
     cuiExtra: {},
     cuiFocus: false,
     railOpen: false,
@@ -63,6 +64,7 @@
     '用户行为分析': { zh: '用户行为分析', en: 'User behavior' },
     '自定义看板': { zh: '自定义看板', en: 'Custom dashboards' },
     '分析任务': { zh: '分析任务', en: 'Analysis task' },
+    '新任务': { zh: '新任务', en: 'New task' },
     '消息通知': { zh: '消息通知', en: 'Notifications' },
     '默认工作区': { zh: '默认工作区', en: 'Default workspace' },
     '暂无任务': { zh: '暂无任务', en: 'No tasks yet' },
@@ -1466,7 +1468,7 @@
               scheduleRuns().map(function (r) {
                 return (
                   '<li>' +
-                    '<button type="button" class="widget-row" data-page="' + esc(r.page) + '" data-schedule-run="' + esc(r.id) + '">' +
+                    '<button type="button" class="widget-row"' + (r.tone === 'pending' ? ' disabled' : ' data-page="' + esc(r.page) + '"') + ' data-schedule-run="' + esc(r.id) + '">' +
                       '<div class="widget-mission-main">' +
                         '<b>' + esc(t(r.page)) + '</b>' +
                         '<span class="widget-mission-meta">' +
@@ -1474,7 +1476,7 @@
                           '<span class="widget-pill is-' + r.tone + '"><span class="dot" aria-hidden="true"></span>' + esc(t(r.status)) + '</span>' +
                         '</span>' +
                       '</div>' +
-                      widgetRowGo() +
+                      (r.tone === 'pending' ? '' : widgetRowGo()) +
                     '</button>' +
                   '</li>'
                 );
@@ -1501,10 +1503,7 @@
                     '<button type="button" class="widget-row" data-artifact="' + esc(r.id) + '">' +
                       '<div class="widget-output-main">' +
                         '<div class="widget-output-title">' + chip + '<b>' + esc(r.name) + '</b></div>' +
-                        '<span class="widget-output-meta">' +
-                          '<span>' + esc(r.time) + '</span>' +
-                          '<span>' + esc(r.type) + '</span>' +
-                        '</span>' +
+                        window.AIOpsCapability.widgetArtifactMeta(r.id) +
                       '</div>' +
                       widgetRowGo() +
                     '</button>' +
@@ -2727,18 +2726,28 @@
     syncSessionShades();
   }
 
-  function closeSessionMark() {
+  function closeSessionMark(restoreFocus) {
     var menu = document.getElementById('sessionMarkMenu');
     if (menu) menu.remove();
+    var anchor = state.sessionMarkAnchor;
     document.querySelectorAll('[data-session-mark][aria-expanded], [data-session-bulk="mark"]').forEach(function (button) { button.setAttribute('aria-expanded', 'false'); });
     state.sessionMarkIds = [];
+    state.sessionMarkAnchor = null;
+    if (restoreFocus && anchor && anchor.isConnected) anchor.focus({ preventScroll: true });
   }
 
-  function openSessionMark(ids, anchor) {
+  function openSessionMark(ids, anchor, focusMenu) {
+    var parent = anchor.closest('#sessionActionsMenu');
     var same = anchor.getAttribute('aria-expanded') === 'true';
+    if (same && parent) {
+      var existing = document.getElementById('sessionMarkMenu');
+      if (focusMenu !== false && existing) existing.querySelector('button').focus({ preventScroll: true });
+      return;
+    }
     closeSessionMark();
     if (same || !ids.length) return;
     state.sessionMarkIds = ids.slice();
+    state.sessionMarkAnchor = anchor;
     var menu = document.createElement('div');
     menu.id = 'sessionMarkMenu'; menu.className = 'session-mark-menu'; menu.setAttribute('role', 'menu');
     menu.setAttribute('aria-label', state.lang === 'en' ? 'Mark sessions' : '标记会话');
@@ -2748,11 +2757,20 @@
     }).join('');
     document.body.appendChild(menu); paintIcons();
     var rect = anchor.getBoundingClientRect();
-    menu.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - menu.offsetWidth - 8)) + 'px';
-    var above = !!anchor.closest('.session-bulk-dock') || rect.bottom + menu.offsetHeight + 8 > window.innerHeight;
-    menu.style.top = Math.max(8, above ? rect.top - menu.offsetHeight - 8 : rect.bottom + 6) + 'px';
+    if (parent) {
+      menu.classList.add('is-submenu');
+      var parentRect = parent.getBoundingClientRect();
+      var left = parentRect.right + 4;
+      if (left + menu.offsetWidth > window.innerWidth - 8) left = parentRect.left - menu.offsetWidth - 4;
+      menu.style.left = Math.max(8, left) + 'px';
+      menu.style.top = Math.max(8, Math.min(rect.top - 6, window.innerHeight - menu.offsetHeight - 8)) + 'px';
+    } else {
+      menu.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - menu.offsetWidth - 8)) + 'px';
+      var above = !!anchor.closest('.session-bulk-dock') || rect.bottom + menu.offsetHeight + 8 > window.innerHeight;
+      menu.style.top = Math.max(8, above ? rect.top - menu.offsetHeight - 8 : rect.bottom + 6) + 'px';
+    }
     anchor.setAttribute('aria-expanded', 'true');
-    menu.querySelector('button').focus({ preventScroll: true });
+    if (focusMenu !== false) menu.querySelector('button').focus({ preventScroll: true });
   }
 
   function markSessions(ids, mark) {
@@ -2803,12 +2821,34 @@
       return '<div class="resource-list-item' + (state.sessionViewId === row.id ? ' is-active' : '') + '" role="button" tabindex="0" data-session-view="' + esc(row.id) + '" aria-label="' + esc('查看会话：' + row.name) + '"><div><strong title="' + esc(row.name) + '">' + esc(row.name) + '</strong></div><button type="button" class="resource-icon" data-session-more="' + esc(row.id) + '" aria-label="' + esc(row.name + '的更多操作') + '" aria-haspopup="menu">' + lucideIcon('ellipsis') + '</button></div>';
     }).join('') : '<div class="sd-empty">' + (state.lang === 'en' ? 'No matching sessions' : '没有匹配的会话') + '</div>') + '</div>';
   }
-  function sessionActionsMenu(id, anchor) {
-    var old = document.getElementById('sessionActionsMenu'); if (old) old.remove();
-    var menu = document.createElement('div'); menu.id = 'sessionActionsMenu'; menu.className = 'cap-menu cap-art-action-menu'; menu.setAttribute('role', 'menu');
-    menu.innerHTML = '<button type="button" role="menuitem" data-session-mark="' + esc(id) + '">' + lucideIcon('tag') + esc(t('标记')) + '</button><button type="button" role="menuitem" data-session-analyze="' + esc(id) + '">' + lucideIcon('sparkles') + esc(t('AI分析')) + '</button>';
-    document.body.appendChild(menu); var r = anchor.getBoundingClientRect(); menu.style.left = Math.max(8, Math.min(r.right - menu.offsetWidth, window.innerWidth - menu.offsetWidth - 8)) + 'px'; menu.style.top = Math.max(8, Math.min(r.bottom + 6, window.innerHeight - menu.offsetHeight - 8)) + 'px'; paintIcons(); menu.querySelector('button').focus();
+  function closeSessionActions(restoreFocus) {
+    var menu = document.getElementById('sessionActionsMenu');
+    if (!menu) return;
+    var anchor = menu.sessionAnchor;
+    closeSessionMark();
+    menu.remove();
+    if (anchor && anchor.isConnected) {
+      anchor.setAttribute('aria-expanded', 'false');
+      if (restoreFocus) anchor.focus({ preventScroll: true });
+    }
   }
+  function sessionActionsMenu(id, anchor) {
+    var old = document.getElementById('sessionActionsMenu');
+    var same = old && old.sessionAnchor === anchor;
+    closeSessionActions(); closeSessionMark();
+    if (same) return;
+    var menu = document.createElement('div'); menu.id = 'sessionActionsMenu'; menu.className = 'cap-menu cap-art-action-menu'; menu.setAttribute('role', 'menu');
+    menu.setAttribute('aria-label', state.lang === 'en' ? 'Session actions' : '会话操作');
+    menu.sessionAnchor = anchor;
+    menu.innerHTML = '<button type="button" role="menuitem" data-session-mark="' + esc(id) + '" aria-haspopup="menu" aria-expanded="false" aria-controls="sessionMarkMenu">' + lucideIcon('tag') + esc(t('标记')) + '<span class="session-submenu-arrow">' + lucideIcon('chevron-right') + '</span></button><button type="button" role="menuitem" data-session-analyze="' + esc(id) + '">' + lucideIcon('sparkles') + esc(t('AI分析')) + '</button>';
+    document.body.appendChild(menu); var r = anchor.getBoundingClientRect(); menu.style.left = Math.max(8, Math.min(r.right - menu.offsetWidth, window.innerWidth - menu.offsetWidth - 8)) + 'px'; menu.style.top = Math.max(8, Math.min(r.bottom + 6, window.innerHeight - menu.offsetHeight - 8)) + 'px'; paintIcons(); anchor.setAttribute('aria-expanded', 'true'); menu.querySelector('button').focus();
+  }
+  document.addEventListener('pointerover', function (e) {
+    var item = e.target.closest('#sessionActionsMenu > [role="menuitem"]');
+    if (!item) return;
+    if (item.hasAttribute('data-session-mark')) openSessionMark([item.getAttribute('data-session-mark')], item, false);
+    else closeSessionMark();
+  });
 
   function pageSessions() {
     if (state.sessionViewId && window.AIOpsSessionDetail) {
@@ -3475,9 +3515,10 @@
 
   function cuiShell(page, started, threadHtml, options) {
     options = options || {};
+    var title = options.title || (started ? t(page) : t('新任务'));
     return (
       '<div class="cui">' +
-        '<header class="cui-head">' + (options.back || '') + '<h1 class="cui-head-title">' + esc(options.title || spaceName()) + '</h1>' +
+        '<header class="cui-head">' + (options.back || '') + '<h1 class="cui-head-title" title="' + esc(title) + '">' + esc(title) + '</h1>' +
           '<button type="button" class="ws-btn" id="toggle-right-rail" aria-label="Open agent panel" aria-pressed="false">' +
             '<svg class="ws-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M15 4.5v15"/></svg>' +
           '</button></header>' +
@@ -3618,26 +3659,8 @@
   var RAIL_FILE = '<svg class="ws-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3.5H7.5A1.5 1.5 0 0 0 6 5v14a1.5 1.5 0 0 0 1.5 1.5h9A1.5 1.5 0 0 0 18 19V8.5L14 3.5Z"/><path d="M14 3.5V8.5h4"/></svg>';
   var RAIL_MSG = '<svg class="ws-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17.5 4 20v-4.2A7.5 7.5 0 1 1 7 17.5Z"/></svg>';
 
-  function railKv(label, value) {
-    return '<tr><td>' + esc(label) + '</td><td>' + esc(value) + '</td></tr>';
-  }
-
   function railArts() {
-    function doc(id, name, mark, cls, folder, meta, html) {
-      return { id: id, name: name, mark: mark, markCls: cls, folder: folder, meta: meta, html: html };
-    }
-    return [
-      doc('art:advice', '制造业规则优化建议.md', 'MD', '', '关账审核智能体', '更新于 2026-10-14 · Feng Zhu',
-        '<h1>制造业规则优化建议</h1><h2>高频问题</h2><p>跨期预提费用规则被否决 8 次，集中在物料类型不在覆盖范围、组织未启用该规则。</p><h2>建议</h2><p>按行业设置阈值与生效日期，并在否决时写明依据会话。</p><p>状态：待业务审核。</p>'),
-      doc('art:review', '会话质量复盘.md', 'MD', '', '默认工作区', '更新于 2026-10-14 · Feng Zhu',
-        '<h1>会话质量复盘</h1><h2>复盘范围</h2><p>最近 7 日的工作区分析会话。</p><h2>主要发现</h2><p>规则适用范围和用户纠正需要结合来源会话复核。</p><h2>后续行动</h2><p>在工作区中引用相关文档，补充业务证据后继续分析。</p>'),
-      doc('art:cost', '成本与性能日报', '表', 'is-sheet', '关账审核智能体', '28 行 · 更新于 2026-10-14 · 定时任务',
-        '<h1>成本与性能日报</h1><p>成本、token、平均耗时及阶段结构，按自然日汇总。</p><table><thead><tr><th>日期</th><th>成本 / CNY</th><th>token</th><th>平均耗时</th><th>报告生成率</th></tr></thead><tbody><tr><td>10-12</td><td>86.40</td><td>12.8M</td><td>42.6s</td><td>94.2%</td></tr><tr><td>10-11</td><td>78.20</td><td>11.6M</td><td>40.8s</td><td>93.7%</td></tr><tr><td>10-09</td><td>128.50</td><td>18.9M</td><td>58.1s</td><td>90.4%</td></tr></tbody></table>'),
-      doc('art:findings', '核验项明细', '表', 'is-sheet', '关账审核智能体', '1,286 行 · 更新于 2026-10-14 · 定时任务',
-        '<h1>核验项明细</h1><table><thead><tr><th>Finding report id</th><th>Referred rule</th><th>check result content</th><th>Category</th></tr></thead><tbody><tr><td>CR-1024</td><td>R-028 v3</td><td>预提费用跨期未冲回</td><td>reasoning</td></tr><tr><td>CR-1023</td><td>R-014 v2</td><td>收入确认时点不一致</td><td>user added</td></tr><tr><td>CR-1021</td><td>R-008 v2</td><td>关联方余额需对账</td><td>user added</td></tr></tbody></table>'),
-      doc('art:json', '分析摘要.json', 'JSON', 'is-json', '默认工作区', '更新于 2026-10-13 · Feng Zhu',
-        '<h1>分析摘要</h1><table class="cui-rail-kv"><tbody>' + railKv('scope', '最近 7 日会话') + railKv('status', '待业务验证') + railKv('source', '工作区分析') + '</tbody></table>')
-    ];
+    return window.AIOpsCapability.railArtifacts();
   }
 
   function railSessions() {
@@ -3645,24 +3668,12 @@
       var msgs = row.messages + (state.lang === 'en' ? ' messages' : ' 条消息');
       return {
         id: 'ses:' + row.id,
+        sessionId: row.id,
         name: row.name,
         mark: state.lang === 'en' ? 'Chat' : '会话',
         markCls: 'is-chat',
         folder: '线上会话',
-        meta: [msgs, row.time, row.user].join(' · '),
-        html: '<h1>' + esc(row.name) + '</h1><table class="cui-rail-kv"><tbody>' +
-          railKv(state.lang === 'en' ? 'Session' : '会话', row.id) +
-          railKv(t('用户'), row.user) +
-          railKv(t('消息'), String(row.messages)) +
-          railKv(t('token 消耗'), sessionTokenLabel(row.tokens)) +
-          railKv(t('警告'), String(row.warnings)) +
-          railKv(t('标记'), t(row.mark)) +
-          railKv(t('最新会话时间'), row.time) +
-          '</tbody></table><h2>' + esc(t('说明')) + '</h2><p>' +
-          esc(state.lang === 'en'
-            ? 'Live session from the close-audit agent. Open it here to read the record beside the task.'
-            : '关账审核智能体的线上会话。在任务旁边打开，查看这次会话的记录。') +
-          '</p>'
+        meta: [msgs, row.time, row.user].join(' · ')
       };
     });
   }
@@ -3682,9 +3693,13 @@
     }).join('') + '</div>';
   }
 
-  function railHasDirectory() { return state.page === '分析任务'; }
+  function isCuiPage() {
+    return state.page === '分析任务' || isWsSession(state.page) || (state.page === '定时任务' && window.AIOpsCapability.isConversation());
+  }
 
-  function paintRail() {
+  function railHasDirectory() { return isCuiPage(); }
+
+  function paintRail(keepBody) {
     var rail = document.getElementById('cuiRail');
     var tabsEl = document.getElementById('cuiRailTabs');
     var body = document.getElementById('cuiRailBody');
@@ -3703,31 +3718,32 @@
     var listed = state.railSection === 'art' || state.railSection === 'ses';
     body.classList.toggle('is-list', listed && !current);
     body.innerHTML = directory ? '<ul class="rp-launch" aria-label="' + esc(state.lang === 'en' ? 'Directory' : '目录') + '">' +
-      '<li><button type="button" class="rp-launch-item" data-rail-section="art" aria-expanded="' + (state.railSection === 'art') + '">' +
-        RAIL_FILE + '<span>' + esc(t('产出物')) + '</span></button>' +
-        (state.railSection === 'art' ? railFilesHtml(railArts()) : '') +
-      '</li><li><button type="button" class="rp-launch-item" data-rail-section="ses" aria-expanded="' + (state.railSection === 'ses') + '">' +
+      '<li><button type="button" class="rp-launch-item" data-rail-section="ses" aria-expanded="' + (state.railSection === 'ses') + '">' +
         RAIL_MSG + '<span>' + esc(t('线上会话')) + '</span></button>' +
         (state.railSection === 'ses' ? railFilesHtml(railSessions()) : '') +
+      '</li><li><button type="button" class="rp-launch-item" data-rail-section="art" aria-expanded="' + (state.railSection === 'art') + '">' +
+        RAIL_FILE + '<span>' + esc(t('产出物')) + '</span></button>' +
+        (state.railSection === 'art' ? railFilesHtml(railArts()) : '') +
       '</li></ul>' : '';
     var tabs = directory ? '<button type="button" class="fd-home' + (current ? '' : ' is-active') + '" data-rail-home aria-label="' + esc(state.lang === 'en' ? 'Directory' : '目录') + '" aria-pressed="' + !current + '">' + RAIL_HOME + '</button>' : '';
-    if (state.railTabs.length) {
-      state.railTabs.forEach(function (id) {
-        var doc = catalog[id];
-        if (!doc) return;
-        var on = current && current.id === id;
-        tabs += '<div class="fd-tab' + (on ? ' is-active' : '') + '" role="tab" data-rail-tab="' + esc(id) + '" aria-selected="' + (on ? 'true' : 'false') + '" title="' + esc(doc.name) + '">' +
-          '<span class="fd-tab-name">' + esc(doc.name) + '</span>' +
-          '<button type="button" class="fd-tab-x" data-rail-x="' + esc(id) + '" aria-label="Close ' + esc(doc.name) + '"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button></div>';
-      });
-    }
+    tabs += window.AIOpsResources.tabsMarkup('', state.railTabs.filter(function (id) { return !!catalog[id]; }).map(function (id) {
+      var doc = catalog[id]; return { id: id, name: doc.name, kind: doc.sessionId ? 'session' : 'artifact' };
+    }), current && current.id, true);
     tabsEl.innerHTML = tabs;
-    if (!current) return;
-    var mid = current.id.indexOf('ses:') === 0 ? current.id.slice(4) : t('产出物');
-    meta.innerHTML = '<span class="fd-crumb">' + esc(current.folder) + '<i>/</i>' + esc(mid) + '<i>/</i><b>' + esc(current.name) + '</b></span>' +
-      '<span class="fd-meta-r">' + esc(current.meta) + '</span>';
-    scroll.innerHTML = '<div class="fd-pane"><article class="fd-doc">' + current.html + '</article></div>';
-    scroll.scrollTop = 0;
+    meta.hidden = true;
+    if (!current) { scroll.innerHTML = ''; delete scroll.dataset.resourceId; paintIcons(); return; }
+    var newResource = scroll.dataset.resourceId !== current.id;
+    if (keepBody && !newResource) { paintIcons(); return; }
+    scroll.dataset.resourceId = current.id;
+    if (current.artifactId) {
+      scroll.innerHTML = window.AIOpsCapability.railArtifactDetail(current.artifactId);
+      paintIcons();
+      return;
+    }
+    var session = sessionRows().filter(function (row) { return row.id === current.sessionId; })[0];
+    scroll.innerHTML = session ? window.AIOpsSessionDetail.page(session, true) : '';
+    paintIcons();
+    window.AIOpsSessionDetail.afterRender(newResource);
   }
 
   function railOpenDoc(id) {
@@ -3746,8 +3762,8 @@
     syncRail();
   }
 
-  function syncRail() {
-    var cui = state.page === '分析任务' || isWsSession(state.page);
+  function syncRail(keepBody) {
+    var cui = isCuiPage();
     var catalog = railCatalog();
     var hasContent = railHasDirectory() || state.railTabs.some(function (id) { return !!catalog[id]; });
     var open = !!(state.railOpen && cui && hasContent && !state.sessionDockInTask);
@@ -3768,14 +3784,19 @@
       rail.hidden = !open && !(window.AIOpsColumns && window.AIOpsColumns.isAnimating());
       rail.inert = !open;
       rail.setAttribute('aria-hidden', String(!open));
-      if (open) paintRail();
+      if (open) paintRail(keepBody);
+      else { var scroll = document.getElementById('cuiRailScroll'); scroll.innerHTML = ''; delete scroll.dataset.resourceId; }
     }
     var btn = document.getElementById('toggle-right-rail');
     if (btn) {
       btn.hidden = open || state.sessionDockInTask || !hasContent;
       btn.setAttribute('aria-pressed', open ? 'true' : 'false');
-      btn.setAttribute('aria-label', open ? 'Close agent panel' : 'Open agent panel');
+      btn.setAttribute('aria-expanded', String(open));
+      btn.setAttribute('aria-controls', 'cuiRail');
+      btn.setAttribute('aria-label', state.lang === 'en' ? (open ? 'Close agent panel' : 'Open agent panel') : (open ? '收起右侧边栏' : '展开右侧边栏'));
     }
+    var closeBtn = document.getElementById('cuiRailClose');
+    if (closeBtn) closeBtn.setAttribute('aria-label', state.lang === 'en' ? 'Close agent panel' : '收起右侧边栏');
     var maxBtn = document.getElementById('cuiRailMax');
     if (maxBtn) {
       maxBtn.setAttribute('aria-pressed', max ? 'true' : 'false');
@@ -3849,7 +3870,7 @@
   function render(opts) {
     opts = opts || {};
     closeCuiModel();
-    var actionMenu = document.getElementById('sessionActionsMenu'); if (actionMenu) actionMenu.remove();
+    closeSessionActions();
     closeDeleteConfirm();
     closeSessionMark();
     if (!opts.keepSessionFilter) closeSessionFilter();
@@ -3865,6 +3886,7 @@
     var oldPanel = opts.keepSessionPanel || opts.keepResourcePanel ? root.querySelector('.resource-panel') : null;
     var panelScrolls = oldPanel ? Array.from(oldPanel.querySelectorAll('*')).filter(function (node) { return node.scrollTop || node.scrollLeft; }).map(function (node) { return { node: node, top: node.scrollTop, left: node.scrollLeft }; }) : [];
     var content = fn();
+    if (isCuiPage() && state.page !== '定时任务') content += window.AIOpsCapability.conversationOverlays();
     if (state.sessionDockInTask && state.sessionViewId && (state.page === '分析任务' || isWsSession(state.page))) {
       var detail = sessionRows().filter(function (row) { return row.id === state.sessionViewId; })[0];
       if (detail) content = window.AIOpsResources.shell('session', content, window.AIOpsSessionDetail.page(detail, true), { workspace: true });
@@ -3873,7 +3895,7 @@
       '<div class="page' +
       (state.page === '工作台' ? ' is-home' : '') +
       (state.page === '线上会话' ? ' is-sessions' : '') +
-      (state.page === '分析任务' || isWsSession(state.page) || (state.page === '定时任务' && window.AIOpsCapability.isConversation()) ? ' is-cui' : '') +
+      (isCuiPage() ? ' is-cui' : '') +
       (isAnalysisPage(state.page) ? ' is-analysis' : '') +
       '">' +
       content +
@@ -4168,6 +4190,7 @@
       var nextPage = pageBtn.getAttribute('data-page');
       var scheduleName = window.AIOpsWorkspaces.taskName(nextPage);
       if (window.AIOpsCapability && window.AIOpsCapability.isTaskName(scheduleName)) {
+        if (scheduleRun) { state.railOpen = false; state.railMax = false; }
         window.AIOpsCapability.focusTask(scheduleName);
         go('定时任务');
         return;
@@ -4243,11 +4266,11 @@
     }
     var sessionMore = e.target.closest('[data-session-more]');
     if (sessionMore) { sessionActionsMenu(sessionMore.getAttribute('data-session-more'), sessionMore); return; }
-    var sessionActionMenu = document.getElementById('sessionActionsMenu'); if (sessionActionMenu && !sessionActionMenu.contains(e.target)) sessionActionMenu.remove();
+    var sessionActionMenu = document.getElementById('sessionActionsMenu'); if (sessionActionMenu && !e.target.closest('#sessionActionsMenu, #sessionMarkMenu')) closeSessionActions();
     var sessionMark = e.target.closest('[data-session-mark]');
-    if (sessionMark) { openSessionMark([sessionMark.getAttribute('data-session-mark')], sessionMark); if (sessionActionMenu) sessionActionMenu.remove(); return; }
+    if (sessionMark) { openSessionMark([sessionMark.getAttribute('data-session-mark')], sessionMark); return; }
     var sessionAnalyze = e.target.closest('[data-session-analyze]');
-    if (sessionAnalyze) { if (sessionActionMenu) sessionActionMenu.remove(); analyzeSessions([sessionAnalyze.getAttribute('data-session-analyze')]); return; }
+    if (sessionAnalyze) { closeSessionActions(); analyzeSessions([sessionAnalyze.getAttribute('data-session-analyze')]); return; }
     var removeSessionRef = e.target.closest('[data-cui-session-remove]');
     if (removeSessionRef && state.cuiSeed) {
       state.cuiSeed.sessionRefs = (state.cuiSeed.sessionRefs || []).filter(function (row) { return row.id !== removeSessionRef.getAttribute('data-cui-session-remove'); });
@@ -4420,8 +4443,23 @@
       e.preventDefault(); openSessionDetail(e.target.getAttribute('data-session-view')); return;
     }
     var actions = document.getElementById('sessionActionsMenu');
-    if (actions && e.key === 'Escape') { actions.remove(); e.preventDefault(); return; }
-    if (actions && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { var buttons = Array.from(actions.querySelectorAll('button')); var at = buttons.indexOf(document.activeElement); buttons[(at + (e.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length].focus(); e.preventDefault(); return; }
+    var markMenu = document.getElementById('sessionMarkMenu');
+    if (markMenu && (e.key === 'Escape' || (actions && e.key === 'ArrowLeft'))) { closeSessionMark(true); e.preventDefault(); return; }
+    if (markMenu && markMenu.contains(e.target) && ['ArrowDown', 'ArrowUp', 'Home', 'End'].indexOf(e.key) >= 0) {
+      var options = Array.from(markMenu.querySelectorAll('button'));
+      var index = options.indexOf(document.activeElement);
+      var next = e.key === 'Home' ? 0 : e.key === 'End' ? options.length - 1 : (index + (e.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length;
+      options[next].focus(); e.preventDefault(); return;
+    }
+    if (actions && e.key === 'Escape') { closeSessionActions(true); e.preventDefault(); return; }
+    if (actions && e.key === 'Tab') { closeSessionActions(true); return; }
+    if (actions && e.key === 'ArrowRight' && e.target.matches('[data-session-mark]')) { openSessionMark([e.target.getAttribute('data-session-mark')], e.target); e.preventDefault(); return; }
+    if (actions && actions.contains(e.target) && ['ArrowDown', 'ArrowUp', 'Home', 'End'].indexOf(e.key) >= 0) {
+      var buttons = Array.from(actions.querySelectorAll('button'));
+      var at = buttons.indexOf(document.activeElement);
+      var nextAction = e.key === 'Home' ? 0 : e.key === 'End' ? buttons.length - 1 : (at + (e.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length;
+      closeSessionMark(); buttons[nextAction].focus(); e.preventDefault(); return;
+    }
     var calendarDay = e.target.closest('[data-session-date-day]');
     var dayStep = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key];
     if (calendarDay && state.sessionDateMenu && dayStep) {
@@ -4438,13 +4476,6 @@
     }
     if (state.sessionDateMenu && e.key === 'Escape') { closeSessionDate(true); e.preventDefault(); return; }
     if (state.sessionFilterMenu && e.key === 'Escape') { closeSessionFilter(true); e.preventDefault(); return; }
-    var markMenu = document.getElementById('sessionMarkMenu');
-    if (markMenu && e.key === 'Escape') { closeSessionMark(); e.preventDefault(); return; }
-    if (markMenu && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
-      var options = Array.from(markMenu.querySelectorAll('button'));
-      var index = options.indexOf(document.activeElement);
-      options[(index + (e.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length].focus(); e.preventDefault(); return;
-    }
     if (e.key === 'Enter' && e.target && e.target.id === 'sessionSearch' && !e.isComposing && !state.sessionComposing) {
       e.preventDefault();
       e.stopPropagation();
@@ -4978,8 +5009,6 @@
         i.classList.toggle('is-current', i === it);
       });
       document.getElementById('teamName').textContent = it.dataset.team;
-      var cuiTitle = document.querySelector('.cui-head-title');
-      if (cuiTitle) cuiTitle.textContent = it.dataset.team;
       var av = document.getElementById('teamAvatar');
       av.textContent = it.dataset.letter;
       av.style.background = it.dataset.color;
@@ -5035,7 +5064,7 @@
       e.preventDefault();
       if (!state.railOpen) state.railOpen = true;
       state.railMax = !state.railMax;
-      syncRail();
+      syncRail(true);
       return;
     }
     if (e.target.closest('#toggle-right-rail') || e.target.closest('#cuiRailClose')) {
@@ -5082,7 +5111,7 @@
   window.addEventListener('resize', function () {
     closeTeam();
     closeAcct();
-    if (state.railOpen) syncRail();
+    if (state.railOpen) syncRail(true);
     if (state.deleteAsk) closeDeleteConfirm();
     if (state.galleryOpen) fitGalleryPreview();
     if (cuiModelMenu && !cuiModelMenu.hidden) alignCuiModelMenu();
@@ -5111,7 +5140,7 @@
     }
     if (state.sessionDateMenu && !e.target.closest?.('#sessionDatePicker')) closeSessionDate();
   }, true);
-  window.addEventListener('resize', function () { closeSessionFilter(); closeSessionDate(); });
+  window.addEventListener('resize', function () { closeSessionActions(); closeSessionMark(); closeSessionFilter(); closeSessionDate(); });
 
   window.AIOpsWidget = {
     /* Monitoring pages tile the chart panel itself. The widget card chrome stays on 工作台. */
@@ -5195,12 +5224,30 @@
       lang: function () { return state.lang; },
       t: t,
       toast: showToast,
-      taskSaved: function (task) { window.AIOpsWorkspaces.syncTask(task); },
+      taskSaved: function (task) { if ((task.history || []).length) window.AIOpsWorkspaces.syncTask(task); else window.AIOpsWorkspaces.removeTask(task); },
       taskDeleted: function (task) { window.AIOpsWorkspaces.removeTask(task); },
-      conversationShell: function (task, record, thread, back) { return cuiShell('schedule-run:' + (record ? record.id : task.id), true, thread, { title: task.name, back: back, draft: record && record.chatDraft || '' }); },
+      openConversationArtifact: function (id) {
+        if (!isCuiPage()) return false;
+        var open = function () { state.railOpen = true; railOpenDoc('art:' + id); syncRail(); };
+        if (!state.railOpen && window.AIOpsColumns) window.AIOpsColumns.animate(open);
+        else open();
+        return true;
+      },
+      refreshRail: function () { paintRail(); paintIcons(); },
+      conversationShell: function (task, record, thread, back, title) { return cuiShell('schedule-run:' + (record ? record.id : task.id), true, thread, { title: title, back: back, draft: record && record.chatDraft || '' }); },
       rerender: function (opts) { render(opts); },
       openScheduleChat: openScheduleChat,
-      referenceArtifacts: function (refs) { state.cuiSeed = { page: '分析任务', skill: '', sessionRefs: refs, prompt: '' }; state.cuiFocus = true; go('分析任务'); },
+      referenceArtifacts: function (refs, detail) {
+        state.cuiSeed = { page: '分析任务', skill: '', sessionRefs: refs, prompt: '' };
+        state.cuiFocus = true;
+        if (detail) {
+          state.sessionDockInTask = false; state.sessionViewId = null;
+          state.railOpen = true; state.railMax = false;
+          state.railCurrent = 'art:' + detail.id;
+          if (state.railTabs.indexOf(state.railCurrent) < 0) state.railTabs.push(state.railCurrent);
+        }
+        go('分析任务');
+      },
       closeShellMenus: function () {
         closeNewMenu();
         closeTeam();
@@ -5211,7 +5258,10 @@
   if (window.AIOpsSessionDetail) window.AIOpsSessionDetail.bind({
     lang: function () { return state.lang; },
     row: function (id) { return sessionRows().filter(function (row) { return row.id === id; })[0]; },
-    render: render, back: closeSessionDetail, analyze: function (id) { analyzeSessions([id]); }, toast: showToast
+    render: function () {
+      if (isCuiPage() && state.railOpen && state.railCurrent && state.railCurrent.indexOf('ses:') === 0 && !state.sessionDockInTask) paintRail();
+      else render();
+    }, back: closeSessionDetail, analyze: function (id) { analyzeSessions([id]); }, toast: showToast
   });
   window.AIOpsResources.configure({
     lang: function () { return state.lang; }, icons: paintIcons, render: render,

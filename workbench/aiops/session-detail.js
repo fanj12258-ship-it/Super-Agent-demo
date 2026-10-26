@@ -4,7 +4,9 @@
   var host = {};
   var ui = { id: null, tab: 'conversation', format: 'conversation', round: 1, jump: false, traceId: null, inspectorTab: 'io', inspectorOpen: true, query: '', type: '', abnormal: false };
   var cache = {};
-  var TYPES = [ ['user', '用户'], ['model', '模型'], ['tool', '工具'], ['ontology', '本体'], ['agent', 'Agent'], ['guard', '安全围栏'], ['memory', '记忆'], ['other', '其他'] ];
+  var choiceMenu = null;
+  var TYPES = [ ['user', '用户'], ['model', '模型'], ['tool', '工具'], ['ontology', '本体'], ['agent', '智能体'], ['guard', '安全围栏'], ['memory', '记忆'], ['other', '其他'] ];
+  var TRACE_LANES = [ ['input', '输入', ['user', 'memory', 'other']], ['model', '模型', ['model']], ['tool', '工具', ['tool']], ['ontology', '本体', ['ontology']], ['agent', '智能体', ['agent']], ['guard', '安全围栏', ['guard']] ];
   function esc(value) { return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function ico(name) { return '<i data-lucide="' + name + '"></i>'; }
   function tr(zh, en) { return host.lang && host.lang() === 'en' ? en : zh; }
@@ -93,62 +95,149 @@
   }
   function feedbackHtml(feedback) {
     if (!feedback) return '';
-    return '<aside class="sd-feedback"><header><strong>' + tr('用户反馈', 'User feedback') + '</strong><span class="' + (feedback.sentiment === 'negative' ? 'sd-negative' : 'sd-positive') + '">' + ico(feedback.sentiment === 'negative' ? 'thumbs-down' : 'thumbs-up') + tr(feedback.sentiment === 'negative' ? '点踩' : '点赞', feedback.sentiment === 'negative' ? 'Dislike' : 'Like') + '</span><small>' + esc(feedback.user + ' · ' + feedback.at) + '</small></header><div class="sd-feedback-tags">' + feedback.tags.map(function (tag) { return '<span>' + esc(tag) + '</span>'; }).join('') + '</div><p><span>' + tr('补充说明', 'Comment') + '</span> ' + esc(feedback.comment) + '</p></aside>';
+    return '<aside class="sd-feedback"><header><strong>' + tr('用户反馈', 'User feedback') + '</strong><span class="' + (feedback.sentiment === 'negative' ? 'sd-negative' : 'sd-positive') + '">' + ico(feedback.sentiment === 'negative' ? 'thumbs-down' : 'thumbs-up') + tr(feedback.sentiment === 'negative' ? '劣质' : '优质', feedback.sentiment === 'negative' ? 'Poor' : 'Good') + '</span><small>' + esc(feedback.user + ' · ' + clock(feedback.at).slice(0, 8)) + '</small></header><p>' + esc(feedback.comment) + '</p><div class="sd-feedback-tags">' + feedback.tags.map(function (tag) { return '<span>' + esc(tag) + '</span>'; }).join('') + '</div></aside>';
+  }
+  function messageBody(text) {
+    return String(text).split(/\n{2,}/).map(function (paragraph) {
+      var lines = paragraph.split('\n');
+      if (lines.every(function (line) { return /^\d+\.\s/.test(line); })) return '<ol>' + lines.map(function (line) { return '<li>' + esc(line.replace(/^\d+\.\s*/, '')) + '</li>'; }).join('') + '</ol>';
+      return '<p>' + esc(paragraph) + '</p>';
+    }).join('');
   }
   function messageHtml(row, turn, input) {
     var id = input ? turn.inputId : turn.outputId;
-    return '<article class="sd-message' + (input ? ' is-user' : '') + '"><header><span class="sd-avatar' + (input ? '' : ' is-agent') + '">' + (input ? tr('用', 'U') : tr('智', 'A')) + '</span><strong>' + (input ? tr('原始输入', 'Original input') : tr('原始输出', 'Original output')) + '</strong><span class="sd-muted">' + (input ? tr('用户', 'User') : tr('智能体', 'Agent')) + '</span><time>' + esc(clock(input ? turn.inputAt : turn.outputAt)) + '</time>' + iconButton('copy-message', tr('复制消息', 'Copy message'), 'copy', ' data-round="' + turn.n + '" data-role="' + (input ? 'user' : 'assistant') + '"') + '</header><div class="sd-message-body"><p>' + esc(input ? turn.input : turn.output) + '</p>' + (input && turn.attachment ? '<span class="cui-session-ref sd-attachment">' + ico('file-spreadsheet') + esc(turn.attachment) + '</span>' : '') + (!input ? feedbackHtml(turn.feedback) : '') + '</div><footer><code>' + esc(id) + '</code><span>' + tr('原始消息正文', 'Original message') + '</span></footer></article>';
+    var actor = input ? row.user : row.agent;
+    var attachment = input && turn.attachment ? '<span class="cui-session-ref sd-attachment" title="' + esc(turn.attachment) + '"><span class="cui-session-ref-icon">' + ico('file-spreadsheet') + '</span><span class="cui-session-ref-label">' + esc(turn.attachment) + '</span></span>' : '';
+    var at = input ? turn.inputAt : turn.outputAt;
+    return '<article class="sd-message' + (input ? ' is-user' : '') + '" aria-label="' + esc(actor + (input ? tr('的输入', ' input') : tr('的回复', ' response'))) + '"><header><div class="sd-message-source"><span class="sd-speaker-avatar' + (input ? '' : ' is-agent') + '" aria-hidden="true">' + (input ? esc(actor.slice(0, 1).toUpperCase()) : ico('bot')) + '</span><span class="sd-muted" title="' + esc(actor) + '">' + esc(actor) + '</span></div><div class="sd-message-meta"><time datetime="' + esc(at) + '">' + esc(clock(at).slice(0, 8)) + '</time><span aria-hidden="true">·</span><code class="sd-message-id">' + esc(id) + '</code><span aria-hidden="true">·</span>' + iconButton('copy-message', tr('复制消息', 'Copy message'), 'copy', ' data-round="' + turn.n + '" data-role="' + (input ? 'user' : 'assistant') + '"') + '</div></header><div class="sd-message-body">' + messageBody(input ? turn.input : turn.output) + attachment + (!input ? feedbackHtml(turn.feedback) : '') + '</div></article>';
+  }
+  function overviewHtml(row, data) {
+    var metrics = [
+      [tr('消息 / 对话轮次', 'Messages / turns'), row.messages + ' / ' + data.rounds.length + tr(' 轮', ' turns')],
+      [tr('token 总用量', 'Total tokens'), row.tokens + ' M token'],
+      [tr('执行步骤 / 总耗时', 'Steps / elapsed'), data.steps + ' / ' + data.duration + tr(' 秒', ' seconds')]
+    ];
+    return '<section class="sd-overview" aria-labelledby="sd-overview-title"><h2 id="sd-overview-title">' + tr('会话概要', 'Conversation overview') + '</h2><dl>' + metrics.map(function (metric) {
+      return '<div><dt>' + esc(metric[0]) + '</dt><dd>' + esc(metric[1]) + '</dd></div>';
+    }).join('') + '</dl></section>';
   }
   function conversationHtml(row, data) {
-    return '<div class="sd-conversation"><aside class="sd-rounds"><header><strong>' + tr('对话轮次', 'Conversation turns') + '</strong><span>' + data.rounds.length + tr(' 轮', ' turns') + '</span></header><nav aria-label="' + tr('对话轮次', 'Conversation turns') + '">' + data.rounds.map(function (turn) {
-      return '<button type="button" data-sd="round" data-round="' + turn.n + '" class="' + (ui.round === turn.n ? 'is-active' : '') + '"' + (ui.round === turn.n ? ' aria-current="true"' : '') + '><span>' + tr('第 ' + turn.n + ' 轮', 'Turn ' + turn.n) + '<i class="sd-round-dot' + (turn.signal ? ' has-signal' : '') + '"></i></span><small>' + esc(turn.input) + '</small></button>';
-    }).join('') + '</nav></aside><section class="sd-conversation-main"><header class="sd-panel-heading"><strong>' + tr('全部对话', 'Full conversation') + '</strong><select id="sdRoundSelect" class="cap-select sd-round-select" aria-label="' + tr('跳转对话轮次', 'Jump to turn') + '">' + data.rounds.map(function (turn) { return '<option value="' + turn.n + '"' + (ui.round === turn.n ? ' selected' : '') + '>' + tr('第 ' + turn.n + ' 轮', 'Turn ' + turn.n) + '</option>'; }).join('') + '</select><span>' + data.rounds.length + tr(' 轮 · ', ' turns · ') + row.messages + tr(' 条消息', ' messages') + '</span><div class="ov-segment" role="group" aria-label="' + tr('会话显示方式', 'Conversation format') + '"><button type="button" data-sd="format" data-value="conversation" class="' + (ui.format === 'conversation' ? 'is-active' : '') + '" aria-pressed="' + (ui.format === 'conversation') + '">' + tr('对话', 'Conversation') + '</button><button type="button" data-sd="format" data-value="json" class="' + (ui.format === 'json' ? 'is-active' : '') + '" aria-pressed="' + (ui.format === 'json') + '">JSON</button></div>' + (ui.format === 'json' ? iconButton('copy-conversation', tr('复制会话 JSON', 'Copy conversation JSON'), 'copy') : '') + '</header><div class="sd-conversation-scroll">' + (ui.format === 'json' ? '<pre class="sd-json">' + esc(JSON.stringify(rawMessages(row, data), null, 2)) + '</pre>' : data.rounds.map(function (turn) {
-      return '<section class="sd-turn" id="sd-turn-' + turn.n + '"><header><strong>' + tr('第 ' + turn.n + ' 轮', 'Turn ' + turn.n) + '</strong><time>' + esc(clock(turn.inputAt).slice(0, 8)) + '</time><button type="button" data-sd="round-trace" data-round="' + turn.n + '">' + turn.steps + tr(' 个执行步骤', ' steps') + ico('arrow-up-right') + '</button></header>' + messageHtml(row, turn, true) + (turn.hasOutput ? messageHtml(row, turn, false) : '<p class="sd-muted">' + tr('尚无后续输出', 'No response yet') + '</p>') + '</section>';
-    }).join('')) + '</div></section></div>';
+    var nav = data.rounds.map(function (turn) {
+      var label = tr('第 ' + turn.n + ' 轮：', 'Turn ' + turn.n + ': ') + turn.input;
+      return '<button type="button" data-sd="round" data-round="' + turn.n + '" aria-label="' + esc(label) + '" title="' + esc(label) + '" class="' + (ui.round === turn.n ? 'is-active' : '') + '"' + (ui.round === turn.n ? ' aria-current="true"' : '') + '><span class="sd-round-number">' + turn.n + '</span><span class="sd-round-prompt">' + esc(turn.input) + '</span></button>';
+    }).join('<div class="sd-round-separator" aria-hidden="true"><hr></div>');
+    var content = ui.format === 'json' ? '<pre class="sd-json">' + esc(JSON.stringify(rawMessages(row, data), null, 2)) + '</pre>' : data.rounds.map(function (turn) {
+      return '<section class="sd-turn" id="sd-turn-' + turn.n + '"><header><button type="button" class="sd-turn-link" data-sd="round-trace" data-round="' + turn.n + '" aria-label="' + tr('查看第 ' + turn.n + ' 轮 Trace', 'View trace for turn ' + turn.n) + '" title="' + tr('查看本轮第一个执行步骤', 'View the first step in this turn') + '"><strong>' + tr('第 ' + turn.n + ' 轮', 'Turn ' + turn.n) + '</strong><span>' + tr('查看 ', 'View ') + turn.steps + tr(' 个执行步骤', ' steps') + '</span>' + ico('chevron-right') + '</button></header>' + messageHtml(row, turn, true) + (turn.hasOutput ? messageHtml(row, turn, false) : '<p class="sd-muted">' + tr('尚无后续输出', 'No response yet') + '</p>') + '</section>';
+    }).join('');
+    return '<div class="sd-conversation-view">' + overviewHtml(row, data) +
+      '<section class="sd-conversation-section" aria-labelledby="sd-conversation-title"><h2 id="sd-conversation-title">' + tr('会话详情', 'Conversation details') + '</h2>' +
+      '<div class="sd-conversation"><aside class="sd-rounds"><header>' + tr('对话轮次', 'Conversation turns') + '</header><nav aria-label="' + tr('对话轮次', 'Conversation turns') + '">' + nav + '</nav></aside>' +
+      '<section class="sd-conversation-main"><header class="sd-panel-heading"><div class="sd-conversation-label"><strong>' + tr('全部对话', 'Full conversation') + '</strong></div>' +
+      '<button type="button" id="sdRoundSelect" class="btn-soft sd-round-select" data-sd="round-menu" aria-label="' + tr('跳转对话轮次', 'Jump to turn') + '" aria-haspopup="listbox" aria-controls="sdRoundMenu" aria-expanded="false"><span>' + tr('第 ' + ui.round + ' 轮', 'Turn ' + ui.round) + '</span>' + ico('chevron-down') + '</button>' +
+      '<div class="sd-format-actions"><span class="sd-copy-slot">' + (ui.format === 'json' ? iconButton('copy-conversation', tr('复制会话 JSON', 'Copy conversation JSON'), 'copy') : '') + '</span><div class="ov-segment" role="group" aria-label="' + tr('会话显示方式', 'Conversation format') + '">' + [['conversation', tr('对话', 'Conversation')], ['json', 'JSON']].map(function (format) {
+        return '<button type="button" data-sd="format" data-value="' + format[0] + '" class="' + (ui.format === format[0] ? 'is-active' : '') + '" aria-pressed="' + (ui.format === format[0]) + '">' + format[1] + '</button>';
+      }).join('') + '</div></div>' +
+      '</header><div class="sd-conversation-scroll">' + content + '</div></section></div></section></div>';
   }
   function filteredRecords(data) {
     var q = ui.query.trim().toLowerCase();
     return data.records.filter(function (record) { return (!ui.type || record.type === ui.type) && (!ui.abnormal || record.status === 'error' || record.status === 'warning') && (!q || (record.id + ' ' + record.name + ' ' + display(record.input) + ' ' + display(record.output)).toLowerCase().indexOf(q) >= 0); });
   }
   function timelineHtml(data) {
-    return '<section class="sd-timeline"><header><strong>' + tr('全程轨迹', 'Full trace') + '</strong><span class="sd-muted">' + tr('按记录顺序', 'In record order') + '</span><div class="sd-timeline-legend">' + TYPES.map(function (type) { var count = data.records.filter(function (r) { return r.type === type[0]; }).length; return '<span class="sd-track-' + type[0] + '"><i></i>' + esc(type[1]) + ' <b>' + count + '</b></span>'; }).join('') + '</div></header><div class="sd-timeline-scroll">' + TYPES.map(function (type) {
-      return '<div class="sd-track sd-track-' + type[0] + '"><span>' + esc(type[1]) + '</span><div>' + data.records.map(function (record, index) {
-        if (record.type !== type[0]) return '';
-        var label = type[1] + ' · ' + record.name + (record.round ? ' · 第 ' + record.round + ' 轮' : '');
-        return '<button type="button" data-sd="trace-point" data-id="' + record.id + '" style="--point:' + ((index + 0.5) / data.records.length * 100).toFixed(3) + '%" class="' + (record.id === ui.traceId ? 'is-selected ' : '') + (record.status === 'error' ? 'is-error' : record.status === 'warning' ? 'is-warning' : '') + '" aria-label="' + esc(label) + '" title="' + esc(label) + '"></button>';
+    var legend = ['user', 'memory', 'other', 'model', 'tool', 'ontology', 'agent', 'guard'];
+    return '<section class="sd-timeline"><header><strong>' + tr('全程轨迹', 'Full trace') + '</strong><div class="sd-timeline-legend">' + legend.map(function (type) { return '<span class="sd-track-' + type + '"><i></i>' + esc(typeLabel(type)) + '</span>'; }).join('') + '</div></header><div class="sd-timeline-scroll">' + TRACE_LANES.map(function (lane) {
+      return '<div class="sd-track"><span>' + esc(lane[1]) + '</span><div>' + data.records.map(function (record, index) {
+        if (lane[2].indexOf(record.type) < 0) return '';
+        var label = typeLabel(record.type) + ' · ' + record.name + (record.round ? ' · 第 ' + record.round + ' 轮' : '');
+        return '<button type="button" data-sd="trace-point" data-id="' + record.id + '" style="--point:' + ((index + 0.5) / data.records.length * 100).toFixed(3) + '%" class="sd-track-' + record.type + (record.id === ui.traceId ? ' is-selected' : '') + (record.status === 'error' ? ' is-error' : record.status === 'warning' ? ' is-warning' : '') + '" aria-label="' + esc(label) + '" title="' + esc(label) + '"></button>';
       }).join('') + '</div></div>';
     }).join('') + '</div></section>';
   }
   function statusLabel(status) { return status === 'error' ? tr('错误', 'Error') : status === 'warning' ? tr('警告', 'Warning') : tr('已完成', 'Completed'); }
   function inspectorHtml(record) {
     if (!record || !ui.inspectorOpen) return '';
-    var main = ui.inspectorTab === 'raw' ? '<pre class="sd-json">' + esc(JSON.stringify(record, null, 2)) + '</pre>' : ui.inspectorTab === 'details' ? '<table class="sd-record-meta"><tbody>' + [ [tr('请求编号', 'Request ID'), record.id], [tr('会话编号', 'Session ID'), record.session_id], [tr('记录类型', 'Type'), typeLabel(record.type)], [tr('操作', 'Operation'), record.name], [tr('状态', 'Status'), statusLabel(record.status)], [tr('时间', 'Timestamp'), record.timestamp], [tr('耗时', 'Duration'), (record.duration_ms / 1000).toFixed(2) + ' 秒'], ['Token', record.tokens.toLocaleString('en-US')], [tr('轮次 / 步骤', 'Turn / step'), (record.round || '—') + ' / ' + (record.step || '—')] ].map(function (pair) { return '<tr><th>' + esc(pair[0]) + '</th><td>' + esc(pair[1]) + '</td></tr>'; }).join('') + '</tbody></table>' : '<section><h3>' + tr('输入', 'Input') + '</h3><pre class="sd-json">' + esc(display(record.input)) + '</pre></section><section><h3>' + tr('输出', 'Output') + '</h3><pre class="sd-json">' + esc(display(record.output)) + '</pre></section>';
-    return '<aside class="sd-inspector"><header>' + badge(record.type) + '<span>' + (record.round ? tr('第 ' + record.round + ' 轮', 'Turn ' + record.round) : tr('初始化', 'Initialization')) + (record.step ? ' · ' + tr('第 ' + record.step + ' 步', 'Step ' + record.step) : '') + '</span>' + iconButton('inspector-close', tr('关闭记录详情', 'Close record details'), 'x') + '</header><div class="sd-inspector-summary"><strong>' + esc(record.name) + '</strong><span class="sd-status-' + record.status + '">' + statusLabel(record.status) + '</span><small>' + (record.duration_ms / 1000).toFixed(2) + tr(' 秒', ' seconds') + ' · ' + record.tokens.toLocaleString('en-US') + ' token</small></div><div class="sd-inspector-tabs" role="tablist" aria-label="' + tr('记录详情', 'Record details') + '">' + [ ['io', tr('输入输出', 'Input / output')], ['details', tr('详情', 'Details')], ['raw', tr('原始记录', 'Raw record')] ].map(function (tab) { return '<button type="button" role="tab" data-sd="inspector-tab" data-value="' + tab[0] + '" aria-selected="' + (ui.inspectorTab === tab[0]) + '" class="' + (ui.inspectorTab === tab[0] ? 'is-active' : '') + '">' + tab[1] + '</button>'; }).join('') + '</div><div class="sd-inspector-content" role="tabpanel">' + main + '</div><footer>' + (record.round ? '<button type="button" data-sd="related-conversation" data-round="' + record.round + '">' + tr('查看关联原始会话', 'View original conversation') + ico('arrow-right') + '</button>' : '<span></span>') + iconButton('copy-record', tr('复制记录', 'Copy record'), 'copy', ' data-id="' + record.id + '"') + '</footer></aside>';
+    var main = ui.inspectorTab === 'raw' ? '<div class="sd-raw-heading"><span>JSON</span>' + iconButton('copy-record', tr('复制记录', 'Copy record'), 'copy', ' data-id="' + record.id + '"') + '</div><pre class="sd-json">' + esc(JSON.stringify(record, null, 2)) + '</pre>' : ui.inspectorTab === 'details' ? '<table class="sd-record-meta"><tbody>' + [ [tr('请求编号', 'Request ID'), record.id], [tr('会话编号', 'Session ID'), record.session_id], [tr('记录类型', 'Type'), typeLabel(record.type)], [tr('操作', 'Operation'), record.name], [tr('状态', 'Status'), statusLabel(record.status)], [tr('时间', 'Timestamp'), record.timestamp], [tr('耗时', 'Duration'), (record.duration_ms / 1000).toFixed(2) + ' 秒'], ['Token', record.tokens.toLocaleString('en-US')], [tr('轮次 / 步骤', 'Turn / step'), (record.round || '—') + ' / ' + (record.step || '—')] ].map(function (pair) { return '<tr><th>' + esc(pair[0]) + '</th><td>' + esc(pair[1]) + '</td></tr>'; }).join('') + '</tbody></table>' : '<section><h3>' + tr('输入', 'Input') + '</h3><pre class="sd-json">' + esc(display(record.type === 'user' ? record.output : record.input)) + '</pre></section>' + (record.type === 'user' ? '' : '<section><h3>' + tr('输出', 'Output') + '</h3><pre class="sd-json">' + esc(display(record.output)) + '</pre></section>');
+    return '<aside class="sd-inspector"><header>' + badge(record.type) + '<strong title="' + esc(record.name) + '">' + esc(record.type === 'user' ? tr('用户输入', 'User input') : record.name) + '</strong><div class="sd-inspector-actions">' + (record.round ? iconButton('related-conversation', tr('查看关联原始会话', 'View original conversation'), 'circle-arrow-right', ' data-round="' + record.round + '"') : '') + iconButton('inspector-close', tr('关闭记录详情', 'Close record details'), 'x') + '</div></header><div class="sd-inspector-tabs ov-segment" role="tablist" aria-label="' + tr('记录详情', 'Record details') + '">' + [ ['io', tr('输入输出', 'Input / output')], ['details', tr('详情', 'Details')], ['raw', tr('原始记录', 'Raw record')] ].map(function (tab) { return '<button type="button" role="tab" data-sd="inspector-tab" data-value="' + tab[0] + '" aria-selected="' + (ui.inspectorTab === tab[0]) + '" class="' + (ui.inspectorTab === tab[0] ? 'is-active' : '') + '">' + tab[1] + '</button>'; }).join('') + '</div><div class="sd-inspector-content" role="tabpanel">' + main + '</div></aside>';
   }
   function traceHtml(data) {
     var records = filteredRecords(data);
     if (!records.some(function (r) { return r.id === ui.traceId; })) ui.traceId = records.length ? records[0].id : null;
     var selected = records.filter(function (r) { return r.id === ui.traceId; })[0];
-    return '<div class="sd-trace">' + timelineHtml(data) + '<div class="sd-trace-toolbar"><label class="search-field">' + ico('search') + '<input id="sdTraceSearch" type="text" placeholder="' + tr('搜索消息、操作、请求编号或结果', 'Search messages, operations, IDs, or results') + '" aria-label="' + tr('搜索 Trace', 'Search trace') + '" value="' + esc(ui.query) + '"></label><select class="cap-select" id="sdTraceType" aria-label="' + tr('记录类型', 'Record type') + '"><option value="">' + tr('全部记录', 'All records') + '</option>' + TYPES.map(function (type) { return '<option value="' + type[0] + '"' + (ui.type === type[0] ? ' selected' : '') + '>' + type[1] + '</option>'; }).join('') + '</select><label class="session-column-check sd-abnormal"><input type="checkbox" id="sdTraceAbnormal"' + (ui.abnormal ? ' checked' : '') + '>' + tr('仅异常', 'Anomalies only') + '</label><span class="sd-trace-count">' + records.length + ' / ' + data.records.length + tr(' 条记录', ' records') + '</span>' + iconButton('copy-trace', tr('复制当前记录', 'Copy filtered records'), 'copy') + '</div><div class="sd-trace-body"><div class="sd-records" role="region" aria-label="' + tr('Trace 记录', 'Trace records') + '">' + (records.length ? records.map(function (record) {
-      var summary = (record.type === 'tool' || record.type === 'ontology' ? display(record.input) + ' → ' : '') + display(record.output);
-      return '<button type="button" class="sd-record' + (record.id === ui.traceId ? ' is-selected' : '') + ' sd-record-' + record.status + '" data-sd="trace-record" data-id="' + record.id + '" aria-current="' + (record.id === ui.traceId) + '" title="' + esc(record.name + ' · ' + display(record.output)) + '"><span class="sd-record-round">' + (record.type === 'user' ? tr('第 ' + record.round + ' 轮', 'Turn ' + record.round) : '') + '</span>' + badge(record.type) + '<span class="sd-record-text"><b>' + esc(record.name) + '</b> ' + esc(summary.replace(/\s+/g, ' ')) + '</span><small>' + (record.step ? '#' + record.step : '') + (record.duration_ms ? ' ' + (record.duration_ms / 1000).toFixed(2) + 's' : '') + (record.status !== 'completed' ? ' · ' + statusLabel(record.status) : '') + '</small></button>';
-    }).join('') : '<div class="sd-empty"><p>' + tr('没有匹配的记录', 'No matching records') + '</p><button type="button" class="btn-soft" data-sd="trace-reset">' + tr('重置筛选', 'Reset filters') + '</button></div>') + '</div>' + inspectorHtml(selected) + '</div><footer class="sd-trace-footer"><span>' + data.steps + tr(' 个请求步骤', ' request steps') + '</span><span>' + tr('演示数据', 'Demo data') + '</span></footer></div>';
+    return '<div class="sd-trace">' + timelineHtml(data) + '<div class="sd-trace-toolbar"><label class="search-field">' + ico('search') + '<input id="sdTraceSearch" type="text" placeholder="' + tr('搜索 Trace', 'Search Trace') + '" aria-label="' + tr('搜索 Trace', 'Search trace') + '" value="' + esc(ui.query) + '"></label><button type="button" class="btn-soft sd-trace-type" id="sdTraceType" data-sd="type-menu" aria-label="' + tr('记录类型', 'Record type') + '" aria-haspopup="listbox" aria-controls="sdTraceTypeMenu" aria-expanded="false"><span>' + (ui.type ? typeLabel(ui.type) : tr('全部记录', 'All records')) + '</span>' + ico('chevron-down') + '</button><span class="sd-abnormal">' + tr('仅显示异常', 'Anomalies only') + '<button type="button" class="cap-switch" id="sdTraceAbnormal" data-sd="abnormal-toggle" role="switch" aria-label="' + tr('仅显示异常', 'Anomalies only') + '" aria-checked="' + ui.abnormal + '"><span></span></button></span><span class="sd-trace-count" aria-live="polite">' + records.length + ' / ' + data.records.length + tr(' 条记录', ' records') + '</span>' + iconButton('copy-trace', tr('复制当前记录', 'Copy filtered records'), 'copy') + '</div><div class="sd-trace-body"><div class="sd-records" role="region" aria-label="' + tr('Trace 记录', 'Trace records') + '">' + (records.length ? records.map(function (record) {
+      var operation = record.type === 'tool' || record.type === 'ontology';
+      var summary = operation ? display(record.input) : display(record.output);
+      var text = (operation ? '<b class="sd-operation">' + esc(record.name) + '</b> ' : record.type === 'other' ? '<b>' + esc(record.name) + '</b> ' : '') + (record.name === '初始系统提示词' ? '' : esc(summary.replace(/\s+/g, ' ')));
+      return '<button type="button" class="sd-record' + (record.id === ui.traceId ? ' is-selected' : '') + (record.type === 'other' ? ' is-context' : '') + ' sd-record-' + record.status + '" data-sd="trace-record" data-id="' + record.id + '" aria-current="' + (record.id === ui.traceId) + '" title="' + esc(record.name + ' · ' + display(record.output)) + '"><span class="sd-record-round">' + (record.type === 'user' ? '<span>' + tr('第 ' + record.round + ' 轮', 'Turn ' + record.round) + '</span>' : '') + '</span>' + badge(record.type) + '<span class="sd-record-text">' + text + '</span></button>';
+    }).join('<div class="sd-record-separator" aria-hidden="true"></div>') : '<div class="sd-empty"><p>' + tr('没有匹配的记录', 'No matching records') + '</p><button type="button" class="btn-soft" data-sd="trace-reset">' + tr('重置筛选', 'Reset filters') + '</button></div>') + '</div>' + inspectorHtml(selected) + '</div></div>';
   }
   var savedViews = {};
   function page(row, docked) {
     if (ui.id !== row.id) { if (ui.id) savedViews[ui.id] = Object.assign({}, ui); if (savedViews[row.id]) ui = Object.assign({}, savedViews[row.id]); else reset(row.id); }
     var data = dataFor(row);
-    if (!ui.traceId) { var model = data.records.filter(function (record) { return record.type === 'model'; })[0]; ui.traceId = model ? model.id : data.records[0].id; }
-    return '<div class="session-detail"><div class="page-heading has-actions sd-heading"><div><h1>' + esc(row.name) + '</h1><div class="sd-session-meta"><code>' + esc(row.id) + '</code>' + iconButton('copy-id', tr('复制会话编号', 'Copy session ID'), 'copy') + '<span>·</span><span>' + esc(row.agent) + '</span><span>·</span><span>' + esc(row.user) + '</span><span class="sd-session-status' + (row.errors || row.warnings ? ' has-signal' : '') + '"><i></i>' + tr('已完成', 'Completed') + (row.errors || row.warnings ? tr(' · 含运行异常', ' · With anomalies') : '') + '</span></div></div><div class="sd-heading-actions">' + (docked ? '' : button('back', tr('返回列表', 'Back to list'), 'arrow-left')) + button('analyze', tr('AI 分析', 'AI analysis'), 'sparkles') + '</div></div><div class="sd-metrics"><span>' + tr('消息 / 对话轮次', 'Messages / turns') + ' <b>' + row.messages + '</b> / ' + data.rounds.length + tr(' 轮', ' turns') + '</span><span>' + tr('token 总用量', 'Total tokens') + ' <b>' + esc(row.tokens) + 'M</b> token</span><span>' + tr('执行步骤 / 总耗时', 'Steps / elapsed') + ' <b>' + data.steps + '</b> / ' + data.duration + tr(' 秒', 's') + '</span><span>' + tr('最近一次时间', 'Latest activity') + ' <b>' + esc(row.time.slice(5)) + '</b></span><span>' + tr('运行信号', 'Runtime signals') + ' <em class="sd-status-error">' + row.errors + tr(' 错误', ' errors') + '</em><em class="sd-status-warning">' + row.warnings + tr(' 警告', ' warnings') + '</em></span></div><div class="sd-tabs" role="tablist" aria-label="' + tr('会话详情', 'Session details') + '">' + [ ['conversation', tr('原始会话', 'Original conversation'), data.rounds.length + tr(' 轮', ' turns'), 'file-text'], ['trace', 'Trace', data.steps + tr(' 步', ' steps'), 'chart-no-axes-combined'] ].map(function (tab) { return '<button type="button" role="tab" data-sd="tab" data-value="' + tab[0] + '" aria-selected="' + (ui.tab === tab[0]) + '" class="' + (ui.tab === tab[0] ? 'is-active' : '') + '">' + ico(tab[3]) + tab[1] + '<small>' + tab[2] + '</small></button>'; }).join('') + '<span>' + tr('演示数据 · 北京时间', 'Demo data · Beijing time') + '</span></div><div class="sd-tab-content" role="tabpanel">' + (ui.tab === 'conversation' ? conversationHtml(row, data) : traceHtml(data)) + '</div></div>';
+    if (!ui.traceId) { var input = data.records.filter(function (record) { return record.type === 'user'; })[0]; ui.traceId = input ? input.id : data.records[0].id; }
+    var signal = row.errors || row.warnings;
+    var signalLabel = row.errors + tr(' 个错误，', ' errors, ') + row.warnings + tr(' 个警告', ' warnings');
+    var signalDetails = tr('包含 ' + row.errors + ' 错误 ' + row.warnings + ' 警告', 'Contains ' + row.errors + ' errors and ' + row.warnings + ' warnings');
+    var tabs = [['conversation', tr('原始会话', 'Original conversation'), data.rounds.length + tr(' 轮', ' turns')], ['trace', 'Trace', data.steps + tr(' 步', ' steps')]];
+    return '<div class="session-detail"><header class="page-heading has-actions sd-heading"><div class="sd-heading-main">' +
+      '<div class="sd-title-row"><div class="sd-title-line"><h1>' + esc(row.name) + '</h1>' + (signal ? '<button type="button" class="sd-session-status has-signal" data-sd="signals" aria-label="' + esc(tr('查看运行异常：', 'View anomalies: ') + signalLabel) + '" aria-describedby="sd-signal-tooltip">' + tr('含运行异常', 'With anomalies') + ico('info') + '<span id="sd-signal-tooltip" class="metric-tooltip sd-signal-tooltip" role="tooltip">' + esc(signalDetails) + '</span></button>' : '') + '</div><div class="sd-heading-actions">' + (docked ? '' : button('back', tr('返回列表', 'Back to list'), 'arrow-left')) + '<button type="button" class="btn-ink" data-sd="analyze">' + ico('sparkles') + tr('AI 分析', 'AI analysis') + '</button></div></div>' +
+      '<div class="sd-session-meta"><span class="sd-session-id"><code>' + esc(row.id) + '</code>' + iconButton('copy-id', tr('复制会话编号', 'Copy session ID'), 'copy') + '</span><span aria-hidden="true">·</span><span>' + tr('最新对话 ', 'Latest activity ') + '<time>' + esc(row.time) + '</time></span><span aria-hidden="true">·</span><span>' + esc(row.agent) + '</span><span aria-hidden="true">·</span><span>' + esc(row.user) + '</span></div></div>' +
+      '</header>' +
+      '<section class="sd-detail-card"><div class="sd-card-heading"><div class="sd-tabs" role="tablist" aria-label="' + tr('会话详情', 'Session details') + '">' + tabs.map(function (tab) {
+        return '<button type="button" role="tab" id="sd-tab-' + tab[0] + '" data-sd="tab" data-value="' + tab[0] + '" aria-controls="sd-tab-content" aria-selected="' + (ui.tab === tab[0]) + '" tabindex="' + (ui.tab === tab[0] ? '0' : '-1') + '" class="' + (ui.tab === tab[0] ? 'is-active' : '') + '">' + tab[1] + '<span>（' + tab[2] + '）</span></button>';
+      }).join('') + '</div></div>' +
+      '<div class="sd-tab-content" id="sd-tab-content" role="tabpanel" aria-labelledby="sd-tab-' + ui.tab + '">' + (ui.tab === 'conversation' ? conversationHtml(row, data) : traceHtml(data)) + '</div></section></div>';
   }
-  function repaint() { if (host.render) host.render(); }
-  function afterRender() {
+  function closeChoiceMenu(restoreFocus) {
+    if (!choiceMenu) return;
+    var anchor = choiceMenu.anchor;
+    choiceMenu.element.remove();
+    choiceMenu = null;
+    if (anchor.isConnected) {
+      anchor.setAttribute('aria-expanded', 'false');
+      if (restoreFocus) anchor.focus();
+    }
+  }
+  function openChoiceMenu(anchor, config, focusLast) {
+    closeChoiceMenu();
+    var menu = document.createElement('div');
+    menu.id = config.id;
+    menu.className = 'cui-model-menu sd-choice-menu';
+    menu.setAttribute('role', 'listbox');
+    menu.setAttribute('aria-label', config.label);
+    menu.innerHTML = config.items.map(function (item) {
+      var selected = config.value === item[0];
+      return '<button type="button" class="cui-model-option' + (selected ? ' is-selected' : '') + '" role="option" aria-selected="' + selected + '" tabindex="-1" data-sd="' + config.action + '" data-value="' + esc(item[0]) + '"><span>' + esc(item[1]) + '</span>' + (selected ? ico('check') : '') + '</button>';
+    }).join('');
+    document.body.appendChild(menu);
+    choiceMenu = { element: menu, anchor: anchor };
+    anchor.setAttribute('aria-expanded', 'true');
+    if (global.lucide) global.lucide.createIcons();
+    var rect = anchor.getBoundingClientRect();
+    var below = window.innerHeight - rect.bottom - 12, above = rect.top - 12;
+    var openAbove = below < Math.min(220, menu.scrollHeight) && above > below;
+    menu.style.maxHeight = Math.min(280, openAbove ? above : below) + 'px';
+    menu.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - menu.offsetWidth - 8)) + 'px';
+    menu.style.top = (openAbove ? rect.top - menu.offsetHeight - 4 : rect.bottom + 4) + 'px';
+    var option = focusLast ? menu.lastElementChild : menu.querySelector('[aria-selected="true"]') || menu.firstElementChild;
+    if (option) option.focus();
+  }
+  function openRoundMenu(anchor, data, focusLast) {
+    openChoiceMenu(anchor, { id: 'sdRoundMenu', label: tr('选择对话轮次', 'Select conversation turn'), action: 'round', value: String(ui.round), items: data.rounds.map(function (turn) { return [String(turn.n), tr('第 ' + turn.n + ' 轮', 'Turn ' + turn.n)]; }) }, focusLast);
+  }
+  function openTraceTypeMenu(anchor, focusLast) {
+    openChoiceMenu(anchor, { id: 'sdTraceTypeMenu', label: tr('记录类型', 'Record type'), action: 'trace-type', value: ui.type, items: [['', tr('全部记录', 'All records')]].concat(TYPES) }, focusLast);
+  }
+  function repaint() { closeChoiceMenu(); if (host.render) host.render(); }
+  function afterRender(restorePosition) {
+    if (choiceMenu && !choiceMenu.anchor.isConnected) closeChoiceMenu();
     if (!document.querySelector('.session-detail')) return;
+    if (restorePosition) ui.jump = true;
     if (ui.jump) {
       ui.jump = false;
       var target = ui.tab === 'trace' ? document.querySelector('.sd-record[data-id="' + ui.traceId + '"]') : document.getElementById('sd-turn-' + ui.round);
       var scroller = document.querySelector(ui.tab === 'trace' ? '.sd-records' : '.sd-conversation-scroll');
-      if (target && scroller) scroller.scrollTop = target.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+      if (target && scroller) scroller.scrollTop = target.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - (parseFloat(getComputedStyle(scroller).paddingTop) || 0);
       var nav = document.querySelector('.sd-rounds nav');
       var active = nav && nav.querySelector('.is-active');
       if (active) {
@@ -168,6 +257,8 @@
     e.preventDefault(); e.stopImmediatePropagation();
     var row = currentRow(); if (!row) return;
     var data = dataFor(row), action = control.getAttribute('data-sd'), value = control.getAttribute('data-value'), round = Number(control.getAttribute('data-round')) || 1;
+    if (action === 'round-menu' || action === 'type-menu') { if (choiceMenu) closeChoiceMenu(true); else if (action === 'round-menu') openRoundMenu(control, data); else openTraceTypeMenu(control); return; }
+    var choiceTriggerId = control.closest('.sd-choice-menu') && choiceMenu ? choiceMenu.anchor.id : null;
     if (action === 'back') { if (host.back) host.back(); return; }
     if (action === 'analyze') { if (host.analyze) host.analyze(row.id); return; }
     if (action === 'copy-id') { copy(row.id); return; }
@@ -176,17 +267,21 @@
     if (action === 'copy-trace') { copy(JSON.stringify(filteredRecords(data), null, 2)); return; }
     if (action === 'copy-record') { var record = data.records.filter(function (item) { return item.id === control.getAttribute('data-id'); })[0]; if (record) copy(JSON.stringify(record, null, 2)); return; }
     var records = document.querySelector('.sd-records'), traceTop = records ? records.scrollTop : 0;
-    if (action === 'tab') { ui.tab = value; ui.jump = true; }
+    if (action === 'signals') { ui.tab = 'trace'; ui.query = ''; ui.type = ''; ui.abnormal = true; ui.inspectorOpen = true; ui.jump = true; }
+    if (action === 'tab') { ui.tab = value; ui.jump = value === 'conversation'; }
     if (action === 'format') { ui.format = value; ui.jump = true; }
-    if (action === 'round') { ui.round = round; ui.format = 'conversation'; ui.jump = true; }
-    if (action === 'round-trace') { ui.tab = 'trace'; ui.type = ''; ui.query = ''; ui.abnormal = false; var first = data.records.filter(function (item) { return item.round === round && item.step; })[0]; ui.traceId = first.id; ui.inspectorOpen = true; ui.jump = true; }
+    if (action === 'round') { ui.round = Number(value) || round; ui.format = 'conversation'; ui.jump = true; }
+    if (action === 'round-trace') { ui.tab = 'trace'; ui.round = round; ui.type = ''; ui.query = ''; ui.abnormal = false; var first = data.records.filter(function (item) { return item.round === round && item.step; })[0]; ui.traceId = first.id; ui.inspectorOpen = true; ui.jump = true; }
     if (action === 'trace-record' || action === 'trace-point') { ui.traceId = control.getAttribute('data-id'); ui.inspectorOpen = true; ui.jump = action === 'trace-point'; if (action === 'trace-point') { ui.query = ''; ui.type = ''; ui.abnormal = false; } }
     if (action === 'inspector-close') ui.inspectorOpen = false;
     if (action === 'inspector-tab') ui.inspectorTab = value;
     if (action === 'related-conversation') { ui.tab = 'conversation'; ui.round = round; ui.format = 'conversation'; ui.jump = true; }
+    if (action === 'trace-type') ui.type = value;
     if (action === 'trace-reset') { ui.query = ''; ui.type = ''; ui.abnormal = false; }
+    if (action === 'abnormal-toggle') ui.abnormal = !ui.abnormal;
     var jumping = ui.jump;
     repaint();
+    if (choiceTriggerId) { var trigger = document.getElementById(choiceTriggerId); if (trigger) trigger.focus(); }
     records = document.querySelector('.sd-records'); if (records && !jumping) records.scrollTop = traceTop;
   });
   document.addEventListener('input', function (e) {
@@ -200,12 +295,35 @@
     ui.query = e.target.value; repaint();
     var field = document.getElementById('sdTraceSearch'); if (field) { field.focus(); field.setSelectionRange(field.value.length, field.value.length); }
   });
-  document.addEventListener('change', function (e) {
-    if (e.target.id === 'sdRoundSelect') { ui.round = Number(e.target.value); ui.format = 'conversation'; ui.jump = true; repaint(); }
-    if (e.target.id === 'sdTraceType') { ui.type = e.target.value; repaint(); }
-    if (e.target.id === 'sdTraceAbnormal') { ui.abnormal = e.target.checked; repaint(); }
-  });
+  document.addEventListener('click', function (e) {
+    if (choiceMenu && !e.target.closest('.sd-choice-menu, #sdRoundSelect, #sdTraceType')) closeChoiceMenu();
+  }, true);
+  window.addEventListener('resize', function () { closeChoiceMenu(); });
+  window.addEventListener('scroll', function (e) {
+    if (choiceMenu && !choiceMenu.element.contains(e.target)) closeChoiceMenu();
+  }, true);
   document.addEventListener('keydown', function (e) {
+    var choiceTrigger = e.target.closest('#sdRoundSelect, #sdTraceType');
+    var option = e.target.closest('.sd-choice-menu [role="option"]');
+    if (choiceMenu && (e.key === 'Escape' || e.key === 'Tab')) {
+      if (e.key === 'Escape') e.preventDefault();
+      closeChoiceMenu(true);
+      return;
+    }
+    if (choiceTrigger && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+      e.preventDefault();
+      if (choiceTrigger.id === 'sdTraceType') openTraceTypeMenu(choiceTrigger, e.key === 'ArrowUp');
+      else { var row = currentRow(); if (row) openRoundMenu(choiceTrigger, dataFor(row), e.key === 'ArrowUp'); }
+      return;
+    }
+    if (option && ['ArrowDown', 'ArrowUp', 'Home', 'End'].indexOf(e.key) >= 0) {
+      e.preventDefault();
+      var options = Array.from(choiceMenu.element.querySelectorAll('[role="option"]'));
+      var index = options.indexOf(option);
+      var next = e.key === 'Home' ? 0 : e.key === 'End' ? options.length - 1 : (index + (e.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length;
+      options[next].focus();
+      return;
+    }
     var tab = e.target.closest('.sd-tabs [role="tab"], .sd-inspector-tabs [role="tab"]');
     if (!tab || ['ArrowLeft', 'ArrowRight', 'Home', 'End'].indexOf(e.key) < 0) return;
     e.preventDefault();
