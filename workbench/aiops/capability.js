@@ -636,15 +636,15 @@
     var status = record ? record.status : 'pending';
     var result = record ? chatResult(record, files) : '<p>' + tr('等待任务首次执行。', 'Waiting for the first run.') + '</p>';
     var back = ui.runOrigin ? '<button type="button" class="ws-btn cap-chat-back aiops-back" data-cap="run-back" aria-label="' + tr('返回执行记录', 'Back to runs') + '">' + ico('arrow-left') + '</button>' : '';
-    var thread = '<section class="cap-execution-chat chat-thread" data-run-id="' + esc(record ? record.id : '') + '"><div class="chat-msg-user"><div class="chat-bubble-user">' + renderMd(record ? record.prompt : task.prompt || task.description) + '</div></div><article class="chat-msg-assistant"><div class="ao-turn">' + (record ? '<details class="cap-chat-process"' + (status === 'running' ? ' open' : '') + '><summary><span>' + esc(status === 'running' ? tr('正在执行','Running') : tr('用时 ','Duration: ') + duration(record)) + '</span>' + ico('chevron-down') + '</summary><ol class="cap-steps">' + steps(record).map(function (step) { return '<li class="is-' + step.status + '"><span class="dot">' + (step.status === 'done' ? '✓' : step.n) + '</span><div><b>' + esc(step.label) + '</b><small>' + esc(step.note) + '</small></div></li>'; }).join('') + '</ol></details>' : '') + '<div class="ao-answer chat-prose"><div class="chat-md">' + result + '</div></div>' + (files.length ? '<div class="file-grid cap-chat-files">' + files.map(chatArtifact).join('') + '</div>' : '') + '</div></article>' + (record && record.followups || []).map(function (turn) { return '<div class="chat-msg-user"><div class="chat-bubble-user">' + esc(turn.user) + '</div></div><article class="chat-msg-assistant"><div class="ao-answer chat-prose"><div class="chat-md">' + renderMd(turn.answer) + '</div></div></article>'; }).join('') + '</section>';
+    var thread = '<section class="cap-execution-chat chat-thread" data-run-id="' + esc(record ? record.id : '') + '"><div class="chat-msg-user"><div class="chat-bubble-user">' + renderMd(record ? record.prompt : task.prompt || task.description) + '</div></div><article class="chat-msg-assistant"><div class="ao-turn">' + (record ? '<details class="cap-chat-process"' + (status === 'running' ? ' open' : '') + '><summary><span>' + esc(status === 'running' ? tr('正在执行','Running') : tr('用时 ','Duration: ') + duration(record)) + '</span>' + ico('chevron-down') + '</summary><ol class="cap-steps">' + steps(record).map(function (step) { return '<li class="is-' + step.status + '"><span class="dot">' + (step.status === 'done' ? '✓' : step.n) + '</span><div><b>' + esc(step.label) + '</b><small>' + esc(step.note) + '</small></div></li>'; }).join('') + '</ol></details>' : '') + '<div class="ao-answer chat-prose"><div class="chat-md">' + result + '</div></div>' + (files.length ? '<div class="file-grid cap-chat-files">' + files.map(chatArtifact).join('') + '</div>' : '') + '</div></article>' + (record && record.followups || []).map(function (turn) { return '<div class="chat-msg-user"><div class="chat-bubble-user">' + (host.referenceHtml ? host.referenceHtml(turn.sessionRefs, false) : '') + esc(turn.user) + '</div></div><article class="chat-msg-assistant"><div class="ao-answer chat-prose"><div class="chat-md">' + renderMd(turn.answer) + '</div></div></article>'; }).join('') + '</section>';
     var title = executionTitle(task, record);
     return host.conversationShell ? host.conversationShell(task, record, thread, back, title) : thread;
   }
-  function continueRun(id, text) {
+  function continueRun(id, text, refs) {
     var record = findRun(id);
     if (!record) return;
     record.followups = record.followups || [];
-    record.followups.push({ user: text, answer: tr('已接着本次执行结果继续分析。\n\n你提出的「', 'Continuing from this run.\n\nYour request: ') + text + tr('」已加入当前会话。\n\n本次业务日：', '\n\nBusiness date: ') + record.businessDate + tr('。后续复核将沿用本次会话的来源记录、分析结果和产出物。', '. This conversation retains the run’s sources, results, and artifacts.') });
+    record.followups.push({ user: text, sessionRefs: refs || [], answer: tr('已接着本次执行结果继续分析。\n\n你提出的「', 'Continuing from this run.\n\nYour request: ') + text + tr('」已加入当前会话。\n\n本次业务日：', '\n\nBusiness date: ') + record.businessDate + tr('。后续复核将沿用本次会话的来源记录、分析结果和产出物。', '. This conversation retains the run’s sources, results, and artifacts.') });
     record.chatDraft = '';
     ui.focus = { sel: '.cui-input' }; ui.chatScroll = true;
     rerender();
@@ -713,7 +713,7 @@
   function artifactBatchBar(selected) {
     if (!selected.length) return '';
     var actions = [
-      ['art-ref', 'quote', tr('引用', 'Reference'), tr('批量引用', 'Reference selected artifacts')],
+      ['art-ref', 'message-circle-plus', tr('引用', 'Reference'), tr('批量引用', 'Reference selected artifacts')],
       ['art-export', 'download', tr('下载', 'Download'), tr('批量下载', 'Download selected artifacts')],
       ['art-move', 'folder-input', tr('移动', 'Move'), tr('批量移动', 'Move selected artifacts')],
       ['art-delete', 'trash-2', tr('删除', 'Delete'), tr('批量删除', 'Delete selected artifacts')]
@@ -724,9 +724,9 @@
       }).join('') + '<button type="button" class="session-bulk-clear" data-cap="art-clear" aria-label="' + esc(tr('取消选择', 'Clear selection')) + '" title="' + esc(tr('取消选择', 'Clear selection')) + '">' + ico('x') + '</button></div>';
   }
 
-  function artSearchControl() {
+  function artSearchControl(expanded) {
     var label = tt('搜索产出物');
-    if (ui.artSearchOpen || ui.filters.query.trim()) {
+    if (expanded || ui.artSearchOpen || ui.filters.query.trim()) {
       return '<label class="search-field cap-search-field">' + ico('search') + '<input id="capArtSearch" type="text" data-cap="art-query" placeholder="' + esc(label) + '" value="' + esc(ui.filters.query) + '" aria-label="' + esc(label) + '" autocomplete="off"></label>';
     }
     return '<button type="button" class="fb-tool" data-cap="art-search-open" aria-label="' + esc(label) + '" title="' + esc(label) + '">' + ico('search') + '</button>';
@@ -843,11 +843,12 @@
     var indices = filteredArts();
     var groups = groupsFrom(indices);
     var selected = ui.selected.filter(function (id) { return indices.some(function (a) { return a.id === id; }); });
-    return '<div class="page-heading has-actions cap-list-head"><h1>' + esc(tt('产出物')) + '</h1><div class="cap-heading-actions">' + artSearchControl() + artSourceControl() + '</div></div>' +
+    // Source tabs are temporarily omitted from the artifact page header.
+    return '<div class="page-heading has-actions cap-list-head"><h1>' + esc(tt('产出物')) + '</h1><div class="cap-heading-actions">' + artSearchControl() + '</div></div>' +
       artifactBatchBar(selected) +
-      '<div id="capArtResults" class="table-wrap"><table class="data-table cap-table"><colgroup><col style="width:5%"><col style="width:32%"><col style="width:12%"><col style="width:12%"><col style="width:19%"><col style="width:20%"></colgroup><thead><tr>' +
+      '<div id="capArtResults" class="table-wrap"><table class="data-table cap-table"><colgroup><col style="width:38px"><col><col style="width:12%"><col style="width:12%"><col style="width:19%"><col style="width:1px"></colgroup><thead><tr>' +
         '<th class="cap-check"><input id="capArtAll" type="checkbox" data-cap="art-all" aria-label="' + esc(tr('全选当前结果', 'Select all results')) + '" title="' + esc(tr('全选当前结果', 'Select all results')) + '"' + (indices.length && selected.length === indices.length ? ' checked' : '') + (indices.length ? '' : ' disabled') + '></th>' +
-        '<th scope="col">' + esc(tt('名称')) + '</th>' + artColumnHeading('type') + artColumnHeading('by') + artSortHeading() + '<th scope="col">' + esc(tt('操作')) + '</th></tr></thead>' +
+        '<th scope="col">' + esc(tt('名称')) + '</th>' + artColumnHeading('type') + artColumnHeading('by') + artSortHeading() + '<th scope="col" class="cap-row-actions">' + esc(tt('操作')) + '</th></tr></thead>' +
         (indices.length ? groups.map(function (g, gi) {
           var closed = !!ui.collapsed[g[0]];
           var allOn = g[1].every(function (a) { return ui.selected.indexOf(a.id) >= 0; });
@@ -1409,6 +1410,7 @@
   }
   var artViews = {};
   var railViews = {}, railPreview = null, pendingRailScroll = null;
+  var railContexts = Object.create(null);
   function selectDetail(id) {
     if (ui.artifactPreview) artViews[ui.artifactPreview.id] = Object.assign({}, ui.artifactPreview);
     ui.artifactPreview = id ? Object.assign({}, artViews[id] || { id: id, tab: 'content', row: null }) : null;
@@ -1416,7 +1418,7 @@
   }
   function compactArtifacts() {
     var rows = filteredArts();
-    return '<div class="page-heading"><h1>' + esc(tt('产出物')) + '</h1></div><div class="resource-list-controls">' + artSearchControl() + artSourceControl() + '</div><div class="resource-list-scroll">' + (rows.length ? groupsFrom(rows).map(function (group, gi) {
+    return '<div class="page-heading"><h1>' + esc(tt('产出物')) + '</h1></div><div class="resource-list-controls">' + artSearchControl(true) + '</div><div class="resource-list-scroll">' + (rows.length ? groupsFrom(rows).map(function (group, gi) {
       var closed = !!ui.collapsed[group[0]];
       return '<section class="resource-art-group' + (closed ? ' is-closed' : '') + '">' + artifactFolderHtml(group[0], gi, closed) + (closed ? '' : group[1].map(function (a) {
         return '<div class="resource-list-item' + (ui.artifactPreview.id === a.id ? ' is-active' : '') + '" role="button" tabindex="0" data-artifact-view="' + esc(a.id) + '" aria-label="' + esc('查看产出物：' + a.name) + '">' + chip(a) + '<div><strong title="' + esc(a.name) + '">' + esc(displayName(a.name)) + '</strong></div><button type="button" class="resource-icon" data-cap="art-more" data-id="' + esc(a.id) + '" data-compact="true" aria-label="' + esc(a.name + '的更多操作') + '" aria-haspopup="menu">' + ico('ellipsis') + '</button></div>';
@@ -2277,7 +2279,7 @@
   }, true);
   document.addEventListener('focusout', function (e) {
     if (e.target && e.target.id === 'capArtSearch') {
-      if (ui.composing || e.target.value.trim()) return;
+      if (e.target.closest('.resource-list-controls') || ui.composing || e.target.value.trim()) return;
       setTimeout(function () {
         if (document.activeElement && document.activeElement.id === 'capArtSearch') return;
         if (ui.filters.query.trim()) return;
@@ -2346,7 +2348,7 @@
       ui.editor = null;
     }
     if (page !== '产出物') {
-      global.AIOpsResources.dismiss('artifact');
+      if (ui.artifactPreview) artViews[ui.artifactPreview.id] = Object.assign({}, ui.artifactPreview);
       ui.artifactPreview = null;
       ui.artifactEdit = ui.artifactDraft = ui.artifactEditScope = null;
     } else if (pendingArt && artById(pendingArt)) {
@@ -2354,9 +2356,9 @@
       ui.filters = { query: '', type: [], by: [], sort: 'updated-desc', source: 'all' };
       ui.artSearchOpen = false;
       ui.selected = [];
-      ui.artifactPreview = { id: art.id, tab: 'content', row: null };
+      selectDetail(art.id);
     } else {
-      ui.artifactPreview = null;
+      selectDetail(global.AIOpsResources.active('artifact'));
       ui.artifactEdit = ui.artifactDraft = ui.artifactEditScope = null;
     }
     if (page !== '定时任务' && page !== '产出物') ui.confirm = ui.move = null;
@@ -2408,6 +2410,12 @@
 
   global.AIOpsCapability = {
     isConversation: function () { return !!ui.runId; },
+    railContextKey: function () { return ui.runId ? 'schedule-run:' + ui.runId : ui.taskDetailId ? 'schedule-task:' + ui.taskDetailId : null; },
+    setRailContext: function (key) {
+      railViews = railContexts[key] || (railContexts[key] = {});
+      railPreview = null;
+      pendingRailScroll = null;
+    },
     isTaskDefinition: function () { return !!ui.taskDetailId && !ui.runId; },
     workspaceTaskLabel: function (id) { var task = taskById(id); return task ? executionTitle(task, taskRuns(task)[0]) : null; },
     continueRun: continueRun,
@@ -2423,7 +2431,7 @@
     railArtifacts: function () {
       return scopeList().map(function (a) {
         var type = artifactType(a);
-        return { id: 'art:' + a.id, artifactId: a.id, name: a.name, folder: artifactWorkspace(a), meta: artMeta(a), mark: type === 'Markdown' ? 'MD' : type === tr('数据表', 'Table') ? tr('表', 'Table') : type, markCls: artifactKind(a) === 'table' ? 'is-sheet' : type === 'JSON' ? 'is-json' : '' };
+        return { id: 'art:' + a.id, artifactId: a.id, name: a.name, folder: artifactWorkspace(a), source: artifactSource(a), type: type, updatedAt: a.updatedAt || '', meta: artMeta(a), mark: type === 'Markdown' ? 'MD' : type === tr('数据表', 'Table') ? tr('表', 'Table') : type, markCls: artifactKind(a) === 'table' ? 'is-sheet' : type === 'JSON' ? 'is-json' : '' };
       });
     },
     railArtifactDetail: function (id) {

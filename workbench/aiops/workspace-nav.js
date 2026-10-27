@@ -191,7 +191,12 @@
       if ((kind === 'create' || kind === 'edit') && spaces.some(function (row) { return row.id !== dialog.id && row.name === name; })) { error(text('工作区名称已存在，请使用其他名称。', 'A workspace with this name exists.')); return; }
       if (kind === 'rename' && spaces.some(function (row) { return row.items.some(function (item) { return item.id !== c.item.id && label(item) === name; }); })) { error(text('任务名称已存在，请使用其他名称。', 'A task with this name exists.')); return; }
       if ((kind === 'create' || kind === 'edit') && !dialog.scope.length) { error(text('请至少选择一个 Agent 或本体对象集。', 'Select at least one agent or object set.'), true); return; }
-      if (kind === 'create') { serial += 1; spaces.push({ id: 'workspace-' + Date.now() + '-' + serial, name: name, scope: dialog.scope.slice(), items: [], open: true }); }
+      if (kind === 'create') {
+        serial += 1;
+        var created = { id: 'workspace-' + Date.now() + '-' + serial, name: name, scope: dialog.scope.slice(), items: [], open: true };
+        spaces.push(created);
+        if (dialog.selectAfterCreate) host.pickWorkspace(created.id);
+      }
       if (kind === 'edit') { host.moveWorkspace(w.name, name); w.name = name; w.scope = dialog.scope.slice(); }
       if (kind === 'rename') { host.renameTask(c.item, name); c.item.label = name; }
     } else if (kind === 'delete-workspace') {
@@ -277,6 +282,7 @@
   global.AIOpsWorkspaces = {
     configure: function (next, initial) { host = next; spaces = initial; },
     markup: markup,
+    create: function (trigger) { openDialog('create'); dialog.selectAfterCreate = true; if (trigger) returnFocus = trigger; },
     scopeCatalog: function () { return scopes.map(function (s) { return { id: s.id, name: s.name, items: ['agents', 'objects'].reduce(function (all, kind) { return all.concat(s[kind].map(function (name, i) { return { id: s.id + ':' + kind + ':' + i, name: name, type: kind === 'agents' ? 'Agent' : '本体对象集' }; })); }, []) }; }); },
     scopePickerMarkup: pickerMarkup,
     names: function () { return spaces.map(function (w) { return w.name; }); },

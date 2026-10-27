@@ -1054,6 +1054,10 @@ body.aiops-body {
 .cui-ws-option:hover { background: var(--hover, #f5f5f5); }
 .cui-ws-option.is-on { font-weight: 500; }
 
+.cui-ws-divider { height: 1px; margin: 4px 0; background: var(--border, #ececec); }
+.cui-ws-create { justify-content: flex-start; gap: 8px; }
+.cui-ws-create > svg { width: 16px; height: 16px; color: var(--text-secondary); }
+
 .cui-ws-check { flex-shrink: 0; color: #171717; }
 
 .cui-thread {
@@ -1262,62 +1266,6 @@ body.aiops-body {
   align-items: center;
   gap: 2px;
   min-width: 0;
-}
-
-.cui-skills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0 0 8px;
-}
-
-.cui-skill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  max-width: 100%;
-  height: 26px;
-  padding: 0 4px 0 8px;
-  border-radius: 999px;
-  background: var(--search-bg, #f5f5f5);
-  color: var(--text-primary, #111);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 16px;
-}
-
-.cui-skill > svg {
-  width: 13px;
-  height: 13px;
-  color: #666;
-  flex-shrink: 0;
-}
-
-.cui-skill > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cui-skill-x {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #8c8c8c;
-  flex-shrink: 0;
-}
-
-.cui-skill-x:hover {
-  background: #e8e8e8;
-  color: #111;
-}
-
-.cui-skill-x svg {
-  width: 12px;
-  height: 12px;
 }
 
 .cui-toolbar {
@@ -4065,9 +4013,9 @@ body.aiops-body .session-date-field[aria-expanded="true"] { border-color: var(--
 #sessionActionsMenu [aria-expanded="true"] { background: var(--hover); }
 
 /* Match the Workbench form focus treatment. */
-.aiops-body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea):not(.cui-input):not(.search-field input):focus {
+.aiops-body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea):not(.cui-input):not(:is(.search-field, .context-picker-search, .rail-picker-search) input):focus {
   outline: none; border-color: #0d99ff; box-shadow: 0 0 0 3px rgba(13,153,255,.15);
 }
-.aiops-body .search-field input:focus { border-color: transparent; box-shadow: none; }
+.aiops-body :is(.search-field, .context-picker-search, .rail-picker-search) input:focus { outline: none; border-color: transparent; box-shadow: none; }
 :is(.aiops-back,.cap-chat-back,[data-sd="back"],.detail-back) { border: 1px solid var(--control-border,#dedede); background: #fff; border-radius: 8px; }
 #aiopsCollapsedHome { display: none; }

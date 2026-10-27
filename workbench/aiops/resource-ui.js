@@ -29,10 +29,26 @@
   }
   function updateScope(focus) { host.changed(); host.render(); paintScope(); var target = focus && document.querySelector(focus); if (target) target.focus({ preventScroll: true }); }
   function dock(kind) { return docks[kind] || (docks[kind] = { items: [], active: null, max: false }); }
+  function rememberView() {
+    var split = document.querySelector('.resource-split');
+    if (!split) return;
+    dock(split.dataset.kind).scrolls = Array.from(split.querySelectorAll('*')).map(function (node, index) {
+      return { index: index, top: node.scrollTop, left: node.scrollLeft };
+    }).filter(function (position) { return position.top || position.left; });
+  }
+  function restoreView() {
+    var split = document.querySelector('.resource-split');
+    if (!split) return;
+    var nodes = split.querySelectorAll('*');
+    (dock(split.dataset.kind).scrolls || []).forEach(function (position) {
+      var node = nodes[position.index];
+      if (node) { node.scrollTop = position.top; node.scrollLeft = position.left; }
+    });
+  }
   function open(kind, item) { var d = dock(kind); if (!d.items.some(function (x) { return x.id === item.id; })) d.items.push({ id: item.id, name: item.name }); d.items.forEach(function (x) { if (x.id === item.id) x.name = item.name; }); d.active = item.id; }
   function panelIcon(maximize, expanded) {
-    var source = document.querySelector(maximize ? '#cuiRailMax ' + (expanded ? '.rail-min-ico' : '.rail-max-ico') : '#cuiRailClose svg');
-    if (!source) return icon(maximize ? (expanded ? 'minimize' : 'maximize') : 'panel-right');
+    var source = document.querySelector(maximize ? '#cuiRailMax ' + (expanded ? '.rail-min-ico' : '.rail-max-ico') : '#cuiRailClose .rail-close-ico');
+    if (!source) return icon(maximize ? (expanded ? 'minimize' : 'maximize') : 'x');
     var clone = source.cloneNode(true); clone.removeAttribute('hidden'); return clone.outerHTML;
   }
   function fitListControls() {
@@ -51,7 +67,7 @@
       var itemKind = item.kind || kind;
       var select = rail ? ' data-rail-tab="' + esc(item.id) + '"' : ' data-resource="select" data-kind="' + kind + '"';
       var close = rail ? ' data-rail-x="' + esc(item.id) + '"' : ' data-resource="close" data-kind="' + kind + '"';
-      return '<div class="resource-tab' + (active === item.id ? ' is-active' : '') + '"><button type="button" role="tab" aria-selected="' + (active === item.id) + '" data-id="' + esc(item.id) + '"' + select + ' title="' + esc(item.name) + '">' + icon(itemKind === 'session' ? 'messages-square' : 'file-text') + '<span>' + esc(item.name) + '</span></button><button type="button" class="resource-icon" data-id="' + esc(item.id) + '"' + close + ' aria-label="' + esc(tr('关闭 ', 'Close ') + item.name) + '">' + icon('x') + '</button></div>';
+      return '<div class="resource-tab' + (active === item.id ? ' is-active' : '') + '"><button type="button" role="tab" aria-selected="' + (active === item.id) + '" data-id="' + esc(item.id) + '"' + select + ' title="' + esc(item.name) + '">' + (item.iconMarkup || icon(itemKind === 'session' ? 'messages-square' : 'file-text')) + '<span>' + esc(item.name) + '</span></button><button type="button" class="resource-icon" data-id="' + esc(item.id) + '"' + close + ' aria-label="' + esc(tr('关闭 ', 'Close ') + item.name) + '">' + icon('x') + '</button></div>';
     }).join('');
   }
   function shell(kind, left, body, options) {
@@ -88,5 +104,5 @@
     }
     if (e.key === 'Escape' && scopeOpen) { e.preventDefault(); closeScope(true); } });
   window.addEventListener('resize', function () { fitListControls(); paintScope(); });
-  global.AIOpsResources = { configure: function (next) { host = next; }, tabsMarkup: tabsMarkup, scopeTrigger: trigger, scopeCatalog: catalog, scopeIds: function () { if (!selected.length) return allIds(); var ids = selected.slice(); catalog().forEach(function (s) { if (s.items.some(function (x) { return x.type !== 'Agent' && selected.indexOf(x.id) >= 0; })) s.items.filter(function (x) { return x.type === 'Agent'; }).forEach(function (x) { if (ids.indexOf(x.id) < 0) ids.push(x.id); }); }); return ids; }, scopeSelected: function () { return selected.slice(); }, scopeHasScene: function (id) { return !selected.length || selected.some(function (x) { return x.indexOf(id + ':') === 0; }); }, afterRender: function () { fitListControls(); paintScope(); }, open: open, shell: shell, columnLayout: function (kind) { var d = dock(kind); return { width: d.width || (kind === 'session' ? 300 : 260), min: d.minWidth || (kind === 'session' ? 300 : 260) }; }, resizeColumn: function (kind, width, remember) { var d = dock(kind); d.width = width; if (remember) d.userWidth = width; }, remove: function (kind, id) { var d = dock(kind); d.items = d.items.filter(function (x) { return x.id !== id; }); if (d.active === id) { d.active = d.items.length ? d.items[d.items.length - 1].id : null; host.select(kind, d.active); } }, dismiss: function (kind) { var d = dock(kind); d.items = []; d.active = null; d.max = false; } };
+  global.AIOpsResources = { configure: function (next) { host = next; }, active: function (kind) { return dock(kind).active; }, rememberView: rememberView, restoreView: restoreView, tabsMarkup: tabsMarkup, scopeTrigger: trigger, scopeCatalog: catalog, scopeIds: function () { if (!selected.length) return allIds(); var ids = selected.slice(); catalog().forEach(function (s) { if (s.items.some(function (x) { return x.type !== 'Agent' && selected.indexOf(x.id) >= 0; })) s.items.filter(function (x) { return x.type === 'Agent'; }).forEach(function (x) { if (ids.indexOf(x.id) < 0) ids.push(x.id); }); }); return ids; }, scopeSelected: function () { return selected.slice(); }, scopeHasScene: function (id) { return !selected.length || selected.some(function (x) { return x.indexOf(id + ':') === 0; }); }, afterRender: function () { fitListControls(); paintScope(); }, open: open, shell: shell, columnLayout: function (kind) { var d = dock(kind); return { width: d.width || (kind === 'session' ? 300 : 260), min: d.minWidth || (kind === 'session' ? 300 : 260) }; }, resizeColumn: function (kind, width, remember) { var d = dock(kind); d.width = width; if (remember) d.userWidth = width; }, remove: function (kind, id) { var d = dock(kind); d.items = d.items.filter(function (x) { return x.id !== id; }); if (d.active === id) { d.active = d.items.length ? d.items[d.items.length - 1].id : null; host.select(kind, d.active); } }, dismiss: function (kind) { var d = dock(kind); d.items = []; d.active = null; d.max = false; } };
 })(window);

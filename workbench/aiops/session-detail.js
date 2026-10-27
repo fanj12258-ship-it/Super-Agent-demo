@@ -171,6 +171,7 @@
     }).join('<div class="sd-record-separator" aria-hidden="true"></div>') : '<div class="sd-empty"><p>' + tr('没有匹配的记录', 'No matching records') + '</p><button type="button" class="btn-soft" data-sd="trace-reset">' + tr('重置筛选', 'Reset filters') + '</button></div>') + '</div>' + inspectorHtml(selected) + '</div></div>';
   }
   var savedViews = {};
+  var contexts = Object.create(null), contextKey = null;
   function page(row, docked) {
     if (ui.id !== row.id) { if (ui.id) savedViews[ui.id] = Object.assign({}, ui); if (savedViews[row.id]) ui = Object.assign({}, savedViews[row.id]); else reset(row.id); }
     var data = dataFor(row);
@@ -332,5 +333,17 @@
     var selector = '[data-sd="' + next.getAttribute('data-sd') + '"][data-value="' + next.getAttribute('data-value') + '"]';
     next.click(); var target = document.querySelector(selector); if (target) target.focus();
   });
-  global.AIOpsSessionDetail = { bind: function (next) { host = next; }, page: page, afterRender: afterRender };
+  global.AIOpsSessionDetail = {
+    bind: function (next) { host = next; }, page: page, afterRender: afterRender,
+    setContext: function (key) {
+      if (contextKey === key) return;
+      closeChoiceMenu();
+      if (contextKey) contexts[contextKey] = { ui: Object.assign({}, ui), views: savedViews };
+      contextKey = key;
+      var saved = contexts[key];
+      savedViews = saved ? saved.views : {};
+      if (saved) ui = Object.assign({}, saved.ui);
+      else reset(null);
+    }
+  };
 })(window);

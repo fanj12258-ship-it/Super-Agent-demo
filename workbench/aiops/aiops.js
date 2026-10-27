@@ -15,7 +15,6 @@
     galleryHidden: false,
     sessionPage: 1,
     sessionViewId: null,
-    sessionDockInTask: false,
     sessionListScroll: null,
     sessionQuery: '',
     sessionSort: { key: 'time', direction: 'desc' },
@@ -38,6 +37,10 @@
     railSection: null,
     railTabs: [],
     railCurrent: null,
+    railContexts: Object.create(null),
+    railOwner: null,
+    cuiDrafts: Object.create(null),
+    cuiDraftId: 0,
     cuiSeed: null,
     cuiWs: 'audit',
     cuiModel: 'Auto',
@@ -85,6 +88,7 @@
     '本期不包含': { zh: '本期不包含', en: 'Not in this release' },
     '新建': { zh: '新建', en: 'New' },
     '创建工作区': { zh: '创建工作区', en: 'Create workspace' },
+    '新建工作区': { zh: '新建工作区', en: 'New workspace' },
     '今日': { zh: '今日', en: 'Today' },
     '天': { zh: '天', en: 'd' },
     '全部': { zh: '全部', en: 'All' },
@@ -2437,6 +2441,8 @@
     );
   }
 
+  function sessionScene(row) { return /成本/.test(row.agent) ? 'cost' : /制造业/.test(row.agent) ? 'manufacturing' : 'audit'; }
+
   function sessionFilterValue(row, key) {
     return key === 'by' ? row.by || '__unmarked__' : row[key];
   }
@@ -2454,7 +2460,7 @@
   function filteredSessionRows() {
     var q = (state.sessionQuery || '').trim().toLowerCase();
     var rows = sessionRows().filter(function (row) {
-      var scene = /成本/.test(row.agent) ? 'cost' : /制造业/.test(row.agent) ? 'manufacturing' : 'audit';
+      var scene = sessionScene(row);
       if (!window.AIOpsResources.scopeHasScene(scene)) return false;
       if (q && (row.name + ' ' + row.id + ' ' + row.user).toLowerCase().indexOf(q) < 0) return false;
       var range = state.sessionDateRange;
@@ -2558,6 +2564,7 @@
   }
 
   function dateRangeFor(context) {
+    if (context === 'rail-picker') return window.AIOpsRailPicker.dateRange();
     return context === 'monitoring' ? monitoringDateRange() : state.sessionDateRange;
   }
 
@@ -2581,9 +2588,9 @@
     var range = dateRangeFor(context);
     var days = sessionPresetDays(range);
     var dates = range ? range.start + ' – ' + range.end : '';
-    var emptyLabel = context === 'sessions' ? (state.lang === 'en' ? 'Any time' : '不限时间范围') : (state.lang === 'en' ? 'Date range' : '时间范围');
+    var emptyLabel = context !== 'monitoring' ? (state.lang === 'en' ? 'Any time' : '不限时间范围') : (state.lang === 'en' ? 'Date range' : '时间范围');
     var label = days ? sessionPresetLabel(days) : dates || emptyLabel;
-    var clearable = context === 'sessions' && range;
+    var clearable = context !== 'monitoring' && range;
     var clearLabel = state.lang === 'en' ? 'Clear date range' : '清空时间范围';
     return '<div class="session-date-control' + (clearable ? ' is-clearable' : '') + '"><button type="button" class="session-date-trigger" data-session-date-open data-date-context="' + context + '" aria-haspopup="dialog" aria-expanded="false" aria-label="' + (state.lang === 'en' ? 'Select date range' : '选择时间范围') + '" title="' + esc(dates || label) + '">' + lucideIcon('calendar-days') + '<span>' + esc(label) + '</span>' + lucideIcon('chevron-down') + '</button>' + (clearable ? '<button type="button" class="session-date-inline-clear" data-session-date-clear aria-label="' + clearLabel + '" title="' + clearLabel + '">' + lucideIcon('x') + '</button>' : '') + '</div>';
   }
@@ -2619,7 +2626,7 @@
       var label = en ? field === 'start' ? 'Start date' : 'End date' : field === 'start' ? '开始日期' : '结束日期';
       return (field === 'end' ? '<span aria-hidden="true">–</span>' : '') + '<div class="session-date-field-group"><span>' + label + '</span><input type="hidden" data-session-date-' + field + ' value="' + esc(range[field]) + '"><button type="button" class="session-date-field" data-session-date-field="' + field + '" aria-label="' + label + '" aria-expanded="false" aria-controls="sessionDateCalendar"><span>' + esc(range[field] || (en ? 'Select date' : '选择日期')) + '</span>' + lucideIcon('calendar-days') + '</button></div>';
     }).join('') + '</div><div id="sessionDateCalendar" class="session-date-calendar" role="group" hidden></div><p class="session-date-error" role="alert" hidden></p><footer><button type="button" class="btn-soft" data-session-date-cancel>' + esc(t('取消')) + '</button><button type="button" class="btn-ink" data-session-date-apply>' + (en ? 'Apply' : '确定') + '</button></footer>';
-    document.body.appendChild(panel);
+    (context === 'rail-picker' ? anchor.closest('.rail-picker-overlay') : document.body).appendChild(panel);
     paintIcons();
     positionSessionPopover(panel, anchor);
     anchor.setAttribute('aria-expanded', 'true');
@@ -2683,6 +2690,7 @@
 
   function applySessionDate(range) {
     var context = state.sessionDateMenu ? state.sessionDateMenu.context : 'sessions';
+    if (context === 'rail-picker') { closeSessionDate(); window.AIOpsRailPicker.applyDateRange(range); return; }
     if (context === 'monitoring') {
       state.monitoringDateRange = range;
       state.range = dateRangeDays(range || window.AIOpsBoards.dateBounds());
@@ -2797,9 +2805,10 @@
   function analyzeSessions(ids) {
     var refs = sessionRows().filter(function (row) { return ids.indexOf(row.id) >= 0; });
     if (!refs.length) return;
-    state.cuiSeed = { page: '分析任务', skill: '', sessionRefs: refs, prompt: state.lang === 'en' ? 'Analyze the referenced sessions and summarize key issues and improvements.' : '请分析引用的会话，梳理主要问题与改进建议。' };
-    state.cuiFocus = true;
-    go('分析任务', { keepSessionDetail: !!state.sessionViewId });
+    var prompt = state.lang === 'en' ? 'Analyze the referenced sessions and summarize key issues and improvements.' : '请分析引用的会话，梳理主要问题与改进建议。';
+    if (referenceInConversation(refs, prompt)) return;
+    var detailId = state.sessionViewId;
+    openNewTask({ page: '分析任务', skill: '', sessionRefs: refs, prompt: prompt }, detailId ? 'ses:' + detailId : null);
   }
 
   function sessionReferenceHtml(refs, editable) {
@@ -2807,7 +2816,7 @@
     return '<div class="cui-session-refs" role="group" aria-label="' + (state.lang === 'en' ? 'Referenced sessions' : '引用的内容') + '">' + refs.map(function (row) {
       var artifact = row.kind === 'artifact';
       var table = artifact && (row.type === '数据表' || row.type === 'Table');
-      return '<span class="cui-session-ref" data-session-reference="' + esc(row.id) + '" title="' + esc(row.name + ' · ' + row.id) + '"><span class="cui-session-ref-icon' + (table ? ' is-table' : '') + '">' + lucideIcon(artifact ? (table ? 'table-2' : 'file-text') : 'messages-square') + '</span><span class="cui-session-ref-label">' + esc(row.name) + '</span>' + (editable ? '<button type="button" data-cui-session-remove="' + esc(row.id) + '" aria-label="' + esc((state.lang === 'en' ? 'Remove ' : '移除引用：') + row.name) + '">' + lucideIcon('x') + '</button>' : '') + '</span>';
+      return '<span class="cui-session-ref" data-session-reference="' + esc(row.id) + '" title="' + esc(row.path || row.name + ' · ' + row.id) + '"><button type="button" class="cui-reference-open" data-cui-reference-open="' + esc(row.id) + '" data-reference-kind="' + esc(row.kind || 'session') + '" aria-label="' + esc('预览引用：' + row.name) + '"><span class="cui-session-ref-icon' + (table ? ' is-table' : '') + '">' + window.AIOpsContext.icon(row) + '</span><span class="cui-session-ref-label">' + esc(row.name) + '</span></button>' + (editable ? '<button type="button" data-cui-session-remove="' + esc(row.id) + '" aria-label="' + esc((state.lang === 'en' ? 'Remove ' : '移除引用：') + row.name) + '">' + lucideIcon('x') + '</button>' : '') + '</span>';
     }).join('') + '</div>';
   }
 
@@ -3463,28 +3472,54 @@
     return !!inPicker;
   }
 
+  function composerSeed(page) {
+    return page === '分析任务' ? state.cuiSeed : state.cuiDrafts[page];
+  }
+
+  function saveComposerDraft(page, prompt, parts) {
+    var seed = composerSeed(page) || { page: page, prompt: '', skill: '', sessionRefs: [] };
+    seed.prompt = prompt;
+    if (parts) seed.parts = parts;
+    else if (seed.parts && window.AIOpsComposer.textOf(seed.parts) !== prompt) seed.parts = null;
+    if (page === '分析任务') state.cuiSeed = seed;
+    else state.cuiDrafts[page] = seed;
+    return seed;
+  }
+
+  function referenceInConversation(refs, prompt) {
+    var form = isCuiPage() && document.querySelector('#pageRoot [data-cui-composer]');
+    if (!form) return false;
+    var field = form.querySelector('.cui-input');
+    var seed = saveComposerDraft(form.getAttribute('data-cui-page'), window.AIOpsComposer.text(field), window.AIOpsComposer.parts(field));
+    seed.sessionRefs = (seed.sessionRefs || []).slice();
+    refs.forEach(function (ref) {
+      if (!seed.sessionRefs.some(function (item) { return item.id === ref.id && (item.kind || 'session') === (ref.kind || 'session'); })) seed.sessionRefs.push(ref);
+    });
+    if (prompt && seed.prompt.indexOf(prompt) < 0) {
+      var added = (seed.prompt.trim() ? '\n' : '') + prompt;
+      seed.prompt += added;
+      seed.parts.push({ type: 'text', text: added });
+    }
+    state.cuiFocus = true;
+    render({ keepRailBody: true });
+    return true;
+  }
+
   function cuiComposer(page, draft) {
-    var seed = state.cuiSeed && state.cuiSeed.page === page ? state.cuiSeed : null;
-    var prompt = draft != null ? draft : seed ? seed.prompt : '';
-    var skill = seed && seed.skill ? seed.skill : '';
+    var seed = composerSeed(page);
+    var prompt = seed ? seed.prompt : draft != null ? draft : '';
     var refs = seed && seed.sessionRefs ? seed.sessionRefs : [];
     return (
       '<form class="cui-composer" data-cui-composer data-cui-page="' + esc(page) + '">' +
         '<div class="cui-card' + (prompt.trim() || refs.length ? ' has-text' : '') + '">' +
-          (skill
-            ? '<div class="cui-skills"><span class="cui-skill">' + lucideIcon('sparkles') +
-              '<span>' + esc(skill) + '</span>' +
-              '<button type="button" class="cui-skill-x" data-cui-skill-remove aria-label="' + esc(t('移除技能')) + '">' +
-              lucideIcon('x') + '</button></span></div>'
-            : '') +
           sessionReferenceHtml(refs, true) +
-          '<textarea class="cui-input" rows="1" placeholder="' + esc(t('对话占位')) + '" aria-label="' + esc(t('对话占位')) + '">' + esc(prompt) + '</textarea>' +
+          '<div class="cui-input" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="' + esc(t('对话占位')) + '" aria-label="' + esc(t('对话占位')) + '">' + window.AIOpsComposer.html(prompt, seed && seed.parts) + '</div>' +
             '<div class="cui-toolbar">' +
             '<div class="cui-toolbar-left">' +
-              '<button type="button" class="cui-plus" aria-label="' + esc(t('添加')) + '">' +
+              '<button type="button" class="cui-plus" data-cui-context-open aria-label="' + esc(t('添加')) + '">' +
                 '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>' +
               '</button>' +
-              '<button type="button" class="cui-plus" aria-label="' + esc(t('上传')) + '">' +
+              '<button type="button" class="cui-plus" data-cui-upload aria-label="' + esc(t('上传')) + '">' +
                 '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m21 11.5-8.6 8.6a5.2 5.2 0 0 1-7.4-7.4l8.8-8.8a3.5 3.5 0 0 1 4.9 4.9l-8.8 8.8a1.8 1.8 0 0 1-2.5-2.5l8.1-8.1"/></svg>' +
               '</button>' +
             '</div>' +
@@ -3521,6 +3556,7 @@
           (on ? check : '') +
         '</button>';
       }).join('') +
+      '<div class="cui-ws-divider" role="separator"></div><button type="button" class="cui-ws-option cui-ws-create" role="menuitem" data-cui-ws-create><i data-lucide="plus" aria-hidden="true"></i><span>' + esc(t('新建工作区')) + '</span></button>' +
     '</div>';
     var name = '<span class="cui-ws-wrap"><button type="button" class="cui-ws" id="cui-ws" aria-haspopup="menu" aria-expanded="false" aria-label="' + esc(t('切换工作区')) + '">' + esc(cuiWsName()) + '</button>' + menu + '</span>';
     var line = esc(t('分析问候前')) + name + esc(t('分析问候后'));
@@ -3557,7 +3593,7 @@
     if (!chat) return '';
     var html = userBubble(pickLang(chat.user), chat.sessionRefs) + wsChatTurn(chat);
     (state.cuiExtra[name] || []).forEach(function (extra) {
-      html += userBubble(extra.user) + wsChatTurn(extra.chat);
+      html += userBubble(extra.user, extra.sessionRefs) + wsChatTurn(extra.chat);
     });
     return html;
   }
@@ -3652,13 +3688,19 @@
       WS_CHATS[id].answer = [{ zh: '已将所选内容作为本次任务的分析上下文。你可以补充关注的问题、时间范围或期望的输出。', en: 'The selected content is linked as context for this task. You can add a focus, date range, or desired output.' }];
     }
     window.AIOpsWorkspaces.addTask(state.cuiWs, { id: id, kind: 'session' });
+    var draftRail = captureRailContext(), draftOwner = state.railOwner;
+    state.cuiSeed = null;
     state.cuiFocus = true;
     go(id);
+    restoreRailContext(draftRail);
+    delete state.railContexts[draftOwner];
+    syncRail();
   }
 
-  function appendTurn(page, text) {
+  function appendTurn(page, text, refs) {
     if (!state.cuiExtra[page]) state.cuiExtra[page] = [];
-    state.cuiExtra[page].push({ user: text, chat: replyChat(text, false) });
+    state.cuiExtra[page].push({ user: text, sessionRefs: refs, chat: replyChat(text, false) });
+    delete state.cuiDrafts[page];
     state.cuiFocus = true;
     render();
   }
@@ -3695,16 +3737,8 @@
   function railCatalog() {
     var map = {};
     railArts().concat(railSessions()).forEach(function (doc) { map[doc.id] = doc; });
+    window.AIOpsContext.documents().forEach(function (ref) { map['ctx:' + ref.id] = { id: 'ctx:' + ref.id, contextId: ref.id, name: ref.name, reference: ref }; });
     return map;
-  }
-
-  function railFilesHtml(items) {
-    return '<div class="cui-rail-files">' + items.map(function (doc) {
-      var on = state.railCurrent === doc.id ? ' is-on' : '';
-      return '<button type="button" class="cui-rail-file' + on + '" data-rail-open="' + esc(doc.id) + '">' +
-        '<span class="cui-rail-mark ' + (doc.markCls || '') + '">' + esc(doc.mark) + '</span>' +
-        '<span>' + esc(doc.name) + '</span></button>';
-    }).join('') + '</div>';
   }
 
   function isCuiPage() {
@@ -3716,6 +3750,41 @@
   }
 
   function railHasDirectory() { return isCuiPage(); }
+
+  function captureRailContext() {
+    var nodes = Array.from(document.querySelectorAll('#cuiRailScroll, #cuiRailScroll *'));
+    return {
+      railOpen: state.railOpen, railMax: state.railMax, railSection: state.railSection,
+      railTabs: state.railTabs.slice(), railCurrent: state.railCurrent,
+      width: window.AIOpsColumns.savedRailWidth(),
+      scrolls: nodes.map(function (node, index) { return { index: index, top: node.scrollTop, left: node.scrollLeft }; }).filter(function (position) { return position.top || position.left; })
+    };
+  }
+
+  function restoreRailContext(saved) {
+    state.railOpen = saved ? saved.railOpen : false;
+    state.railMax = saved ? saved.railMax : false;
+    state.railSection = saved ? saved.railSection : null;
+    state.railTabs = saved ? saved.railTabs.slice() : [];
+    state.railCurrent = saved ? saved.railCurrent : null;
+    window.AIOpsColumns.restoreRailWidth(saved ? saved.width : null);
+  }
+
+  function selectRailContext() {
+    var key = state.page === '定时任务' ? window.AIOpsCapability.railContextKey() : null;
+    if (state.page === '分析任务') key = 'draft:' + state.cuiDraftId;
+    key = key || (isCuiPage() ? 'chat:' : 'page:') + state.page;
+    if (state.railOwner === key) return null;
+    if (state.railOwner) state.railContexts[state.railOwner] = captureRailContext();
+    state.railOwner = key;
+    var saved = state.railContexts[key];
+    restoreRailContext(saved);
+    window.AIOpsSessionDetail.setContext(key);
+    window.AIOpsCapability.setRailContext(key);
+    var scroll = document.getElementById('cuiRailScroll');
+    scroll.innerHTML = ''; delete scroll.dataset.resourceId;
+    return saved;
+  }
 
   function paintRail(keepBody) {
     var rail = document.getElementById('cuiRail');
@@ -3733,19 +3802,15 @@
     rail.classList.toggle('is-file', !!current);
     view.hidden = !current;
     body.hidden = !!current || !directory;
-    var listed = state.railSection === 'art' || state.railSection === 'ses';
-    body.classList.toggle('is-list', listed && !current);
+    body.classList.remove('is-list');
     body.innerHTML = directory ? '<ul class="rp-launch" aria-label="' + esc(state.lang === 'en' ? 'Directory' : '目录') + '">' +
-      '<li><button type="button" class="rp-launch-item" data-rail-section="ses" aria-expanded="' + (state.railSection === 'ses') + '">' +
-        RAIL_MSG + '<span>' + esc(t('线上会话')) + '</span></button>' +
-        (state.railSection === 'ses' ? railFilesHtml(railSessions()) : '') +
-      '</li><li><button type="button" class="rp-launch-item" data-rail-section="art" aria-expanded="' + (state.railSection === 'art') + '">' +
-        RAIL_FILE + '<span>' + esc(t('产出物')) + '</span></button>' +
-        (state.railSection === 'art' ? railFilesHtml(railArts()) : '') +
-      '</li></ul>' : '';
+      '<li><button type="button" class="rp-launch-item" data-rail-section="ses" aria-haspopup="dialog">' +
+        RAIL_MSG + '<span>' + esc(t('线上会话')) + '</span></button></li>' +
+      '<li><button type="button" class="rp-launch-item" data-rail-section="art" aria-haspopup="dialog">' +
+        RAIL_FILE + '<span>' + esc(t('产出物')) + '</span></button></li></ul>' : '';
     var tabs = directory ? '<button type="button" class="fd-home' + (current ? '' : ' is-active') + '" data-rail-home aria-label="' + esc(state.lang === 'en' ? 'Directory' : '目录') + '" aria-pressed="' + !current + '">' + RAIL_HOME + '</button>' : '';
     tabs += window.AIOpsResources.tabsMarkup('', state.railTabs.filter(function (id) { return !!catalog[id]; }).map(function (id) {
-      var doc = catalog[id]; return { id: id, name: doc.name, kind: doc.sessionId ? 'session' : 'artifact' };
+      var doc = catalog[id]; return { id: id, name: doc.name, kind: doc.sessionId ? 'session' : 'artifact', iconMarkup: doc.reference ? window.AIOpsContext.icon(doc.reference) : null };
     }), current && current.id, true);
     tabsEl.innerHTML = tabs;
     meta.hidden = true;
@@ -3753,6 +3818,7 @@
     var newResource = scroll.dataset.resourceId !== current.id;
     if (keepBody && !newResource) { paintIcons(); return; }
     scroll.dataset.resourceId = current.id;
+    if (current.contextId) { scroll.innerHTML = window.AIOpsContext.detail(current.contextId); paintIcons(); return; }
     if (current.artifactId) {
       scroll.innerHTML = window.AIOpsCapability.railArtifactDetail(current.artifactId);
       paintIcons();
@@ -3770,6 +3836,12 @@
     paintRail();
   }
 
+  function openComposerResource(id) {
+    if (!isCuiPage()) return;
+    var open = function () { state.railOpen = true; railOpenDoc(id); syncRail(true); };
+    if (!state.railOpen && window.AIOpsColumns) window.AIOpsColumns.animate(open); else open();
+  }
+
   function railCloseDoc(id) {
     var i = state.railTabs.indexOf(id);
     if (i < 0) return;
@@ -3784,7 +3856,7 @@
     var cui = canOpenArtifactRail();
     var catalog = railCatalog();
     var hasContent = railHasDirectory() || state.railTabs.some(function (id) { return !!catalog[id]; });
-    var open = !!(state.railOpen && cui && hasContent && !state.sessionDockInTask);
+    var open = !!(state.railOpen && cui && hasContent);
     var max = open && !!state.railMax;
     if (!open) state.railMax = false;
     var app = document.querySelector('.aiops-app');
@@ -3795,7 +3867,7 @@
       if (open && !max) {
         var nav = document.querySelector('.aiops-side');
         var room = app.clientWidth - (nav && !nav.hidden ? nav.getBoundingClientRect().width : 0) - 400;
-        app.style.setProperty('--rail-w', (window.AIOpsColumns ? window.AIOpsColumns.railWidth(room) : Math.max(220, Math.min(600, room))) + 'px');
+        app.style.setProperty('--rail-w', (window.AIOpsColumns ? window.AIOpsColumns.railWidth(room) : Math.max(220, Math.min(800, room))) + 'px');
       }
     }
     if (rail) {
@@ -3807,14 +3879,21 @@
     }
     var btn = document.getElementById('toggle-right-rail');
     if (btn) {
-      btn.hidden = open || state.sessionDockInTask || !hasContent;
+      btn.hidden = open || !hasContent;
       btn.setAttribute('aria-pressed', open ? 'true' : 'false');
       btn.setAttribute('aria-expanded', String(open));
       btn.setAttribute('aria-controls', 'cuiRail');
       btn.setAttribute('aria-label', state.lang === 'en' ? (open ? 'Close agent panel' : 'Open agent panel') : (open ? '收起右侧边栏' : '展开右侧边栏'));
     }
     var closeBtn = document.getElementById('cuiRailClose');
-    if (closeBtn) closeBtn.setAttribute('aria-label', state.lang === 'en' ? 'Close agent panel' : '收起右侧边栏');
+    if (closeBtn) {
+      var collapsible = railHasDirectory();
+      var closeLabel = state.lang === 'en' ? (collapsible ? 'Collapse agent panel' : 'Close panel') : (collapsible ? '收起右侧边栏' : '关闭侧边栏');
+      closeBtn.setAttribute('aria-label', closeLabel);
+      closeBtn.title = closeLabel;
+      closeBtn.querySelector('.rail-collapse-ico').toggleAttribute('hidden', !collapsible);
+      closeBtn.querySelector('.rail-close-ico').toggleAttribute('hidden', collapsible);
+    }
     var maxBtn = document.getElementById('cuiRailMax');
     if (maxBtn) {
       maxBtn.setAttribute('aria-pressed', max ? 'true' : 'false');
@@ -3887,6 +3966,8 @@
 
   function render(opts) {
     opts = opts || {};
+    window.AIOpsComposer.destroy();
+    var restoredRail = selectRailContext();
     closeCuiModel();
     closeSessionActions();
     closeDeleteConfirm();
@@ -3905,10 +3986,6 @@
     var panelScrolls = oldPanel ? Array.from(oldPanel.querySelectorAll('*')).filter(function (node) { return node.scrollTop || node.scrollLeft; }).map(function (node) { return { node: node, top: node.scrollTop, left: node.scrollLeft }; }) : [];
     var content = fn();
     if (isCuiPage() && state.page !== '定时任务') content += window.AIOpsCapability.conversationOverlays();
-    if (state.sessionDockInTask && state.sessionViewId && (state.page === '分析任务' || isWsSession(state.page))) {
-      var detail = sessionRows().filter(function (row) { return row.id === state.sessionViewId; })[0];
-      if (detail) content = window.AIOpsResources.shell('session', content, window.AIOpsSessionDetail.page(detail, true), { workspace: true });
-    }
     root.innerHTML =
       '<div class="page' +
       (state.page === '工作台' ? ' is-home' : '') +
@@ -3919,6 +3996,7 @@
       content +
       '</div>';
     if (oldPanel && root.querySelector('.resource-panel')) root.querySelector('.resource-panel').replaceWith(oldPanel);
+    window.AIOpsComposer.bind(root);
     if (keepScroll) root.scrollTop = scrollTop;
     var nextList = root.querySelector('.resource-list-scroll'); if (nextList && keepScroll) nextList.scrollTop = listScroll;
     if (state.sessionRestore && state.page === '线上会话' && !state.sessionViewId) {
@@ -3927,7 +4005,7 @@
       state.sessionRestore = false;
     }
     paintIcons();
-    syncRail();
+    syncRail(!!opts.keepRailBody);
     if (state.cuiFocus) {
       state.cuiFocus = false;
       requestAnimationFrame(function () {
@@ -3935,9 +4013,7 @@
         var scroll = root.querySelector('.cui-scroll');
         if (scroll) scroll.scrollTop = scroll.scrollHeight;
         if (input) {
-          input.focus();
-          var end = input.value.length;
-          if (input.setSelectionRange) input.setSelectionRange(end, end);
+          window.AIOpsComposer.focusEnd(input);
         }
       });
     }
@@ -3960,7 +4036,12 @@
     if (window.AIOpsCapability) window.AIOpsCapability.afterRender();
     if (window.AIOpsSessionDetail) window.AIOpsSessionDetail.afterRender();
     window.AIOpsResources.afterRender();
+    if (opts.restoreResourceView) window.AIOpsResources.restoreView();
     window.AIOpsColumns.afterRender();
+    if (restoredRail && restoredRail.scrolls) {
+      var railNodes = document.querySelectorAll('#cuiRailScroll, #cuiRailScroll *');
+      restoredRail.scrolls.forEach(function (saved) { var node = railNodes[saved.index]; if (node) { node.scrollTop = saved.top; node.scrollLeft = saved.left; } });
+    }
     panelScrolls.forEach(function (saved) { saved.node.scrollTop = saved.top; saved.node.scrollLeft = saved.left; });
     if (window.AIOpsBoards && (isAnalysisPage(state.page) || state.page === '工作台')) {
       window.AIOpsBoards.syncCharts();
@@ -3979,31 +4060,37 @@
   }
 
   function openScheduleChat() {
-    state.cuiSeed = {
-      page: '分析任务',
-      skill: t('新建定时任务'),
-      prompt: t('定时任务提示')
-    };
+    var parts = [{ type: 'skill', id: 'create-schedule', name: 'create-schedule' }, { type: 'text', text: ' ' + t('定时任务提示') }];
+    openNewTask({ page: '分析任务', prompt: window.AIOpsComposer.textOf(parts), parts: parts });
+  }
+
+  function openNewTask(seed, detailId) {
+    state.cuiSeed = seed || null;
+    state.cuiDraftId += 1;
     state.cuiFocus = true;
     go('分析任务');
+    if (detailId) {
+      state.railOpen = true;
+      railOpenDoc(detailId);
+      syncRail(true);
+    }
   }
 
   function go(page, opts) {
     opts = opts || {};
-    var keepDetail = opts.keepSessionDetail || (state.sessionDockInTask && (page === '分析任务' || isWsSession(page)));
-    state.sessionDockInTask = !!(keepDetail && state.sessionViewId);
+    window.AIOpsResources.rememberView();
     if (state.cuiSeed && state.cuiSeed.page !== page) state.cuiSeed = null;
     if (window.AIOpsCapability) window.AIOpsCapability.onNavigate(page);
     state.page = page;
     state.workspaceSchedulePage = opts.workspaceSchedulePage || null;
-    if (!keepDetail) state.sessionViewId = null;
+    state.sessionViewId = page === '线上会话' ? window.AIOpsResources.active('session') : null;
     state.newOpen = false;
     if (page !== '工作台') {
       state.galleryOpen = false;
       state.galleryHidden = false;
       state.configId = null;
     }
-    render({ resetScroll: true, keepSessionPanel: state.sessionDockInTask });
+    render({ resetScroll: true, restoreResourceView: true });
   }
 
   function closeNewMenu() {
@@ -4038,6 +4125,16 @@
 
     if (handleCuiModelClick(e)) return;
 
+    var wsCreate = e.target.closest('[data-cui-ws-create]');
+    if (wsCreate) {
+      e.preventDefault(); e.stopPropagation();
+      document.getElementById('cui-ws-menu').hidden = true;
+      var wsTrigger = document.getElementById('cui-ws');
+      wsTrigger.setAttribute('aria-expanded', 'false');
+      window.AIOpsWorkspaces.create(wsTrigger);
+      return;
+    }
+
     var wsPick = e.target.closest('[data-cui-ws]');
     if (wsPick) {
       e.preventDefault();
@@ -4047,7 +4144,8 @@
       if (draft && state.page === '分析任务') {
         state.cuiSeed = state.cuiSeed || { page: '分析任务', prompt: '', skill: '' };
         state.cuiSeed.page = '分析任务';
-        state.cuiSeed.prompt = draft.value;
+        state.cuiSeed.prompt = window.AIOpsComposer.text(draft);
+        state.cuiSeed.parts = window.AIOpsComposer.parts(draft);
       }
       render();
       return;
@@ -4068,16 +4166,6 @@
     var wsMenuOpen = document.getElementById('cui-ws-menu');
     if (wsMenuOpen && !wsMenuOpen.hidden && !e.target.closest('.cui-ws-wrap')) wsMenuOpen.hidden = true;
 
-    var removeSkill = e.target.closest('[data-cui-skill-remove]');
-    if (removeSkill) {
-      e.preventDefault();
-      e.stopPropagation();
-      if (state.cuiSeed) state.cuiSeed.skill = '';
-      state.cuiFocus = true;
-      render();
-      return;
-    }
-
     var btnNew = e.target.closest('#btnNew');
     if (btnNew) {
       e.stopPropagation();
@@ -4095,8 +4183,7 @@
       e.stopPropagation();
       var kind = newItem.getAttribute('data-new');
       if (kind === '分析任务') {
-        state.cuiSeed = null;
-        go('分析任务');
+        openNewTask();
       }
       else if (kind === '定时任务') {
         if (window.AIOpsCapability) window.AIOpsCapability.startCreate('manual');
@@ -4292,10 +4379,19 @@
     if (sessionMark) { openSessionMark([sessionMark.getAttribute('data-session-mark')], sessionMark); return; }
     var sessionAnalyze = e.target.closest('[data-session-analyze]');
     if (sessionAnalyze) { closeSessionActions(); analyzeSessions([sessionAnalyze.getAttribute('data-session-analyze')]); return; }
+    var referenceOpen = e.target.closest('[data-cui-reference-open]');
+    if (referenceOpen) {
+      e.preventDefault();
+      var kind = referenceOpen.dataset.referenceKind;
+      openComposerResource((kind === 'session' ? 'ses:' : kind === 'artifact' ? 'art:' : 'ctx:') + referenceOpen.dataset.cuiReferenceOpen);
+      return;
+    }
     var removeSessionRef = e.target.closest('[data-cui-session-remove]');
-    if (removeSessionRef && state.cuiSeed) {
-      state.cuiSeed.sessionRefs = (state.cuiSeed.sessionRefs || []).filter(function (row) { return row.id !== removeSessionRef.getAttribute('data-cui-session-remove'); });
-      state.cuiFocus = true; render(); return;
+    if (removeSessionRef) {
+      var refForm = removeSessionRef.closest('[data-cui-composer]');
+      var refSeed = refForm && composerSeed(refForm.getAttribute('data-cui-page'));
+      if (refSeed) refSeed.sessionRefs = (refSeed.sessionRefs || []).filter(function (row) { return row.id !== removeSessionRef.getAttribute('data-cui-session-remove'); });
+      state.cuiFocus = true; render({ keepRailBody: true }); return;
     }
     if (!e.target.closest('#sessionMarkMenu')) closeSessionMark();
 
@@ -4405,10 +4501,11 @@
     var field = e.target && e.target.closest && e.target.closest('.cui-input');
     if (!field) return;
     var runPage = field.closest('[data-cui-page]');
-    if (runPage && runPage.getAttribute('data-cui-page').indexOf('schedule-run:') === 0) window.AIOpsCapability.setRunDraft(runPage.getAttribute('data-cui-page').slice(13), field.value);
-    if (state.cuiSeed && field.closest('[data-cui-page="分析任务"]')) state.cuiSeed.prompt = field.value;
+    var value = window.AIOpsComposer.text(field);
+    if (runPage && runPage.getAttribute('data-cui-page').indexOf('schedule-run:') === 0) window.AIOpsCapability.setRunDraft(runPage.getAttribute('data-cui-page').slice(13), value);
+    var seed = saveComposerDraft(runPage.getAttribute('data-cui-page'), value, window.AIOpsComposer.parts(field));
     var card = field.closest('.cui-card');
-    if (card) card.classList.toggle('has-text', field.value.trim().length > 0 || !!(state.cuiSeed && state.cuiSeed.sessionRefs && state.cuiSeed.sessionRefs.length));
+    if (card) card.classList.toggle('has-text', value.trim().length > 0 || !!(seed.sessionRefs && seed.sessionRefs.length));
     field.style.height = 'auto';
     field.style.height = Math.min(field.scrollHeight, 168) + 'px';
   });
@@ -4508,7 +4605,7 @@
       return;
     }
     var field = e.target && e.target.closest && e.target.closest('.cui-input');
-    if (!field || e.key !== 'Enter' || e.shiftKey) return;
+    if (!field || e.key !== 'Enter' || e.shiftKey || e.isComposing || e.keyCode === 229) return;
     e.preventDefault();
     var form = field.closest('[data-cui-composer]');
     if (form && form.requestSubmit) form.requestSubmit();
@@ -4519,13 +4616,15 @@
     if (!form) return;
     e.preventDefault();
     var field = form.querySelector('.cui-input');
-    var text = field ? field.value.trim() : '';
-    if (!text && !(state.cuiSeed && state.cuiSeed.sessionRefs && state.cuiSeed.sessionRefs.length)) return;
-    if (!text) text = state.lang === 'en' ? 'Analyze the referenced content.' : '分析引用的内容。';
+    var text = window.AIOpsComposer.text(field).trim();
     var page = form.getAttribute('data-cui-page');
-    if (page.indexOf('schedule-run:') === 0) { window.AIOpsCapability.continueRun(page.slice(13), text); return; }
+    var seed = composerSeed(page);
+    var refs = seed && seed.sessionRefs ? seed.sessionRefs.slice() : [];
+    if (!text && !refs.length) return;
+    if (!text) text = state.lang === 'en' ? 'Analyze the referenced content.' : '分析引用的内容。';
+    if (page.indexOf('schedule-run:') === 0) { delete state.cuiDrafts[page]; window.AIOpsCapability.continueRun(page.slice(13), text, refs); return; }
     if (page === '分析任务') startTask(text);
-    else appendTurn(page, text);
+    else appendTurn(page, text, refs);
   });
 
   document.addEventListener('change', function (e) {
@@ -5091,10 +5190,14 @@
     if (e.target.closest('#toggle-right-rail') || e.target.closest('#cuiRailClose')) {
       e.preventDefault();
       var toggleRail = function () {
+        var closedId = state.railCurrent;
+        var dismiss = !railHasDirectory() && e.target.closest('#cuiRailClose');
         state.railOpen = !state.railOpen;
         if (!state.railOpen) state.railMax = false;
+        if (dismiss) { state.railOpen = false; state.railTabs = []; state.railCurrent = null; state.railSection = null; }
         syncRail();
         var focus = document.getElementById(state.railOpen ? 'cuiRailClose' : 'toggle-right-rail');
+        if (dismiss) focus = Array.from(document.querySelectorAll('#pageRoot [data-cap="task-art"]')).filter(function (button) { return 'art:' + button.dataset.id === closedId; })[0] || document.querySelector('#pageRoot .aiops-back');
         if (focus) focus.focus({ preventScroll: true });
       };
       if (window.AIOpsColumns) window.AIOpsColumns.animate(toggleRail);
@@ -5104,9 +5207,7 @@
     if (!e.target.closest('#cuiRail')) return;
     var section = e.target.closest('[data-rail-section]');
     if (section) {
-      var key = section.getAttribute('data-rail-section');
-      state.railSection = state.railSection === key ? null : key;
-      paintRail();
+      window.AIOpsRailPicker.open(section.getAttribute('data-rail-section'), section);
       return;
     }
     var closer = e.target.closest('[data-rail-x]');
@@ -5215,13 +5316,47 @@
       state.widgetSkin = savedSkin;
     }
   } catch (e) {}
+  window.AIOpsRailPicker.configure({
+    lang: function () { return state.lang; }, icons: paintIcons,
+    dateControl: function () { return sessionDateControl('rail-picker'); }, closeDate: closeSessionDate, sceneForSession: sessionScene,
+    owner: function () { return state.railOwner; },
+    opened: function () { return state.railTabs.slice(); },
+    items: function (kind) { return kind === 'ses' ? sessionRows().map(function (row) { return Object.assign({}, row, { id: 'ses:' + row.id }); }) : railArts(); },
+    open: function (ids, owner) {
+      if (!isCuiPage() || state.railOwner !== owner) return;
+      var catalog = railCatalog();
+      ids = ids.filter(function (id) { return !!catalog[id]; });
+      if (!ids.length) return;
+      ids.forEach(function (id) { if (state.railTabs.indexOf(id) < 0) state.railTabs.push(id); });
+      state.railOpen = true; state.railCurrent = ids[0]; syncRail();
+      var tab = document.querySelector('[data-rail-tab="' + ids[0] + '"]'); if (tab) tab.focus({ preventScroll: true });
+    }
+  });
+  window.AIOpsContext.configure({
+    lang: function () { return state.lang; },
+    icons: paintIcons, toast: showToast,
+    sessions: function () { return sessionRows().map(function (row) { return Object.assign({}, row, { kind: 'session', path: '线上会话 / ' + row.name }); }); },
+    artifacts: function () { return railArts().map(function (row) { return { id: row.artifactId, kind: 'artifact', name: row.name, type: row.type, path: row.folder + ' / ' + row.name, updatedAt: row.updatedAt }; }); },
+    owner: function () { var form = document.querySelector('[data-cui-composer]'); return { page: form.getAttribute('data-cui-page'), draftId: state.cuiDraftId }; },
+    attach: function (refs, context) {
+      var owner = context.owner;
+      if (owner.page === '分析任务' && owner.draftId !== state.cuiDraftId) return;
+      var seed = saveComposerDraft(owner.page, context.prompt, context.parts);
+      seed.sessionRefs = (seed.sessionRefs || []).slice();
+      refs.forEach(function (ref) { if (!seed.sessionRefs.some(function (row) { return row.id === ref.id && (row.kind || 'session') === (ref.kind || 'session'); })) seed.sessionRefs.push(ref); });
+      var form = document.querySelector('[data-cui-composer]');
+      if (form && form.getAttribute('data-cui-page') === owner.page) { state.cuiFocus = true; render({ keepRailBody: true }); }
+    },
+    open: function (id) { openComposerResource('ctx:' + id); },
+    refresh: function (id) { if (state.railOpen && state.railCurrent === 'ctx:' + id) paintRail(); }
+  });
   window.AIOpsWorkspaces.configure({
     lang: function () { return state.lang; }, t: t, page: navigationPage,
     render: render, renderNav: function () { renderNav(); paintIcons(); }, icons: paintIcons,
     toast: showToast, currentWorkspace: function () { return state.cuiWs; },
     scheduleLabel: function (item) { return window.AIOpsCapability && window.AIOpsCapability.workspaceTaskLabel(item.taskId); },
     pickWorkspace: function (id) { state.cuiWs = id; },
-    newTask: function () { state.cuiSeed = null; go('分析任务'); },
+    newTask: function () { openNewTask(); },
     goHome: function () { state.page = '工作台'; },
     closeMenus: function () { closeNewMenu(); closeTeam(); closeAcct(); },
     moveWorkspace: function (oldName, newName) { if (window.AIOpsCapability) window.AIOpsCapability.moveWorkspace(oldName, newName); },
@@ -5245,6 +5380,7 @@
     window.AIOpsCapability.bind({
       lang: function () { return state.lang; },
       t: t,
+      referenceHtml: sessionReferenceHtml,
       toast: showToast,
       taskSaved: function (task) { if ((task.history || []).length) window.AIOpsWorkspaces.syncTask(task); else window.AIOpsWorkspaces.removeTask(task); },
       taskDeleted: function (task) { window.AIOpsWorkspaces.removeTask(task); },
@@ -5260,15 +5396,8 @@
       rerender: function (opts) { render(opts); },
       openScheduleChat: openScheduleChat,
       referenceArtifacts: function (refs, detail) {
-        state.cuiSeed = { page: '分析任务', skill: '', sessionRefs: refs, prompt: '' };
-        state.cuiFocus = true;
-        if (detail) {
-          state.sessionDockInTask = false; state.sessionViewId = null;
-          state.railOpen = true; state.railMax = false;
-          state.railCurrent = 'art:' + detail.id;
-          if (state.railTabs.indexOf(state.railCurrent) < 0) state.railTabs.push(state.railCurrent);
-        }
-        go('分析任务');
+        if (referenceInConversation(refs)) return;
+        openNewTask({ page: '分析任务', skill: '', sessionRefs: refs, prompt: '' }, detail ? 'art:' + detail.id : null);
       },
       closeShellMenus: function () {
         closeNewMenu();
@@ -5281,14 +5410,14 @@
     lang: function () { return state.lang; },
     row: function (id) { return sessionRows().filter(function (row) { return row.id === id; })[0]; },
     render: function () {
-      if (isCuiPage() && state.railOpen && state.railCurrent && state.railCurrent.indexOf('ses:') === 0 && !state.sessionDockInTask) paintRail();
+      if (isCuiPage() && state.railOpen && state.railCurrent && state.railCurrent.indexOf('ses:') === 0) paintRail();
       else render();
     }, back: closeSessionDetail, analyze: function (id) { analyzeSessions([id]); }, toast: showToast
   });
   window.AIOpsResources.configure({
     lang: function () { return state.lang; }, icons: paintIcons, render: render,
     changed: function () { state.sessionPage = 1; state.sessionSelected = {}; },
-    select: function (kind, id) { if (kind === 'session') { state.sessionViewId = id; if (!id) { state.sessionRestore = true; state.sessionDockInTask = false; } } else window.AIOpsCapability.selectDetail(id); }
+    select: function (kind, id) { if (kind === 'session') { state.sessionViewId = id; if (!id) state.sessionRestore = true; } else window.AIOpsCapability.selectDetail(id); }
   });
   render();
 })();

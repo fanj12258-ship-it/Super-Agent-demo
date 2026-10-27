@@ -2,6 +2,8 @@
 (function (global) {
   'use strict';
   var navWidth = 256, navOpen = true, cuiWidth = null, drag = null;
+  // Leave room above the resource panel's 680px compact-layout breakpoint.
+  var DEFAULT_RAIL_WIDTH = 800;
   var compactNavOpen = false;
   var animating = false, motionFrame = null, motionTimer = null;
   var collapsedNav = document.getElementById('aiopsCollapsedNav');
@@ -12,6 +14,7 @@
   function split() { return document.querySelector('.resource-split'); }
   function tr(zh, en) { return document.documentElement.lang === 'en' ? en : zh; }
   function clamp(value, min, max) { return Math.round(Math.max(min, Math.min(Math.max(min, max), value))); }
+  function railWidth(room) { return clamp(cuiWidth == null ? DEFAULT_RAIL_WIDTH : cuiWidth, 220, room); }
   function layout() {
     var el = split();
     return el ? global.AIOpsResources.columnLayout(el.dataset.kind) : null;
@@ -69,7 +72,7 @@
     var el = split(), data = layout();
     if (el && !el.classList.contains('is-max')) setResourceWidth(data.width, false);
     if (app().classList.contains('is-rail-open') && !app().classList.contains('is-rail-max')) {
-      var railRange = bounds('cui'); app().style.setProperty('--rail-w', clamp(cuiWidth == null ? Math.min(600, railRange.max) : cuiWidth, railRange.min, railRange.max) + 'px');
+      var railRange = bounds('cui'); app().style.setProperty('--rail-w', railWidth(railRange.max) + 'px');
     }
     updateHandles();
   }
@@ -165,7 +168,7 @@
   }, true);
   document.addEventListener('dblclick', function (event) {
     var handle = event.target.closest('[data-column-resize]'); if (!handle) return;
-    change(handle.dataset.columnResize, handle.dataset.columnResize === 'nav' ? 256 : handle.dataset.columnResize === 'resource' ? bounds('resource').min : 600);
+    change(handle.dataset.columnResize, handle.dataset.columnResize === 'nav' ? 256 : handle.dataset.columnResize === 'resource' ? bounds('resource').min : DEFAULT_RAIL_WIDTH);
   });
   document.addEventListener('click', function (event) {
     var button = event.target.closest('#aiopsNavToggle, #aiopsNavOpen');
@@ -192,6 +195,8 @@
     afterRender: normalize,
     animate: animateColumns,
     isAnimating: function () { return animating; },
-    railWidth: function (room) { return clamp(cuiWidth == null ? Math.min(600, room) : cuiWidth, 220, room); }
+    savedRailWidth: function () { return cuiWidth; },
+    restoreRailWidth: function (width) { cuiWidth = width == null ? null : width; },
+    railWidth: railWidth
   };
 })(window);

@@ -143,7 +143,8 @@
 | 附件上传 | 选择、附件条、取消、完成 | 可直接复用 | `js/fast-upload.js` |
 | 模型选择 | Popover、子菜单、Esc / 外点 | 可直接复用 | `js/composer-model-picker.js`；AIOps 输入栏同一交互 `workbench/aiops/aiops.js` |
 | Token 用量 | 小型 Popover | 可直接复用 | `js/composer-token-usage.js` |
-| Slash Skill 面板 | 输入 `/` 后在 Composer 上方展示可调用 Skill；支持输入筛选、↑↓、Enter / Tab 插入、Esc / 失焦关闭 | 可直接复用；Skill 清单为演示占位 | `js/composer-slash-skills.js`、`css/chat-composer.css` |
+| Slash Skill 面板 | 输入 `/` 后在 Composer 上方展示可调用 Skill；支持输入筛选、↑↓、Enter / Tab 插入、Esc / 失焦关闭 | AIOps 已复用同一菜单工厂与样式；Skill 清单为演示占位 | `js/composer-slash-skills.js`、`css/composer-slash-skills.css`（由 `css/chat-composer.css` 引入） |
+| AIOps @ 引用面板 | 复用 Slash 菜单样式；会话 / 产出物先 5 后每批 20；本地文件 / 文件夹选择；六类原子能力搜索与跨 tab 多选；标签回填并打开当前会话侧栏 | 本地原生混选需 scripts/preview.py；静态托管使用浏览器文件上传；复用 Workbench 能力目录与文件图标 | `../workbench/aiops/composer-context.js`、`../workbench/aiops/composer-context.css` |
 | 多会话 Tab | 新建、切换、stash / restore | 可直接复用 | `js/fast-conversations.js` |
 | 删除会话 | 两阶段确认 | 可直接复用 | `js/fast-conversations.js` |
 | 当前会话摘要 | 四段摘要 + 存入 Files | 可直接复用 | `js/fast-summary.js` |
@@ -392,3 +393,19 @@ Enterprise Profile section navigation uses the ontology segmented control style:
 Navigation icons now use original 16px SVG assets from Figma 219:30061. Enterprise file tree and tab icons use File component variants from 266:109807; interactions are unchanged.
 
 Right-panel launch menu uses the eight original SVGs from Figma 219:34540. File tabs resolve every file icon through the File component variants from 266:109807, preserving menu actions and tab behavior.
+
+### Shared sliding tabs
+
+- `workbench/js/segmented-tabs.js` and `workbench/css/segmented-tabs.css` provide one black sliding selection marker for Workbench, Workplace and AIOps segmented controls. Existing click handlers and selection attributes stay owned by their feature.
+- Supports Arrow Left / Right, Home / End and scrolls the selected tab into view. Hidden groups stay hidden, and reduced motion disables the animation. Line tabs continue to use the separate line-tabs component.
+
+### AIOps sidebar resource picker
+
+- `workbench/aiops/rail-picker.js` / `.css` expose a shared modal for sidebar directory launchers. Session mode is a flat list with agent / label filters; artifact mode is a workspace / source tree with workspace / file-type filters.
+- Search, filtered select-all, folder batch selection, partial selection, persistent cross-filter selection, zero-selection disabling, cancellation, focus restoration and current-chat tab deduplication are shared. Footer count is left aligned; Cancel / Confirm are right aligned.
+
+AIOps 的本地文件入口现在为整行单入口；macOS 本地预览使用 `scripts/local-file-picker.swift` 与 `scripts/preview.py` 同时选文件 / 文件夹，目录内容按需读取。启动与适用范围见 `scripts/PREVIEW.md`。
+
+- Composer Ctrl 多选：`ComposerSlashSkills.createMulti` 由 Workplace / AIOps slash 与 AIOps @ 面板共用；提供 Ctrl checkbox 预览、选择暂存、固定确认取消底栏、键盘取消、macOS Ctrl-click 兼容，查看更多排除 checkbox。AIOps 的添加分组（文件和文件夹、Agent、本体、知识库、MCP、Skill）不参与面板多选；进入多选后保持分组和条目位置、置灰禁用添加项，取消后恢复直接打开对应选择器的行为。
+
+- AIOps 资源多选弹窗（`rail-picker.js` / `rail-picker.css`）复用 `cap-dialog`、`search-field`、`cap-check` 和标准按钮；会话为紧凑列表，采用共用日期组件和 scopePickerMarkup 范围选择器；产出物按工作区分组，文件直接列在工作区下，支持文件夹全选 / 半选；仅保留全宽搜索，移除顶部全选行与来源分组；箭头在 checkbox 左侧并独立控制展开收起，行内点击勾选，支持键盘与窄屏布局。

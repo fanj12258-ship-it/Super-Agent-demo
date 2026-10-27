@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "preview": "python3 scripts/preview.py",
     "build": "node scripts/build-static.mjs",
     "build:workshop": "node scripts/build-workshop-pages.mjs",
     "build:workshop:check": "node scripts/build-workshop-pages.mjs --check"

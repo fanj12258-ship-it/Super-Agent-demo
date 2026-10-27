@@ -614,6 +614,7 @@
 /* Match Workbench Files (.fb-table): 34px header, 40px rows, and quiet dividers. */
 #capArtResults { border: 1px solid var(--border, #ececec); border-radius: 12px; background: #fff; }
 .cap-table { font-size: 12px; }
+#capArtResults .cap-table { table-layout: auto; }
 .cap-table thead th {
   height: 34px;
   padding: 0 12px;
@@ -641,6 +642,15 @@
 .cap-table tr.is-selected,
 .cap-table tr.is-selected:hover { background: var(--selected, #e5f4ff); }
 .cap-table .cap-check { width: 38px; min-width: 38px; text-align: center; box-sizing: border-box; }
+/* Keep selection and row actions reachable while artifact columns scroll. */
+#capArtResults :is(.cap-check, .cap-row-actions) { position: sticky; z-index: 2; background: #fff; }
+#capArtResults .cap-check { left: 0; box-shadow: 1px 0 var(--border, #ececec); }
+#capArtResults .cap-row-actions { right: 0; box-shadow: -1px 0 var(--border, #ececec); }
+#capArtResults thead :is(.cap-check, .cap-row-actions) { z-index: 3; background: var(--bg-subtle, #fafafa); }
+#capArtResults tbody tr:hover :is(.cap-check, .cap-row-actions) { background: var(--bg-subtle, #fafafa); }
+#capArtResults tr.is-selected :is(.cap-check, .cap-row-actions),
+#capArtResults tr.is-selected:hover :is(.cap-check, .cap-row-actions) { background: var(--selected, #e5f4ff); }
+
 .cap-folder { display: flex; align-items: center; min-height: 40px; }
 .cap-folder button { display: inline-flex; align-items: center; gap: 8px; min-width: 0; font-size: 12px; font-weight: 500; color: var(--text-primary, #111); }
 .cap-table .cap-group-row { cursor: pointer; }

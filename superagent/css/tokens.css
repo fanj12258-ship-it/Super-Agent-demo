@@ -1,3 +1,5 @@
+@import url("../../workbench/css/segmented-tabs.css?v=20261027context2");
+
 /* Aligned with Workbench tokens — workbench/tokens/agentos-ui.md */
 :root {
   --text: #333333;
