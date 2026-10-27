@@ -159,6 +159,130 @@
     return { node: box, picked: picked, reveal: reveal, finish: finish };
   }
 
+  var executionAuditDialog = null;
+  var executionAuditTrigger = null;
+  var EXECUTION_TITLE_EN = {
+    '用户故事设计': 'User story design',
+    '业务规则方案设计': 'Business rule design',
+    '高保真交互原型设计': 'High-fidelity interaction prototype',
+    '总体技术架构设计': 'Overall technical architecture',
+    '详细技术方案设计': 'Detailed technical solution',
+    '本体对象集构建': 'Object set build',
+    '智能体及配套能力构建': 'Agent and supporting capability build',
+    '明确目标企业主体并构建企业画像': 'Identify the target enterprise and build its profile',
+    '拆解企业业务全景现状': 'Analyze the enterprise business landscape',
+    '推导并生成场景规划草稿': 'Develop the scenario planning draft',
+    '生成客户沟通汇报方案': 'Create the client presentation',
+    '快速确定技术架构方案': 'Define the Demo technical architecture',
+    '快速设计本体方案': 'Design the Demo ontology solution',
+    '快速设计智能体及配套组件方案': 'Design the Demo Agent and supporting components',
+    '构建可运行的本体对象集': 'Build the runnable object set',
+    '构建可运行的智能体及配套组件': 'Build the runnable Agent and supporting components',
+    '同步更新Demo轻量技术方案': 'Update the Demo technical solution',
+    '更新本体对象集配额规则与Mock数据': 'Update object-set quota rules and mock data',
+    '更新智能体Skill与提示词配置': 'Update Agent Skill and prompt configuration',
+    '设计未来业务人机协同流程（To-be）': 'Design the future human–AI workflow (To-be)',
+    '设计人机交互用户故事旅程': 'Design the human–AI user journey',
+    '设计视觉规范与高保真交互原型': 'Design visual specifications and the high-fidelity prototype',
+    '继承并补齐生产级总体架构方案': 'Complete the production architecture solution',
+    '继承并补齐生产级本体详细方案': 'Complete the production ontology solution',
+    '继承并补齐生产级智能体及配套组件详细方案': 'Complete the production Agent solution',
+    '基于升级后的完整方案新增场景验收测试用例': 'Create scenario acceptance test cases',
+    '构建生产级智能体配套组件': 'Build production Agent components',
+    '构建生产级智能体并完成组装绑定': 'Build and bind the production Agent',
+    '更新业务协同与交互方案': 'Update the business collaboration and interaction solution',
+    '更新业务规则方案': 'Update the business rule solution',
+    '同步更新技术实现方案与测试用例': 'Update the technical solution and test cases',
+    '迭代更新本体对象集': 'Iterate the object set',
+    '迭代更新智能体及配套组件': 'Iterate the Agent and supporting components',
+  };
+  function executionTitleInEnglish(title) {
+    return EXECUTION_TITLE_EN[title] || String(title || '');
+  }
+  var EXECUTION_AGENT_EN = {
+    '快速设计本体方案': 'Technical Solution Agent',
+    '快速设计智能体及配套组件方案': 'Technical Solution Agent',
+    '继承并补齐生产级本体详细方案': 'Technical Solution Agent',
+    '继承并补齐生产级智能体及配套组件详细方案': 'Technical Solution Agent',
+  };
+  function executionAgentFor(title) {
+    var text = String(title || '');
+    if (EXECUTION_AGENT_EN[text]) return EXECUTION_AGENT_EN[text];
+    if (/本体|对象集/.test(text)) return 'Ontology Builder Agent';
+    if (/Skill|MCP|知识库|智能体|Agent/.test(text)) return 'Agent Builder Agent';
+    if (/规则/.test(text)) return 'Business Rules Agent';
+    if (/技术|架构/.test(text)) return 'Technical Solution Agent';
+    if (/企业|全景/.test(text)) return 'Enterprise Planning Agent';
+    return 'Scenario Requirements Agent';
+  }
+  function executionResultFor(title) {
+    var text = String(title || '');
+    if (/构建|组装/.test(text)) return 'Build complete. The runnable assets and delivery context have been written back to the scenario.';
+    if (/更新|同步|联动|升版|迭代/.test(text)) return 'Update complete. The affected content and related assets have been synchronized.';
+    return 'Design complete. The result has been written to the deliverable and synchronized with the shared context.';
+  }
+  function ensureExecutionAuditDialog() {
+    if (executionAuditDialog) return executionAuditDialog;
+    var dialog = el('dialog', 'ff-audit-dialog');
+    dialog.setAttribute('aria-labelledby', 'ff-audit-title');
+    dialog.innerHTML =
+      '<div class="ff-audit-shell">' +
+        '<header class="ff-audit-head"><div><h3 id="ff-audit-title">Execution audit</h3>' +
+        '<p data-audit-subtitle></p></div>' +
+        '<button type="button" class="ff-audit-close" data-audit-close aria-label="Close execution audit">' +
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>' +
+        '</button></header>' +
+        '<div class="ff-audit-body">' +
+          '<div class="ff-audit-thread" aria-label="Conversation between the Super Agent and sub-agent">' +
+            '<article class="ff-audit-message is-main"><span class="ff-audit-who">Super Agent · Task delegation</span>' +
+              '<div class="ff-audit-bubble"><p data-audit-dispatch></p>' +
+              '<small>Return the result when complete. Pause and report any critical gap.</small>' +
+            '</div></article>' +
+            '<article class="ff-audit-message is-child"><span class="ff-audit-who" data-audit-agent></span>' +
+              '<div class="ff-audit-bubble"><p data-audit-accepted></p>' +
+            '</div></article>' +
+            '<div class="ff-audit-process"><i></i><span data-audit-process></span></div>' +
+            '<article class="ff-audit-message is-child"><span class="ff-audit-who" data-audit-agent></span>' +
+              '<div class="ff-audit-bubble"><p data-audit-result></p>' +
+              '<small>Result sent to Super Agent</small>' +
+            '</div></article>' +
+            '<article class="ff-audit-message is-main"><span class="ff-audit-who">Super Agent</span>' +
+              '<div class="ff-audit-bubble"><p>Received. The result has been written back to the task and shared delivery context.</p>' +
+            '</div></article>' +
+          '</div>' +
+        '</div>' +
+        '<footer class="ff-audit-foot">Read-only audit trail · Auto-saved</footer>' +
+      '</div>';
+    dialog.addEventListener('click', function (e) {
+      if (e.target === dialog || e.target.closest('[data-audit-close]')) dialog.close();
+    });
+    dialog.addEventListener('close', function () {
+      if (executionAuditTrigger) executionAuditTrigger.focus({ preventScroll: true });
+      executionAuditTrigger = null;
+    });
+    document.body.appendChild(dialog);
+    executionAuditDialog = dialog;
+    return dialog;
+  }
+  function openExecutionAudit(title, index, trigger) {
+    var dialog = ensureExecutionAuditDialog();
+    var agent = executionAgentFor(title);
+    var auditTitle = executionTitleInEnglish(title);
+    executionAuditTrigger = trigger || null;
+    dialog.querySelector('[data-audit-subtitle]').textContent = 'Task ' + (index + 1) + ' · ' + auditTitle;
+    dialog.querySelector('[data-audit-dispatch]').textContent =
+      'Please execute “' + auditTitle + '” using the current scenario context, and return a structured result.';
+    dialog.querySelectorAll('[data-audit-agent]').forEach(function (node) { node.textContent = agent; });
+    dialog.querySelector('[data-audit-accepted]').textContent =
+      'Understood. I’ll review the existing context and related deliverables, then complete “' + auditTitle + '.”';
+    dialog.querySelector('[data-audit-process]').textContent =
+      'Executing “' + auditTitle + '” and preparing the write-back…';
+    dialog.querySelector('[data-audit-result]').textContent = executionResultFor(title);
+    if (!dialog.open) dialog.showModal();
+    var close = dialog.querySelector('[data-audit-close]');
+    if (close) close.focus({ preventScroll: true });
+  }
+
   function executionTaskCard(customTitles) {
     var titles = customTitles || [
       '用户故事设计',
@@ -177,8 +301,20 @@
         return '<div class="ff-exec-row" data-exec-step="' + index + '" data-state="waiting">' +
           '<span class="ff-exec-num">' + (index + 1) + '</span>' +
           '<span class="ff-exec-name">' + esc(title) + '</span>' +
-          '<span class="ff-exec-state"><i></i><span>等待中</span></span></div>';
+          '<span class="ff-exec-actions"><span class="ff-exec-state"><i></i><span>等待中</span></span>' +
+          '<button type="button" class="ff-exec-audit" data-exec-audit="' + index +
+          '" aria-label="View execution audit for ' + esc(title) + '" title="View execution audit">' +
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/>' +
+          '<circle cx="12" cy="12" r="2.75"/></svg></button></span></div>';
       }).join('') + '</div>';
+    box.addEventListener('click', function (e) {
+      var audit = e.target.closest('[data-exec-audit]');
+      if (!audit) return;
+      var index = +audit.getAttribute('data-exec-audit');
+      var row = box.querySelector('[data-exec-step="' + index + '"]');
+      if (!row || row.getAttribute('data-state') !== 'done') return;
+      openExecutionAudit(titles[index], index, audit);
+    });
     function set(index, state) {
       var row = box.querySelector('[data-exec-step="' + index + '"]');
       if (!row) return;

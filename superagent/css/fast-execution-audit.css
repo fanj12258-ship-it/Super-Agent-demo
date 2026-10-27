@@ -1,0 +1,287 @@
+:root {
+  --agentos-mask-base: rgba(0, 0, 0, .16);
+  --agentos-mask-senior: rgba(0, 0, 0, .36);
+  --agentos-neutral-text-color-text: rgba(0, 0, 0, .88);
+  --agentos-neutral-text-color-text-secondary: rgba(0, 0, 0, .65);
+  --agentos-neutral-text-color-text-tertiary: rgba(0, 0, 0, .45);
+  --agentos-neutral-text-color-text-light-solid: rgb(255, 255, 255);
+  --agentos-neutral-bg-color-bg-base: rgb(255, 255, 255);
+  --agentos-neutral-bg-color-bg-elevated: rgb(250, 250, 250);
+  --agentos-neutral-border-color-border-secondary: rgb(240, 240, 240);
+  --agentos-brand-primary-color-primary: rgb(13, 153, 255);
+  --agentos-brand-primary-color-primary-bg: rgb(238, 246, 255);
+  --agentos-brand-primary-color-primary-border: rgb(207, 225, 248);
+  --agentos-brand-success-color-success: rgb(34, 160, 90);
+  --agentos-brand-success-color-success-bg: rgb(232, 248, 239);
+  --agentos-font-size-sm: 12px;
+  --agentos-font-size-md: 13px;
+  --agentos-font-size-base: 14px;
+  --agentos-font-weight-normal: 400;
+  --agentos-font-weight-medium: 500;
+  --agentos-font-weight-semibold: 600;
+  --agentos-font-leading-18: 18px;
+  --agentos-font-leading-20: 20px;
+  --agentos-font-leading-22: 22px;
+  --agentos-radius-rounded-md6: 6px;
+  --agentos-radius-rounded-lg8: 8px;
+  --agentos-radius-rounded-xl12: 12px;
+  --agentos-spacing-padding-xxs4: 4px;
+  --agentos-spacing-padding-xs8: 8px;
+  --agentos-spacing-padding-sm12: 12px;
+  --agentos-spacing-padding16: 16px;
+  --agentos-spacing-padding-md20: 20px;
+  --agentos-spacing-gap-xxs4: 4px;
+  --agentos-spacing-gap-xs8: 8px;
+  --agentos-spacing-gap-sm12: 12px;
+  --agentos-spacing-gap16: 16px;
+  --agentos-control-height-control-height-sm24: 24px;
+  --agentos-control-height-control-height-md32: 32px;
+  --agentos-icon-size-icon-size-sm12: 12px;
+  --agentos-icon-size-icon-size-md16: 16px;
+}
+
+.ff-exec-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--agentos-spacing-gap-xxs4);
+  min-width: 0;
+}
+
+.ff-exec-audit {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--agentos-control-height-control-height-sm24);
+  height: var(--agentos-control-height-control-height-sm24);
+  padding: 0;
+  border: 0;
+  border-radius: var(--agentos-radius-rounded-md6);
+  background: transparent;
+  color: var(--agentos-neutral-text-color-text-tertiary);
+  cursor: pointer;
+}
+
+.ff-exec-row[data-state="done"] .ff-exec-audit {
+  display: inline-flex;
+}
+
+.ff-exec-audit:hover {
+  background: var(--agentos-brand-primary-color-primary-bg);
+  color: var(--agentos-brand-primary-color-primary);
+}
+
+.ff-exec-audit:focus-visible {
+  outline: 2px solid var(--agentos-brand-primary-color-primary-border);
+  outline-offset: 1px;
+}
+
+.ff-exec-audit svg {
+  width: var(--agentos-icon-size-icon-size-md16);
+  height: var(--agentos-icon-size-icon-size-md16);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ff-audit-dialog {
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(720px, calc(100vh - 48px));
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--agentos-neutral-border-color-border-secondary);
+  border-radius: var(--agentos-radius-rounded-xl12);
+  background: var(--agentos-neutral-bg-color-bg-base);
+  color: var(--agentos-neutral-text-color-text);
+  box-shadow: 0 16px 48px var(--agentos-mask-base);
+}
+
+.ff-audit-dialog::backdrop {
+  background: var(--agentos-mask-senior);
+}
+
+.ff-audit-shell {
+  display: flex;
+  max-height: min(720px, calc(100vh - 48px));
+  flex-direction: column;
+}
+
+.ff-audit-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--agentos-spacing-gap16);
+  padding: var(--agentos-spacing-padding-sm12) var(--agentos-spacing-padding16);
+  border-bottom: 1px solid var(--agentos-neutral-border-color-border-secondary);
+}
+
+.ff-audit-head h3 {
+  margin: 0;
+  font-size: var(--agentos-font-size-base);
+  font-weight: var(--agentos-font-weight-semibold);
+  line-height: var(--agentos-font-leading-22);
+}
+
+.ff-audit-head p {
+  margin: var(--agentos-spacing-padding-xxs4) 0 0;
+  color: var(--agentos-neutral-text-color-text-secondary);
+  font-size: var(--agentos-font-size-sm);
+  line-height: var(--agentos-font-leading-18);
+}
+
+.ff-audit-close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--agentos-control-height-control-height-md32);
+  height: var(--agentos-control-height-control-height-md32);
+  padding: 0;
+  border: 0;
+  border-radius: var(--agentos-radius-rounded-lg8);
+  background: transparent;
+  color: var(--agentos-neutral-text-color-text-secondary);
+  cursor: pointer;
+}
+
+.ff-audit-close:hover {
+  background: var(--agentos-neutral-bg-color-bg-elevated);
+  color: var(--agentos-neutral-text-color-text);
+}
+
+.ff-audit-close:focus-visible {
+  outline: 2px solid var(--agentos-brand-primary-color-primary-border);
+}
+
+.ff-audit-close svg {
+  width: var(--agentos-icon-size-icon-size-md16);
+  height: var(--agentos-icon-size-icon-size-md16);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.ff-audit-body {
+  overflow-y: auto;
+  padding: var(--agentos-spacing-padding16);
+}
+
+.ff-audit-message p {
+  margin: 0;
+  color: var(--agentos-neutral-text-color-text);
+  font-size: var(--agentos-font-size-md);
+  line-height: var(--agentos-font-leading-22);
+}
+
+.ff-audit-message small {
+  display: block;
+  margin-top: var(--agentos-spacing-padding-xxs4);
+  color: var(--agentos-neutral-text-color-text-tertiary);
+  font-size: var(--agentos-font-size-sm);
+  line-height: var(--agentos-font-leading-18);
+}
+
+.ff-audit-thread {
+  display: flex;
+  flex-direction: column;
+  gap: var(--agentos-spacing-gap16);
+}
+
+.ff-audit-message {
+  display: block;
+  width: min(88%, 520px);
+}
+
+.ff-audit-message.is-main {
+  align-self: flex-end;
+}
+
+.ff-audit-message.is-main .ff-audit-who {
+  text-align: right;
+}
+
+.ff-audit-message.is-child {
+  align-self: flex-start;
+}
+
+.ff-audit-who {
+  display: block;
+  margin-bottom: var(--agentos-spacing-padding-xxs4);
+  color: var(--agentos-neutral-text-color-text-tertiary);
+  font-size: var(--agentos-font-size-sm);
+  font-weight: var(--agentos-font-weight-semibold);
+  line-height: var(--agentos-font-leading-18);
+  text-align: left;
+}
+
+.ff-audit-bubble {
+  min-width: 0;
+  padding: var(--agentos-spacing-padding-xs8) var(--agentos-spacing-padding-sm12);
+  border: 1px solid var(--agentos-neutral-border-color-border-secondary);
+  border-radius: var(--agentos-radius-rounded-lg8);
+  background: var(--agentos-neutral-bg-color-bg-base);
+}
+
+.ff-audit-message.is-main .ff-audit-bubble {
+  border-color: var(--agentos-brand-primary-color-primary-border);
+  background: var(--agentos-brand-primary-color-primary-bg);
+}
+
+.ff-audit-process {
+  display: flex;
+  align-self: center;
+  align-items: center;
+  gap: var(--agentos-spacing-gap-xs8);
+  padding: var(--agentos-spacing-padding-xxs4) var(--agentos-spacing-padding-xs8);
+  border-radius: var(--agentos-radius-rounded-md6);
+  background: var(--agentos-neutral-bg-color-bg-elevated);
+  color: var(--agentos-neutral-text-color-text-secondary);
+  font-size: var(--agentos-font-size-sm);
+  line-height: var(--agentos-font-leading-18);
+}
+
+.ff-audit-process i {
+  width: var(--agentos-spacing-padding-xxs4);
+  height: var(--agentos-spacing-padding-xxs4);
+  flex: none;
+  border-radius: 50%;
+  background: var(--agentos-brand-primary-color-primary);
+}
+
+.ff-audit-foot {
+  padding: var(--agentos-spacing-padding-xs8) var(--agentos-spacing-padding16);
+  border-top: 1px solid var(--agentos-neutral-border-color-border-secondary);
+  background: var(--agentos-neutral-bg-color-bg-elevated);
+  color: var(--agentos-neutral-text-color-text-tertiary);
+  font-size: var(--agentos-font-size-sm);
+  line-height: var(--agentos-font-leading-18);
+}
+
+@media (max-width: 560px) {
+  .ff-audit-dialog {
+    width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+  }
+
+  .ff-audit-shell {
+    max-height: calc(100vh - 16px);
+  }
+
+  .ff-audit-head,
+  .ff-audit-body {
+    padding-right: var(--agentos-spacing-padding-sm12);
+    padding-left: var(--agentos-spacing-padding-sm12);
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ff-audit-dialog,
+  .ff-audit-dialog::backdrop {
+    scroll-behavior: auto;
+  }
+}
