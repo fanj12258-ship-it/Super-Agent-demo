@@ -2081,7 +2081,8 @@
   }
 
   var toastTimer = null;
-  function showToast(message) {
+  function showToast(message, semantic) {
+    var warning = semantic === 'warning';
     var host = document.getElementById('ui-toast');
     if (!host) {
       host = document.createElement('div');
@@ -2094,11 +2095,11 @@
     toastTimer = null;
     host.innerHTML = '';
     var el = document.createElement('div');
-    el.className = 'ui-toast__item';
+    el.className = 'ui-toast__item' + (warning ? ' ui-toast__item--warning' : '');
     el.setAttribute('role', 'status');
     var icon = document.createElement('img');
     icon.className = 'ui-toast__icon';
-    icon.src = 'assets/toast-success.svg';
+    icon.src = warning ? 'assets/toast-warning.svg' : 'assets/toast-success.svg';
     icon.width = 16;
     icon.height = 16;
     icon.alt = '';
@@ -2110,7 +2111,7 @@
     close.className = 'ui-toast__close';
     close.setAttribute('aria-label', t('关闭'));
     var closeIcon = document.createElement('img');
-    closeIcon.src = 'assets/toast-close.svg';
+    closeIcon.src = warning ? 'assets/toast-warning-close.svg' : 'assets/toast-close.svg';
     closeIcon.width = 12;
     closeIcon.height = 12;
     closeIcon.alt = '';
@@ -3549,17 +3550,18 @@
     var check = '<svg class="cui-ws-check" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.3L5 8.8l4.5-5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     var items = window.AIOpsWorkspaces.choices();
     var menu = '<div class="cui-ws-menu" id="cui-ws-menu" role="menu" hidden>' +
-      items.map(function (item) {
+      items.map(function (item, index) {
         var on = (state.cuiWs || 'audit') === item.id;
-        return '<button type="button" class="cui-ws-option' + (on ? ' is-on' : '') + '" role="menuitemradio" aria-checked="' + (on ? 'true' : 'false') + '" data-cui-ws="' + item.id + '">' +
-          '<span>' + esc(item.label) + '</span>' +
+        return '<button type="button" class="cui-ws-option' + (on ? ' is-on' : '') + '" role="menuitemradio" aria-checked="' + (on ? 'true' : 'false') + '" aria-label="' + esc(item.label) + '" aria-describedby="cui-ws-tooltip-' + index + '" data-cui-ws="' + item.id + '">' +
+          '<span class="cui-ws-option-label">' + esc(item.label) + '</span>' +
           (on ? check : '') +
+          '<span class="metric-tooltip cui-ws-tooltip" role="tooltip" id="cui-ws-tooltip-' + index + '">' + esc(item.label) + '</span>' +
         '</button>';
       }).join('') +
       '<div class="cui-ws-divider" role="separator"></div><button type="button" class="cui-ws-option cui-ws-create" role="menuitem" data-cui-ws-create><i data-lucide="plus" aria-hidden="true"></i><span>' + esc(t('新建工作区')) + '</span></button>' +
     '</div>';
-    var name = '<span class="cui-ws-wrap"><button type="button" class="cui-ws" id="cui-ws" aria-haspopup="menu" aria-expanded="false" aria-label="' + esc(t('切换工作区')) + '">' + esc(cuiWsName()) + '</button>' + menu + '</span>';
-    var line = esc(t('分析问候前')) + name + esc(t('分析问候后'));
+    var name = '<span class="cui-ws-wrap"><button type="button" class="cui-ws" id="cui-ws" aria-haspopup="menu" aria-expanded="false" aria-label="' + esc(t('切换工作区')) + '">' + lucideIcon('folder-closed') + '<span class="cui-ws-label">' + esc(cuiWsName()) + '</span>' + lucideIcon('chevron-down') + '</button>' + menu + '</span>';
+    var line = '<span>' + esc(t('分析问候前').trim()) + '</span>' + name + '<span>' + esc(t('分析问候后').trim()) + '</span>';
     return '<div class="cui-hero"><h1>' + line + '</h1></div>';
   }
 
@@ -3962,6 +3964,8 @@
     var picked = rows.filter(function (row) { return state.sessionSelected[row.id]; }).length;
     box.checked = picked > 0 && picked === rows.length;
     box.indeterminate = picked > 0 && picked < rows.length;
+    var count = selectedSessions().length;
+    root.querySelectorAll('[data-session-select]').forEach(function (input) { window.AIOpsSelectionLimit.sync(input, count, 'ses'); });
   }
 
   function render(opts) {
@@ -4065,6 +4069,7 @@
   }
 
   function openNewTask(seed, detailId) {
+    if (seed && seed.sessionRefs && seed.sessionRefs.length) state.cuiWs = 'default';
     state.cuiSeed = seed || null;
     state.cuiDraftId += 1;
     state.cuiFocus = true;
@@ -4410,13 +4415,10 @@
     var sessionSelect = e.target.closest('[data-session-select]');
     if (sessionSelect) {
       var key = sessionSelect.getAttribute('data-session-select');
-      if (key === 'all') {
-        filteredSessionRows().forEach(function (row) {
-          if (sessionSelect.checked) state.sessionSelected[row.id] = true;
-          else delete state.sessionSelected[row.id];
-        });
-      } else if (sessionSelect.checked) state.sessionSelected[key] = true;
-      else delete state.sessionSelected[key];
+      var ids = key === 'all' ? filteredSessionRows().map(function (row) { return row.id; }) : [key];
+      var selected = window.AIOpsSelectionLimit.select(selectedSessions().map(function (row) { return row.id; }), ids, sessionSelect.checked, 'ses');
+      state.sessionSelected = {};
+      selected.forEach(function (id) { state.sessionSelected[id] = true; });
       rerenderSessions(); return;
     }
 
@@ -5316,6 +5318,7 @@
       state.widgetSkin = savedSkin;
     }
   } catch (e) {}
+  window.AIOpsSelectionLimit.configure({ lang: function () { return state.lang; }, toast: showToast });
   window.AIOpsRailPicker.configure({
     lang: function () { return state.lang; }, icons: paintIcons,
     dateControl: function () { return sessionDateControl('rail-picker'); }, closeDate: closeSessionDate, sceneForSession: sessionScene,

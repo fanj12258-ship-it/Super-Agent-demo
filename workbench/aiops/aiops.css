@@ -988,6 +988,11 @@ body.aiops-body {
 }
 
 .cui-hero h1 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 8px;
   margin: 0;
   text-align: center;
   font-size: 28px;
@@ -997,33 +1002,51 @@ body.aiops-body {
   color: var(--ink, #171717);
 }
 
+.cui-hero h1 > span:not(.cui-ws-wrap) { flex: 0 0 auto; white-space: nowrap; }
+
 .cui-ws-wrap {
+  flex: 0 1 auto;
+  min-width: 0;
   position: relative;
   display: inline-block;
+  max-width: 100%;
+  vertical-align: middle;
 }
 
 .cui-ws {
-  font: inherit;
-  letter-spacing: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 4px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bg-subtle, #fafafa);
   color: inherit;
-  text-decoration: underline dashed rgba(0, 0, 0, 0.38);
-  text-underline-offset: 6px;
-  text-decoration-thickness: 1px;
-  border-radius: 6px;
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: inherit;
+  line-height: 28px;
+  letter-spacing: 0;
+  text-decoration: none;
+  vertical-align: middle;
+  transition: background .14s ease;
 }
-
+.cui-ws > svg { flex-shrink: 0; width: 20px; height: 20px; }
+.cui-ws > svg:last-child { width: 16px; height: 16px; }
+.cui-ws-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cui-ws:hover,
-.cui-ws[aria-expanded='true'] {
-  background: transparent;
-  text-decoration-color: rgba(0, 0, 0, 0.68);
-}
+.cui-ws[aria-expanded='true'] { background: var(--hover, #f5f5f5); }
 
 .cui-ws-menu {
   position: absolute;
   left: 50%;
   top: calc(100% + 8px);
   z-index: 30;
-  min-width: 196px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 6px;
   border: 1px solid var(--popover-border, #ececec);
   border-radius: 14px;
@@ -1036,6 +1059,8 @@ body.aiops-body {
 .cui-ws-menu[hidden] { display: none; }
 
 .cui-ws-option {
+  position: relative;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1053,6 +1078,10 @@ body.aiops-body {
 
 .cui-ws-option:hover { background: var(--hover, #f5f5f5); }
 .cui-ws-option.is-on { font-weight: 500; }
+.cui-ws-option-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cui-ws-option .cui-ws-tooltip { width: max-content; max-width: min(360px, calc(100vw - 24px)); overflow-wrap: anywhere; }
+.cui-ws-option:is(:hover, :focus-visible) .cui-ws-tooltip { visibility: visible; opacity: 1; }
+
 
 .cui-ws-divider { height: 1px; margin: 4px 0; background: var(--border, #ececec); }
 .cui-ws-create { justify-content: flex-start; gap: 8px; }
@@ -3616,6 +3645,12 @@ body.aiops-body {
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
+.ui-toast__item--warning {
+  border-color: var(--color-warning-border, #f7dca7);
+  background: var(--color-warning-bg, #fdf6e9);
+  color: var(--color-warning-text, #926711);
+}
+
 .ui-toast__item--in {
   opacity: 1;
   transform: translateY(0);
@@ -3649,6 +3684,7 @@ body.aiops-body {
   display: block;
   width: 12px;
   height: 12px;
+  /* The exported 8px glyph starts at (0, 0) in its 12px canvas. */
   transform: translate(2px, 2px);
 }
 
@@ -4019,3 +4055,7 @@ body.aiops-body .session-date-field[aria-expanded="true"] { border-color: var(--
 .aiops-body :is(.search-field, .context-picker-search, .rail-picker-search) input:focus { outline: none; border-color: transparent; box-shadow: none; }
 :is(.aiops-back,.cap-chat-back,[data-sd="back"],.detail-back) { border: 1px solid var(--control-border,#dedede); background: #fff; border-radius: 8px; }
 #aiopsCollapsedHome { display: none; }
+
+/* Let disabled resource checkboxes expose the shared limit toast on their hit area. */
+[data-selection-limit] { cursor: not-allowed; }
+[data-selection-limit] > input:disabled { pointer-events: none; opacity: .4; }

@@ -92,7 +92,8 @@
       if (!list.length) html += '<div class="slash-empty">暂无匹配' + group[1] + '</div>';
       list.slice(0, limits[group[0]]).forEach(function (row) { html += option({ type: 'reference', ref: row }, row.name, referenceIcon(row), group[0] === 'artifact' ? row.path : row.time); });
       var remaining = Math.max(0, list.length - limits[group[0]]);
-      if (remaining) html += option({ type: 'more', group: group[0] }, (host.lang() === 'en' ? 'Show more ' : '查看更多 ') + remaining, '', '', 'context-show-more');
+      if (group[0] === 'session') html += option({ type: 'session-picker' }, host.lang() === 'en' ? 'Choose from all sessions' : '在全部会话里选择', '', '', 'context-show-more');
+      else if (remaining) html += option({ type: 'more', group: group[0] }, (host.lang() === 'en' ? 'Show more ' : '查看更多 ') + remaining, '', '', 'context-show-more');
     });
     if (!html) html = '<div class="slash-empty" role="status">没有匹配的内容</div>';
     if (actions.length) html += global.ComposerSlashSkills.hint();
@@ -142,7 +143,10 @@
     if (action.type === 'more') { limits[action.group] += 20; paint(); return; }
     if (action.type === 'reference' && multi && multi.wants(event)) { multi.toggle(actionKey(action), action.ref); return; }
     var context = pending; close();
-    if (action.type === 'file') chooseLocal(context);
+    if (action.type === 'session-picker') global.AIOpsRailPicker.open('ses', field, {
+      onConfirm: function (ids) { commit(host.sessions().filter(function (row) { return ids.indexOf('ses:' + row.id) >= 0; }), context); }
+    });
+    else if (action.type === 'file') chooseLocal(context);
     else if (action.type === 'capability') openPicker(action.category, context, query);
     else commit([action.ref], context);
   }

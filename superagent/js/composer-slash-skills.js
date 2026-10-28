@@ -30,7 +30,7 @@
       '<path d="M10 21.9V14L2.1 9.1"/><path d="m10 14 11.9-6.9"/><path d="M14 19.8v-8.1"/><path d="M18 17.5V9.4"/></svg>';
   }
 
-  function hint() { return '<div class="slash-hint"><span>↑↓ 选择</span><span>Enter 插入</span><span>Esc 关闭</span></div>'; }
+  function hint() { return '<div class="slash-hint"><span>↑↓ 选择</span><span>Ctrl 多选</span><span>Enter 插入</span><span>Esc 关闭</span></div>'; }
 
   // Shared Ctrl selection state for both composer palettes.
   function createMulti(options) {

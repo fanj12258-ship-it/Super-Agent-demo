@@ -8,7 +8,7 @@
   function catalog() { return global.AIOpsWorkspaces.scopeCatalog(); }
   function allIds() { return catalog().reduce(function (all, s) { return all.concat(s.items.map(function (x) { return x.id; })); }, []); }
   function count() { return catalog().reduce(function (n, s) { var on = s.items.filter(function (x) { return selected.indexOf(x.id) >= 0; }).length; return n + (on === s.items.length ? 1 : on); }, 0); }
-  function label() { return selected.length ? tr('已选 ' + count() + ' 项', count() + ' selected') : tr('全部', 'All'); }
+  function label() { return selected.length ? tr('已选 ' + count() + ' 项', count() + ' selected') : tr('全部范围', 'All scopes'); }
   function trigger(analysis) { return '<button type="button"' + (analysis ? ' id="analysis-picker-scope"' : '') + ' class="ov-scope" data-scope-trigger aria-label="' + tr('筛选范围', 'Filter scope') + '" aria-haspopup="dialog" aria-expanded="' + scopeOpen + '"><span>' + esc(label()) + '</span>' + icon('chevron-down') + '</button>'; }
   function closeScope(focus) {
     var p = document.getElementById('globalScopePanel'); if (p) p.remove(); scopeOpen = false;

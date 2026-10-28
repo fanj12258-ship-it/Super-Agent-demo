@@ -26,7 +26,7 @@
   function scopeLabel() {
     var count = 0;
     global.AIOpsWorkspaces.scopeCatalog().forEach(function (scene) { var selected = scene.items.filter(function (item) { return picker.scope.indexOf(item.id) >= 0; }).length; count += selected === scene.items.length ? 1 : selected; });
-    return count ? tr('已选 ' + count + ' 项', count + ' selected') : tr('全部', 'All');
+    return count ? tr('已选 ' + count + ' 项', count + ' selected') : tr('全部范围', 'All scopes');
   }
   function scopeControl() { return '<button type="button" class="ov-scope" data-picker-scope-open aria-label="' + tr('筛选范围', 'Filter scope') + '" aria-haspopup="dialog" aria-expanded="false"><span>' + scopeLabel() + '</span>' + icon('chevron-down') + '</button>'; }
   function closeScope(restore) {
@@ -82,11 +82,19 @@
     var count = Object.keys(picker.selected).length;
     picker.overlay.querySelector('[role="status"]').textContent = tr('已选 ' + count + ' 项', count + ' selected');
     picker.overlay.querySelector('[data-picker-confirm]').disabled = !count;
-    picker.overlay.querySelectorAll('[data-picker-item]').forEach(function (input) { input.checked = !!picker.selected[input.dataset.pickerItem]; });
+    var all = picker.overlay.querySelector('[data-picker-all]');
+    if (all) {
+      var visible = matches(), picked = visible.filter(function (row) { return picker.selected[row.id]; }).length;
+      all.checked = !!visible.length && picked === visible.length;
+      all.indeterminate = picked > 0 && picked < visible.length;
+      global.AIOpsSelectionLimit.sync(all, count, picker.kind, all.closest('label'));
+      if (!visible.length) { all.disabled = true; all.closest('label').removeAttribute('data-selection-limit'); all.closest('label').setAttribute('aria-disabled', 'true'); }
+    }
+    picker.overlay.querySelectorAll('[data-picker-item]').forEach(function (input) { input.checked = !!picker.selected[input.dataset.pickerItem]; global.AIOpsSelectionLimit.sync(input, count, picker.kind, input.closest('label')); });
     picker.overlay.querySelectorAll('[data-picker-group]').forEach(function (input) {
       var rows = picker.groups[Number(input.dataset.pickerGroup)];
       var selected = rows.filter(function (row) { return picker.selected[row.id]; }).length;
-      input.checked = !!rows.length && selected === rows.length; input.indeterminate = selected > 0 && selected < rows.length; input.disabled = !rows.length;
+      input.checked = !!rows.length && selected === rows.length; input.indeterminate = selected > 0 && selected < rows.length; global.AIOpsSelectionLimit.sync(input, count, picker.kind, input.closest('label')); if (!rows.length) input.disabled = true;
     });
   }
   function paint() {
@@ -94,13 +102,21 @@
     picker.overlay.querySelector('.rail-picker-list').innerHTML = rows.length ? (picker.kind === 'ses' ? rows.map(rowHtml).join('') : treeHtml(rows)) : '<li class="rail-picker-empty">' + icon('search-x') + '<strong>' + tr('没有匹配的内容', 'No matching resources') + '</strong><span>' + tr('试试其他关键词或筛选条件', 'Try another keyword or filter') + '</span></li>';
     refreshSelection(); updateControls(); host.icons();
   }
-  function selectRows(rows, checked) { rows.forEach(function (row) { if (checked) picker.selected[row.id] = true; else delete picker.selected[row.id]; }); refreshSelection(); }
-  function open(kind, trigger) {
+  function selectionRows() {
+    // The tree groups files by workspace; select in that same display order.
+    return picker.kind === 'art' ? picker.groups.reduce(function (rows, group) { return rows.concat(group); }, []) : matches();
+  }
+  function selectRows(rows, checked) {
+    var selected = global.AIOpsSelectionLimit.select(Object.keys(picker.selected), rows.map(function (row) { return row.id; }), checked, picker.kind);
+    picker.selected = Object.create(null); selected.forEach(function (id) { picker.selected[id] = true; }); refreshSelection();
+  }
+  function open(kind, trigger, options) {
+    options = options || {};
     close();
     var overlay = document.createElement('div'); overlay.className = 'context-picker-overlay rail-picker-overlay';
-    picker = { kind: kind, overlay: overlay, trigger: trigger, owner: host.owner(), items: host.items(kind).map(function (row) { return Object.assign({}, row, { path: kind === 'art' ? [row.folder, row.name].filter(Boolean).join(' / ') : '' }); }).sort(function (a, b) { return String(b.time || b.updatedAt || '').localeCompare(String(a.time || a.updatedAt || '')); }), selected: Object.create(null), groups: [], closed: Object.create(null), query: '', range: null, scope: [], scene: 'audit' };
+    picker = { onConfirm: options.onConfirm || host.open, kind: kind, overlay: overlay, trigger: trigger, owner: host.owner(), items: host.items(kind).map(function (row) { return Object.assign({}, row, { path: kind === 'art' ? [row.folder, row.name].filter(Boolean).join(' / ') : '' }); }).sort(function (a, b) { return String(b.time || b.updatedAt || '').localeCompare(String(a.time || a.updatedAt || '')); }), selected: Object.create(null), groups: [], closed: Object.create(null), query: '', range: null, scope: [], scene: 'audit' };
     var title = kind === 'ses' ? tr('选择线上会话', 'Select live sessions') : tr('选择产出物', 'Select artifacts');
-    overlay.innerHTML = '<section class="cap-dialog rail-picker' + (kind === 'art' ? ' is-artifact' : '') + '" role="dialog" aria-modal="true" aria-labelledby="railPickerTitle"><header class="cap-dialog-head"><h2 id="railPickerTitle">' + title + '</h2><button type="button" class="cap-icon-btn" data-picker-cancel aria-label="' + tr('关闭选择弹窗', 'Close resource picker') + '">' + icon('x') + '</button></header><div class="rail-picker-controls' + (kind === 'art' ? ' rail-picker-art-controls' : ' rail-picker-session-controls') + '"><div class="search-field rail-picker-search">' + icon('search') + '<input type="search" aria-label="' + tr('搜索资源', 'Search resources') + '" placeholder="' + (kind === 'ses' ? tr('搜索会话名称、ID、用户', 'Search name, ID or user') : tr('搜索文件名称、路径', 'Search file name or path')) + '"></div>' + (kind === 'ses' ? '<span data-picker-date-control>' + host.dateControl() + '</span>' + scopeControl() : '') + '</div>' + '<ul class="rail-picker-list" aria-label="' + (kind === 'ses' ? tr('线上会话列表', 'Live session list') : tr('产出物文件树', 'Artifact file tree')) + '"></ul><footer class="cap-dialog-foot"><span role="status" aria-live="polite"></span><button type="button" class="btn-soft" data-picker-cancel>' + tr('取消', 'Cancel') + '</button><button type="button" class="btn-ink" data-picker-confirm disabled>' + tr('确认', 'Confirm') + '</button></footer></section>';
+    overlay.innerHTML = '<section class="cap-dialog rail-picker' + (kind === 'art' ? ' is-artifact' : '') + '" role="dialog" aria-modal="true" aria-labelledby="railPickerTitle"><header class="cap-dialog-head"><h2 id="railPickerTitle">' + title + '</h2><button type="button" class="cap-icon-btn" data-picker-cancel aria-label="' + tr('关闭选择弹窗', 'Close resource picker') + '">' + icon('x') + '</button></header><div class="rail-picker-controls' + (kind === 'art' ? ' rail-picker-art-controls' : ' rail-picker-session-controls') + '"><div class="search-field rail-picker-search">' + icon('search') + '<input type="search" aria-label="' + tr('搜索资源', 'Search resources') + '" placeholder="' + (kind === 'ses' ? tr('搜索会话名称、ID、用户', 'Search name, ID or user') : tr('搜索文件名称、路径', 'Search file name or path')) + '"></div>' + (kind === 'ses' ? '<span data-picker-date-control>' + host.dateControl() + '</span>' + scopeControl() : '') + '</div>' + '<ul class="rail-picker-list" aria-label="' + (kind === 'ses' ? tr('线上会话列表', 'Live session list') : tr('产出物文件树', 'Artifact file tree')) + '"></ul><footer class="cap-dialog-foot"><div class="rail-picker-selection"><label class="rail-picker-select-all">' + checkbox('data-picker-all', tr('全选', 'Select all')) + '<span>' + tr('全选', 'Select all') + '</span></label><span class="rail-picker-selection-divider" aria-hidden="true"></span><span role="status" aria-live="polite"></span></div><button type="button" class="btn-soft" data-picker-cancel>' + tr('取消', 'Cancel') + '</button><button type="button" class="btn-ink" data-picker-confirm disabled>' + tr('确认', 'Confirm') + '</button></footer></section>';
     document.body.appendChild(overlay); document.querySelector('.aiops-app').inert = true;
     overlay.addEventListener('input', function (event) { if (event.target.type === 'search') { closeScope(); if (host.closeDate) host.closeDate(); picker.query = event.target.value.trim(); picker.closed = Object.create(null); paint(); } });
     overlay.addEventListener('change', function (event) {
@@ -111,7 +127,8 @@
         picker.scope = picker.scope.filter(function (id) { return ids.indexOf(id) < 0; }); if (input.checked) picker.scope = picker.scope.concat(ids);
         var selector = leaf ? '[data-picker-scope-leaf="' + input.dataset.pickerScopeLeaf + '"]' : '[data-picker-scope-parent="' + input.dataset.pickerScopeParent + '"]'; paint(); paintScope(selector); return;
       }
-      if (input.hasAttribute('data-picker-item')) selectRows(picker.items.filter(function (row) { return row.id === input.dataset.pickerItem; }), input.checked);
+      if (input.hasAttribute('data-picker-all')) selectRows(selectionRows(), input.checked);
+      else if (input.hasAttribute('data-picker-item')) selectRows(picker.items.filter(function (row) { return row.id === input.dataset.pickerItem; }), input.checked);
       else if (input.hasAttribute('data-picker-group')) selectRows(picker.groups[Number(input.dataset.pickerGroup)], input.checked);
     });
     overlay.addEventListener('click', function (event) {
@@ -127,7 +144,7 @@
       if (event.target === overlay || event.target.closest('[data-picker-cancel]')) { close(true); return; }
       var folder = event.target.closest('[data-picker-folder]');
       if (folder) { var key = folder.dataset.pickerFolder, list = folder.closest('li').querySelector('ul'); picker.closed[key] = !picker.closed[key]; folder.setAttribute('aria-expanded', String(!picker.closed[key])); list.hidden = picker.closed[key]; return; }
-      if (event.target.closest('[data-picker-confirm]')) { var ids = picker.items.filter(function (row) { return picker.selected[row.id]; }).map(function (row) { return row.id; }), owner = picker.owner; close(); host.open(ids, owner); }
+      if (event.target.closest('[data-picker-confirm]')) { var ids = picker.items.filter(function (row) { return picker.selected[row.id]; }).map(function (row) { return row.id; }), owner = picker.owner, onConfirm = picker.onConfirm; close(); onConfirm(ids, owner); }
     });
     overlay.addEventListener('keydown', function (event) {
       var datePanel = picker.overlay.querySelector('#sessionDatePicker'), scopePanel = picker.overlay.querySelector('#railPickerScopePanel');

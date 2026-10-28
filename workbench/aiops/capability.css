@@ -684,7 +684,8 @@
 .cap-row-actions .fb-act.ghost:focus-visible { background: var(--hover, #f5f5f5); }
 
 .cap-art-action-menu { border-radius: var(--popover-radius, 14px); }
-.cap-art-action-menu button svg { width: 15px; height: 15px; }
+.cap-art-action-menu button svg { width: 15px; height: 15px; flex-shrink: 0; }
+.cap-art-action-menu .cap-menu-note { margin-left: auto; padding-left: 12px; flex-shrink: 0; color: var(--placeholder, #b3b3b3); font-size: 12px; font-weight: 400; white-space: nowrap; }
 .cap-table .cap-empty { padding: 28px 16px; }
 
 .cap-drawer-back {

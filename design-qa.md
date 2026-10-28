@@ -565,3 +565,104 @@ final result: passed
 ### 2026-10-27 — 操作列按内容自适应
 - 产出物表格采用 auto 布局，操作列移除 20% 比例分配并使用收缩列约束，实际宽度由按钮内容、间距和内边距决定，剩余空间交给名称列；左右 sticky 保持。
 - 浏览器在 1313px / 1920px 视口验证操作列均为 142px（按钮组 118px + 左右各 12px），checkbox 列保持 38px；992px 视口横向滚动后左右列仍贴容器边缘。控制台无错误，临时视口恢复。截图：/tmp/aiops-artifact-auto-action-width.png。
+
+### 2026-10-28 — 新任务工作区切换胶囊
+- 去掉工作区切换按钮下划线，改为胶囊：文字 20px / 28px，左右 padding 12px、上下 4px；左侧 Lucide folder-closed 20px，右侧 chevron-down 16px。复用三级浅灰 bg-subtle（#fafafa）与二级 hover（#f5f5f5）。
+- 574px 视口实测以上样式均符合要求、无横向溢出；hover 变为 #f5f5f5，点击仍打开原菜单并保留新建入口，选择默认工作区后文字更新、图标保留。控制台无错误，语法 / diff 检查通过，视口恢复。截图：/tmp/aiops-workspace-pill.png。
+
+### 2026-10-28 — 工作区菜单限宽与名称提示
+- 菜单宽度与胶囊同步，移除原 196px 最小宽度，工作区选项文字可收缩并省略，选中勾保持可见。复用 metric-tooltip 视觉，在 hover / 键盘焦点展示完整名称，并通过 aria-describedby 关联。
+- 长名称工作区在 923px 视口的菜单 / 胶囊均宽 412.875px，选项文字可见 355px、内容宽 455px，正确省略；tooltip 完整展示名称。574px 视口二者均宽 319.875px，无横向溢出，tooltip 完整位于视口内。Enter 切换工作区正常，控制台无错误，语法 / diff 检查通过。截图：/tmp/aiops-workspace-menu-tooltip.png。
+
+### 2026-10-28 — Trace 轨迹选中态增强
+- 选中步骤由单纯压暗改为 2px 品牌蓝描边 + 2px 白色隔层，高度从 14px 增至 18px；保留工具分类色与异常红色，键盘聚焦时保持相同选中样式。
+- 浏览器选择 knowledge.search：描边为品牌蓝、内部仍为异常红色，选中点唯一且与下方记录 id 一致。Enter 切到 report.create 后描边保留、内部恢复工具黄色，记录联动正常；控制台无错误，diff 检查通过。截图：/tmp/aiops-trace-highlight.png。
+
+### 2026-10-28 — Trace 选中态改为轻投影
+- 去掉选中条的蓝色描边和白色隔层，保留 18px 适度加高，改用向下的轻微投影与轻微加深，避免实体外环覆盖相邻条。
+- 浏览器实测 outline=none、box-shadow=0 2px 2px rgba(17,17,17,.28)，条宽保持原值；截图：/tmp/aiops-trace-selection-shadow.png。diff 检查通过，视口已恢复。
+
+### 2026-10-28 — Trace 选中条原色与同色阴影
+- 选中条去掉亮度滤镜，阴影改为轨迹实际颜色的 40% 透明投影；异常条的颜色变量同步为异常红色，使阴影跟随实际状态色。
+- 浏览器验证 warning 为原红色 rgb(233,33,66)、普通工具为原黄色 rgb(239,168,19)，filter 均为 none，投影分别为相同 RGB 的 40% 透明色。控制台无错误。截图：/tmp/aiops-trace-tinted-shadow.png。
+
+### 2026-10-28 — @ 面板从全部会话选择引用
+- 线上会话最近 5 项下的查看更多改为「在全部会话里选择」，复用现有会话多选弹窗的搜索 / 日期 / 范围筛选；确认回调将所选会话作为引用批量添加到输入框，保留草稿并移除触发 @。资源选择弹窗支持可选确认回调，侧栏入口保留默认打开资源行为。
+- 浏览器通过 @ 入口选择 CR-1028，搜索 CR-1001 再选后确认：两条引用同时回填，原文字「先分析」保持，没有打开侧栏标签。取消不添加并保留 @ 草稿；重复选择已有会话保持两条引用。回归侧栏入口仍能打开所选会话标签，控制台无错误，JS 语法 / diff 检查通过。截图：/tmp/aiops-all-sessions-input.png。
+
+### 2026-10-28 · @ / slash 多选快捷键提示
+- 共享 ComposerSlashSkills.hint 在“Enter 插入”前加入“Ctrl 多选”，同步更新 AIOps 和 Superagent 页面的脚本版本。
+- 浏览器验证 @ 和 slash 底部顺序均为“↑↓ 选择 / Ctrl 多选 / Enter 插入 / Esc 关闭”，布局正常，无控制台错误。
+- 验证：node --check superagent/js/composer-slash-skills.js、git diff --check 通过。
+- 截图：/tmp/aiops-context-ctrl-hint.png、/tmp/aiops-slash-ctrl-hint.png。
+
+### 2026-10-28 · 会话 / 产出物多选上限 10 项
+- 范围列表及资源选择弹窗共用 selection-limit.js，上限 10 项；列表全选、文件夹批量勾选只填充剩余名额，超出复用 showToast 组件提示“最多选择 10 个会话 / 文件”。
+- 达到上限，未选 checkbox 使用原生 disabled 和置灰态；通过 checkbox 容器接收点击触发 toast，避免打开详情或改变选择；已选项仍可取消，半选组在满额时可清除组内已选项。
+- 浏览器通过：线上会话列表全选 10 项、其余禁用、点击提示、取消恢复、空格键补足；产出物列表文件夹 / 全选 10 项、取消恢复；会话弹窗逐项选满 10、跨搜索禁用、取消一项并跨搜索补选、确认添加 10 个引用；产出物弹窗文件夹选满 10、跨搜索点击禁用项提示、取消后重新选满。
+- 使用现有 ui-toast 组件，弹窗打开时提示仍可见；控制台无错误。四个变更 JS 的 node --check 和 git diff --check 通过。
+- 截图：/tmp/aiops-session-limit-toast.png、/tmp/aiops-artifact-limit-toast.png、/tmp/aiops-session-picker-limit-toast.png、/tmp/aiops-artifact-picker-limit-toast.png。
+
+### 2026-10-28 · 多选上限 toast 使用 Warning 态
+- 按 Figma hZm6q9qEtQecGCaGPPavgb / 844:58581 为现有 showToast 增加 warning 参数，多选上限提示统一传入 warning。
+- Warning 背景 #fdf6e9、描边 #f7dca7、文字 #926711；沿用组件 13/18 字号行高、16/9 内边距、8px 间距、6px 圆角和 0 4 10 黑色 10% 阴影。
+- 使用 Figma 下载的本地警告图标（16×16）和关闭图标（12×12），关闭图标不偏移；浏览器确认资源加载成功和有效尺寸匹配设计。
+- 浏览器验证文件 / 会话超限均使用 warning 态、禁用 checkbox 点击可提示、toast 关闭生效，无控制台错误；node --check 与 git diff --check 通过。
+- 截图：/tmp/aiops-warning-toast.png。
+
+### 2026-10-28 · 资源弹窗整行禁用与 checkbox 对齐
+- 会话 / 产出物选择弹窗达到 10 项后，未选资源整行设置 aria-disabled，标题、时间与图标一起显示禁用态，整行点击复用 warning toast，选择数保持不变。
+- 禁用行不显示可点击的 hover 底色；取消已选项后移除整行禁用状态并恢复选择。
+- 产出物子列表缩进统一为 24px（父节点箭头 16px + 间距 8px），包括窄屏；父子 checkbox 浏览器实测左坐标均为 325px。
+- 浏览器验证文件文字区域点击、会话行右侧区域点击均弹出对应 warning toast；取消一项后其余行恢复可选；无控制台错误。node --check 与 git diff --check 通过。
+- 截图：/tmp/aiops-disabled-artifact-row.png、/tmp/aiops-disabled-session-row.png。
+
+### 2026-10-28 · Warning toast 关闭图标居中
+- 修正 warning 态覆盖掉关闭图标位置补偿的问题：导出 SVG 的 × 图形中心为 (4,4)，画布中心为 (6,6)，沿用组件 translate(2px, 2px) 使可见图形居中。
+- 浏览器核对图形中心与 12×12 关闭按钮中心一致，垂直对齐文案和提示图标；git diff --check 通过。
+- 截图：/tmp/aiops-toast-close-centered.png。
+
+### 2026-10-28 · 批量引用进入默认工作区
+- 资源引用创建新任务时，在 openNewTask 中将工作区初始化为 default；所选引用与提示词保持传入内容。当前会话内追加引用的流程保持原样。
+- 浏览器验证：线上会话批量分析进入默认工作区，2 个引用和分析提示词均保留；先手动切到关联审核智能体，再从产出物批量引用 10 项，进入新任务后仍选中默认工作区并保留全部引用。
+- 工作区菜单 aria-checked 为 true；无控制台错误；node --check 和 git diff --check 通过。
+- 截图：/tmp/aiops-session-reference-default-workspace.png、/tmp/aiops-artifact-reference-default-workspace.png。
+
+### 2026-10-28 · 移除产出物批量移动入口
+- 产出物批量操作栏移除“移动”按钮，保留引用、下载、删除和取消选择。
+- 浏览器勾选 2 项确认不再出现“批量移动”；node --check、git diff --check 通过。
+- 截图：/tmp/aiops-artifact-bulk-without-move.png。
+
+### 2026-10-28 · 产出物菜单功能备注
+- 共享产出物更多菜单的“编辑”和“历史版本”右侧增加“本期暂无”，备注使用 placeholder 灰色、12px、右对齐。
+- 浏览器验证详情菜单两处备注均显示，右边界同为 1230px，颜色为 #b3b3b3；node --check、git diff --check 通过。
+- 截图：/tmp/aiops-artifact-menu-notes.png。
+
+### 2026-10-28 · 会话选择弹窗新增全选行
+- 线上会话选择弹窗列表顶部 padding 为 0，首行加入“全选”，复用现有 checkbox 和行样式。
+- 全选针对当前筛选结果，支持选中 / 半选 / 取消；仍最多选 10 项，超限使用 warning toast。
+- 浏览器验证全量全选选中 10 项并禁用其余 18 项、再次点击清空；搜索“制造业规则”全选 2 项且全选框选中；空结果正常展示。无控制台错误；node --check、git diff --check 通过。
+- 截图：/tmp/aiops-session-picker-select-all.png。
+
+### 2026-10-28 · 产出物选择弹窗全选行与层级对齐
+- 产出物弹窗列表同样去掉顶部 padding，复用全选行及当前搜索结果选择逻辑，支持半选 / 清空并保留 10 项限制。
+- 全选 checkbox 与工作区父节点 checkbox 左对齐；子节点 checkbox 改为与父节点 folder 图标左对齐。浏览器实测全选 / 父 checkbox x=325px，子 checkbox / folder 图标 x=347px。
+- 浏览器验证全选 10 项及 warning toast、再次点击清空；搜索默认工作区全选 2 个文件且全选框勾选，无控制台错误；node --check、git diff --check 通过。
+- 截图：/tmp/aiops-artifact-picker-select-all.png。
+
+### 2026-10-28 · 全选顺序与文件夹展示一致
+- 修复产出物表格全选使用全局更新时间排序，而 UI 按工作区分组展示导致跳过文件的问题；现在按 currentGroups 的展示顺序生成选择 ID。
+- 产出物选择弹窗全选同步按树中工作区 / 文件顺序选择；保留原有已选项，再按展示顺序补满 10 项。
+- 浏览器验证：空选全选正好勾选表格前 10 个，默认工作区的 Markdown / JSON 均选中；预选末项后全选保留末项并补选最前 9 项；弹窗全选也正好选中展示的前 10 个，无控制台错误。
+- node --check、git diff --check 通过；截图：/tmp/aiops-artifact-select-display-order.png。
+
+### 2026-10-28 · 范围选择器默认文案
+- 场景 / Agent / 本体范围选择器默认文案统一由“全部”改为“全部范围”（英文 All scopes），覆盖共享资源筛选器和会话选择弹窗的独立筛选器。
+- 浏览器验证工作台、成本分析、健康度分析、用户行为分析、线上会话及会话选择弹窗均显示“全部范围”，无控制台错误；node --check、git diff --check 通过。
+- 截图：/tmp/aiops-all-scopes-label.png。
+
+### 2026-10-28 · 全选移至弹窗底部数量左侧
+- 线上会话和产出物选择弹窗移除列表顶部全选行，统一在底部显示“全选 | 已选 x 项”，小竖线为 1×12px。
+- 保留全选 / 半选 / 取消和十项上限；空搜索结果禁用全选，选择提示状态仍可正常更新。
+- 浏览器验证两个弹窗的全选都位于底部，列表中不再有全选行；全选 10 项、清空、空结果禁用通过，无控制台错误；node --check、git diff --check 通过。
+- 截图：/tmp/aiops-session-footer-select-all.png、/tmp/aiops-artifact-footer-select-all.png。

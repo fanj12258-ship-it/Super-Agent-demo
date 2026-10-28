@@ -709,13 +709,14 @@
     return map;
   }
   function currentGroups() { return groupsFrom(filteredArts()); }
-  function filteredIds() { return filteredArts().map(function (a) { return a.id; }); }
+  function filteredIds() {
+    return currentGroups().reduce(function (ids, group) { return ids.concat(group[1].map(function (a) { return a.id; })); }, []);
+  }
   function artifactBatchBar(selected) {
     if (!selected.length) return '';
     var actions = [
       ['art-ref', 'message-circle-plus', tr('引用', 'Reference'), tr('批量引用', 'Reference selected artifacts')],
       ['art-export', 'download', tr('下载', 'Download'), tr('批量下载', 'Download selected artifacts')],
-      ['art-move', 'folder-input', tr('移动', 'Move'), tr('批量移动', 'Move selected artifacts')],
       ['art-delete', 'trash-2', tr('删除', 'Delete'), tr('批量删除', 'Delete selected artifacts')]
     ];
     return '<div class="session-bulk-dock cap-artifact-dock" role="toolbar" aria-label="' + esc(tr('产出物批量操作', 'Artifact actions')) + '"><span class="session-bulk-count" aria-live="polite">' + esc(tr('已选择 ', 'Selected ') + selected.length + tr(' 份', '')) + '</span><span class="session-bulk-divider" aria-hidden="true"></span>' +
@@ -821,7 +822,7 @@
     var panel = document.createElement('div');
     panel.id = 'capArtActionMenu'; panel.className = 'cap-menu cap-art-action-menu';
     panel.setAttribute('role', 'menu'); panel.setAttribute('aria-label', art.name + tr('的更多操作', ' actions'));
-    panel.innerHTML = (anchor.hasAttribute('data-compact') ? '<button type="button" role="menuitem" data-cap="art-ref" data-id="' + esc(id) + '">' + ico('quote') + tr('引用', 'Cite') + '</button><button type="button" role="menuitem" data-cap="art-export" data-id="' + esc(id) + '">' + ico('download') + tr('下载', 'Download') + '</button>' : '') + '<button type="button" role="menuitem" data-cap="art-edit" data-id="' + esc(id) + '">' + ico('pencil') + esc(tr('编辑', 'Edit')) + '</button><button type="button" role="menuitem" data-cap="art-history" data-id="' + esc(id) + '">' + ico('history') + esc(tr('历史版本', 'Version history')) + '</button><button type="button" role="menuitem" class="is-danger" data-cap="art-delete" data-id="' + esc(id) + '">' + ico('trash-2') + esc(tr('删除', 'Delete')) + '</button>';
+    panel.innerHTML = (anchor.hasAttribute('data-compact') ? '<button type="button" role="menuitem" data-cap="art-ref" data-id="' + esc(id) + '">' + ico('quote') + tr('引用', 'Cite') + '</button><button type="button" role="menuitem" data-cap="art-export" data-id="' + esc(id) + '">' + ico('download') + tr('下载', 'Download') + '</button>' : '') + '<button type="button" role="menuitem" data-cap="art-edit" data-id="' + esc(id) + '">' + ico('pencil') + esc(tr('编辑', 'Edit')) + '<small class="cap-menu-note">' + esc(tr('本期暂无', 'Not available yet')) + '</small></button><button type="button" role="menuitem" data-cap="art-history" data-id="' + esc(id) + '">' + ico('history') + esc(tr('历史版本', 'Version history')) + '<small class="cap-menu-note">' + esc(tr('本期暂无', 'Not available yet')) + '</small></button><button type="button" role="menuitem" class="is-danger" data-cap="art-delete" data-id="' + esc(id) + '">' + ico('trash-2') + esc(tr('删除', 'Delete')) + '</button>';
     document.body.appendChild(panel);
     if (global.lucide && global.lucide.createIcons) global.lucide.createIcons({ attrs: { width: 15, height: 15, 'stroke-width': 1.5 } });
     var rect = anchor.getBoundingClientRect();
@@ -2125,21 +2126,17 @@
       applyArtColumnFilter(key, values);
       return;
     }
-    if (action === 'art-all') { ui.selected = el.checked ? filteredIds() : []; rerender(); return; }
+    if (action === 'art-all') { ui.selected = global.AIOpsSelectionLimit.select(ui.selected, filteredIds(), el.checked, 'art'); rerender(); return; }
     if (action === 'art-one') {
       var one = el.getAttribute('data-id');
-      if (el.checked) { if (ui.selected.indexOf(one) < 0) ui.selected.push(one); }
-      else ui.selected = ui.selected.filter(function (item) { return item !== one; });
+      ui.selected = global.AIOpsSelectionLimit.select(ui.selected, [one], el.checked, 'art');
       rerender();
       return;
     }
     if (action === 'art-group') {
       var group = currentGroups()[Number(el.getAttribute('data-g'))];
       if (!group) return;
-      var set = {};
-      ui.selected.forEach(function (item) { set[item] = true; });
-      group[1].forEach(function (a) { if (el.checked) set[a.id] = true; else delete set[a.id]; });
-      ui.selected = Object.keys(set);
+      ui.selected = global.AIOpsSelectionLimit.select(ui.selected, group[1].map(function (a) { return a.id; }), el.checked, 'art');
       rerender();
     }
   }
@@ -2405,6 +2402,9 @@
       if (!box) return;
       var count = g[1].filter(function (a) { return ui.selected.indexOf(a.id) >= 0; }).length;
       box.indeterminate = count > 0 && count < g[1].length;
+    });
+    document.querySelectorAll('[data-cap="art-one"], [data-cap="art-all"], [data-cap="art-group"]').forEach(function (input) {
+      global.AIOpsSelectionLimit.sync(input, ui.selected.length, 'art');
     });
   }
 

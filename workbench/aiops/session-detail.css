@@ -123,9 +123,11 @@ body.aiops-body:has(.session-detail) { min-width: 0; }
 .sd-track > div { position: relative; flex: 1; height: 28px; }
 .sd-track button { position: absolute; left: var(--point); top: 7px; width: clamp(1px, calc(100% / var(--trace-count) - 2px), 6px); height: 14px; padding: 0; border-radius: 1px; background: var(--track-color); transform: translateX(-50%); }
 .sd-track button:hover { filter: brightness(.85); }
-.sd-track button.is-selected { filter: brightness(.65); z-index: 1; }
 .sd-track button:focus-visible { outline: 1px solid var(--file-blue); outline-offset: 1px; }
-.sd-track button:is(.is-error, .is-warning) { background: #e92142; }
+.sd-track button.is-selected,
+.sd-track button.is-selected:focus-visible { top: 5px; height: 18px; filter: none; outline: none; box-shadow: 0 2px 2px color-mix(in srgb, var(--track-color) 40%, transparent); z-index: 2; }
+
+.sd-track button:is(.is-error, .is-warning) { --track-color: #e92142; }
 .sd-trace-toolbar { display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 0; margin: 0; flex-shrink: 0; }
 .sd-trace-toolbar .search-field { flex: 1; min-width: 140px; max-width: none; height: 32px; border: 1px solid var(--control-border); border-radius: 8px; background: #fff; padding: 0 10px; }
 .sd-trace-toolbar .search-field input { font-size: 12px; }
