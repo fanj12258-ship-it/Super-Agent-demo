@@ -1,0 +1,19 @@
+/* Shared chrome and controls from the updated 1084:129564 section. */
+.space-admin { --si-tertiary:#1e1e1e; }
+.space-admin .si-solid,.space-admin .si-segment .is-current,.space-admin .gp-segment .is-current { background:var(--si-tertiary); }
+.space-admin .team-avatar { background:var(--si-tertiary) !important; }
+.space-admin .sb-user .avatar { background:var(--si-tertiary); width:24px; height:24px; line-height:24px; }
+.space-admin .si-tabs { height:52px; min-height:52px; }
+.space-admin .gp-body input[type="checkbox"] { accent-color:var(--si-tertiary); }
+.space-admin .si-solid:hover,.ei-confirm:hover { background:#333; }
+#acctMenu { border-color:#d9d9d9; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,.1); font:13px/18px -apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC",sans-serif; }
+#acctMenu .acct-top { grid-template-columns:24px 1fr; column-gap:8px; padding:16px; }
+#acctMenu .acct-avatar { width:24px; height:24px; font-size:13px; line-height:24px; font-weight:400; background:#1e1e1e; }
+#acctMenu .acct-email { font-size:13px; line-height:18px; margin-top:0; }
+#acctMenu .acct-name { line-height:18px; }
+#acctMenu .acct-sec { padding:4px 8px; }
+#acctMenu .acct-item,#acctMenu .acct-row { height:36px; padding:0 8px; gap:8px; }
+#acctMenu .lang-seg { padding:3px; height:28px; border:0; border-radius:8px; background:rgba(0,0,0,.06); }
+#acctMenu .lang-seg button { min-width:32px; height:22px; line-height:22px; padding:0 8px; border-radius:4px; font-size:12px; }
+#acctMenu .lang-seg button.is-on { background:#1e1e1e; color:white; box-shadow:none; }
+#teamMenu { border-radius:8px; border-color:#d9d9d9; box-shadow:0 4px 10px rgba(0,0,0,.1); }

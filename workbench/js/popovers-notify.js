@@ -59,6 +59,9 @@ function openAcct() {
   closeTeam();
   closeNotify();
   placeSidebarPopover(acct, userBtn, 'above');
+  var accountLeft=document.querySelector('.sidebar').getBoundingClientRect().left+12;
+  acct.style.left=accountLeft+'px';
+  acct.style.width=Math.min(280,window.innerWidth-accountLeft-12)+'px';
   acct.hidden = false;
   userBtn.classList.add('is-open');
   userBtn.setAttribute('aria-expanded', 'true');
